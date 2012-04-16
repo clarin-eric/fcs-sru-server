@@ -605,7 +605,7 @@ public final class SRUEndpointConfig {
                         throw new NullPointerException("prefix == null");
                     }
                     if (prefix.equals("sru")) {
-                        return "http://www.ids-mannheim.de/ns/sru/1.0/";
+                        return CONFIG_FILE_NAMESPACE_URI;
                     } else if (prefix.equals(XMLConstants.XML_NS_PREFIX)) {
                         return XMLConstants.XML_NS_URI;
                     } else {
