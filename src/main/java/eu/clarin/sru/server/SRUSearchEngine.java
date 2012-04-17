@@ -20,10 +20,10 @@ package eu.clarin.sru.server;
  * Interface for connecting the SRU protocol implementation to an actual
  * search engine.
  * <p>Implementing the
- * {@link #explain(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} and
- * {@link #scan(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} is optional,
+ * {@link #explain(SRUServerConfig, SRURequest, SRUDiagnosticList)} and
+ * {@link #scan(SRUServerConfig, SRURequest, SRUDiagnosticList)} is optional,
  * but implementing
- * {@link #search(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} is
+ * {@link #search(SRUServerConfig, SRURequest, SRUDiagnosticList)} is
  * mandatory.</p>
  * <p>The implementation of these methods is required to be thread-safe.</p>
  */
@@ -50,7 +50,7 @@ public interface SRUSearchEngine {
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUExplainResult explain(SRUEndpointConfig config,
+    public SRUExplainResult explain(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
@@ -74,7 +74,7 @@ public interface SRUSearchEngine {
      * @see SRURequest
      * @see SRUExplainResult
      */
-    public SRUSearchResultSet search(SRUEndpointConfig config,
+    public SRUSearchResultSet search(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
@@ -96,7 +96,7 @@ public interface SRUSearchEngine {
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUScanResultSet scan(SRUEndpointConfig config, SRURequest request,
+    public SRUScanResultSet scan(SRUServerConfig config, SRURequest request,
             SRUDiagnosticList diagnostics) throws SRUException;
 
 } // interface SRUSearchEngine

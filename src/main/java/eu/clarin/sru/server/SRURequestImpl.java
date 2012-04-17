@@ -193,7 +193,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    boolean checkParameters(SRUEndpointConfig config) {
+    boolean checkParameters(SRUServerConfig config) {
         // parse mandatory operation parameter
         final String op = getParameter(PARAM_OPERATION, false);
         if (op != null) {

@@ -32,66 +32,71 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.z3950.zing.cql.CQLNode;
 
-import eu.clarin.sru.server.SRUEndpointConfig.DatabaseInfo;
-import eu.clarin.sru.server.SRUEndpointConfig.IndexInfo;
-import eu.clarin.sru.server.SRUEndpointConfig.LocalizedString;
-import eu.clarin.sru.server.SRUEndpointConfig.SchemaInfo;
+import eu.clarin.sru.server.SRUServerConfig.DatabaseInfo;
+import eu.clarin.sru.server.SRUServerConfig.IndexInfo;
+import eu.clarin.sru.server.SRUServerConfig.LocalizedString;
+import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
 
 
 /**
- * SRU/CQL server implementation. This class implements SRU/CQL version 1.1
- * and 1.2.
- * <p>An example servlet implementing an endpoint:</p>
+ * SRU/CQL protocol implementation for the server-side (SRU/S). This class
+ * implements SRU/CQL version 1.1 and and 1.2.
+ * <p>
+ * An example servlet using this class:
+ * </p>
  * <pre>
  * public class MySRUServlet extends HttpServlet {
- *     private transient SRUService service;
+ *     private transient SRUServer sruServer;
+ * 
  * 
  *     public void init() throws ServletException {
  *         final ServletContext ctx = getServletContext();
  *         try {
- *             URL url = MySRUServlet.class.getClassLoader().getResource("META-INF/endpoint-config.xml");
+ *             URL url = MySRUServlet.class.getClassLoader().getResource(
+ *                     &quot;META-INF/endpoint-config.xml&quot;);
  *             if (url == null) {
- *                 throw new ServletException("not found, url == null");
+ *                 throw new ServletException(&quot;not found, url == null&quot;);
  *             }
  * 
- *             // get additional parameters from Servlet context
+ *             // get additional runtime configuration from Servlet context
  *             HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
- *             for (Enumeration&lt;?&gt; i = ctx.getInitParameterNames();
- *                 i.hasMoreElements();) {
- *                 String key   = (String) i.nextElement();
+ *             for (Enumeration&lt;?&gt; i = ctx.getInitParameterNames(); i
+ *                     .hasMoreElements();) {
+ *                 String key = (String) i.nextElement();
  *                 String value = ctx.getInitParameter(key);
- *                 if ((value != null) && !value.isEmpty()) {
+ *                 if ((value != null) &amp;&amp; !value.isEmpty()) {
  *                     params.put(key, value);
  *                 }
  *             }
  * 
- *             SRUEndpointConfig config =
- *                 SRUEndpointConfig.parse(params, url.openStream());
- *             SRUSearchEngine searchEngine =
- *                 new MySRUSearchEngine(config, params);
- *             service = new SRUService(config, searchEngine);
+ *             SRUServerConfig config = SRUServerConfig.parse(params,
+ *                     url.openStream());
+ *             SRUSearchEngine searchEngine = new MySRUSearchEngine(config, params);
+ *             sruServer = new SRUServer(config, searchEngine);
  *         } catch (Exception e) {
- *             throw new ServletException("error initializing endpoint", e);
+ *             throw new ServletException(&quot;error initializing endpoint&quot;, e);
  *         }
  *     }
  * 
+ * 
  *     protected void doGet(HttpServletRequest request,
  *             HttpServletResponse response) throws ServletException, IOException {
- *         service.handleRequest(request, response);
+ *         sruServer.handleRequest(request, response);
  *     }
+ * 
  * 
  *     protected void doPost(HttpServletRequest request,
  *             HttpServletResponse response) throws ServletException, IOException {
- *         service.handleRequest(request, response);
+ *         sruServer.handleRequest(request, response);
  *     }
  * }
  * </pre>
  * 
- * @see SRUEndpointConfig
+ * @see SRUServerConfig
  * @see SRUSearchEngine
  * @see <a href="http://www.loc.gov/standards/sru/">SRU/CQL protocol 1.2</a>
  */
-public class SRUService {
+public class SRUServer {
     private static final String SRU_NS =
             "http://www.loc.gov/zing/srw/";
     private static final String SRU_PREFIX = "sru";
@@ -109,8 +114,8 @@ public class SRUService {
     private static final String RESPONSE_CONTENT_TYPE = "application/xml";
     private static final int RESPONSE_BUFFER_SIZE = 64 * 1024;
     private static final Logger logger =
-            LoggerFactory.getLogger(SRUService.class);
-    private final SRUEndpointConfig config;
+            LoggerFactory.getLogger(SRUServer.class);
+    private final SRUServerConfig config;
     private final SRUSearchEngine searchEngine;
     private final XMLOutputFactory writerFactory;
 
@@ -127,7 +132,7 @@ public class SRUService {
      * @throws SRUException
      *             if an error occurred
      */
-    public SRUService(SRUEndpointConfig config, SRUSearchEngine searchEngine)
+    public SRUServer(SRUServerConfig config, SRUSearchEngine searchEngine)
             throws SRUException {
         if (config == null) {
             throw new NullPointerException("config == null");
@@ -342,7 +347,7 @@ public class SRUService {
                 config.getSchemaInfo();
         if (schemaInfo != null) {
             out.writeStartElement(SRU_EXPLAIN_NS, "schemaInfo");
-            for (SRUEndpointConfig.SchemaInfo schema : schemaInfo) {
+            for (SRUServerConfig.SchemaInfo schema : schemaInfo) {
                 out.writeStartElement(SRU_EXPLAIN_NS, "schema");
                 out.writeAttribute("identifier", schema.getIdentifier());
                 out.writeAttribute("name", schema.getName());

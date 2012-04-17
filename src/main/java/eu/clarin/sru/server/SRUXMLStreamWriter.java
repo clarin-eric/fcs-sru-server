@@ -45,7 +45,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
             final SRURecordPacking recordPacking) throws IOException,
             XMLStreamException {
         this.writer = new OutputStreamWriter(stream,
-                SRUService.RESPONSE_ENCODING) {
+                SRUServer.RESPONSE_ENCODING) {
             @Override
             public void write(int c) throws IOException {
                 if (writingRecord &&

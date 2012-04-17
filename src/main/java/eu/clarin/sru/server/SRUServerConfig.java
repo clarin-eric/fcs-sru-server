@@ -16,7 +16,7 @@
  */
 package eu.clarin.sru.server;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.Schema;
@@ -36,6 +37,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -51,26 +53,35 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * Endpoint configuration. Most of the endpoint configuration is created from
- * the XML file.
+ * SRU server configuration.
  * 
- * <p>Example:</p>
+ * <p>
+ * Example:
+ * </p>
  * <pre>
- * URL url = MySRUServlet.class.getClassLoader().getResource("META-INF/endpoint-config.xml");
+ * URL url = MySRUServlet.class.getClassLoader()
+ *               .getResource("META-INF/sru-server-config.xml");
  * if (url == null) {
- *     throw new ServletException("not found, url == null");
+ *     throw new ServletException(&quot;not found, url == null&quot;);
  * }
  * 
+ * // other runtime configuration, usually obtained from servlet context
  * HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
- * SRUEndpointConfig config = SRUEndpointConfig.parse(params, url.openStream());
+ * params.put(SRUServerConfig.SRU_TRANSPORT, "http");
+ * params.put(SRUServerConfig.SRU_HOST, "127.0.0.1");
+ * params.put(SRUServerConfig.SRU_PORT, "80");
+ * params.put(SRUServerConfig.SRU_DATABASE, "sru-server");
+ *
+ * SRUServerConfig config = SRUServerConfig.parse(params, url);
  * </pre>
  * 
- * <p>The XML configuration file must validate against the "endpoint-config.xsd"
- * schema bundled with the package and need to have the
+ * <p>
+ * The XML configuration file must validate against the "sru-server-config.xsd"
+ * W3C schema bundled with the package and need to have the
  * <code>http://www.clarin.eu/sru-server/1.0/</code> XML namespace.
- * </p> 
+ * </p>
  */
-public final class SRUEndpointConfig {
+public final class SRUServerConfig {
     public static final String SRU_TRANSPORT     = "sru.transport";
     public static final String SRU_HOST          = "sru.host";
     public static final String SRU_PORT          = "sru.port";
@@ -78,6 +89,8 @@ public final class SRUEndpointConfig {
     public static final String SRU_ECHO_REQUESTS = "sru.echoRequests";
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
+    private static final String CONFIG_FILE_SCHEMA_URL =
+            "META-INF/sru-server-config.xsd";
 
     public static final class LocalizedString {
         private final boolean primary;
@@ -412,7 +425,7 @@ public final class SRUEndpointConfig {
     private final List<SchemaInfo> schemaInfo;
 
 
-    private SRUEndpointConfig(String transport, String host, String port,
+    private SRUServerConfig(String transport, String host, String port,
             String database, boolean echoRequests, DatabaseInfo databaseinfo,
             IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
         this.transport    = transport;
@@ -523,32 +536,34 @@ public final class SRUEndpointConfig {
 
 
     /**
-     * Parse the XML endpoint configuration.
+     * Parse a SRU server XML configuration file and create an configuration
+     * object from it.
      * 
      * @param params
      *            additional settings
-     * @param in
-     *            an {@link InputSource} to the XML configuration file
+     * @param configFile
+     *            an {@link URL} pointing to the XML configuration file
      * @return a initialized <code>SRUEndpointConfig</code> instance
      * @throws NullPointerException
-     *             if <em>params</em> or <em>in</em> is <code>null</code>
+     *             if <em>params</em> or <em>configFile</em> is
+     *             <code>null</code>
      * @throws SRUConfigException
-     *             if an error occured
+     *             if an error occurred
      */
-    public static SRUEndpointConfig parse(Map<String, String> params,
-            InputStream in) throws SRUConfigException {
+    public static SRUServerConfig parse(Map<String, String> params,
+            URL configFile) throws SRUConfigException {
         if (params == null) {
             throw new NullPointerException("params == null");
         }
-        if (in == null) {
+        if (configFile == null) {
             throw new NullPointerException("in == null");
         }
         try {
-            URL url = SRUEndpointConfig.class.getClassLoader()
-                    .getResource("META-INF/endpoint-config.xsd");
+            URL url = SRUServerConfig.class.getClassLoader()
+                    .getResource(CONFIG_FILE_SCHEMA_URL);
             if (url == null) {
-                throw new SRUConfigException("cannot open " +
-                        "\"META-INF/endpoint-config.xsd\"");
+                throw new SRUConfigException("cannot open \"" +
+                        CONFIG_FILE_SCHEMA_URL + "\"");
             }
             SchemaFactory sfactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -563,7 +578,7 @@ public final class SRUEndpointConfig {
 
             // parse input
             DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource input = new InputSource(in);
+            InputSource input = new InputSource(configFile.openStream());
             input.setPublicId(CONFIG_FILE_NAMESPACE_URI);
             input.setSystemId(CONFIG_FILE_NAMESPACE_URI);
             Document doc = builder.parse(input);
@@ -653,11 +668,27 @@ public final class SRUEndpointConfig {
                 throw new SRUConfigException("parameter \"" + SRU_PORT +
                         "\" is mandatory");
             }
+            // sanity check
+            try {
+                int num = Integer.parseInt(port);
+                if ((num < 1) && (num > 65535)) {
+                    throw new SRUConfigException("parameter \"" + SRU_PORT +
+                            "\" must be between 1 and 65535");
+                }
+            } catch (NumberFormatException e) {
+                throw new SRUConfigException("parameter \"" + SRU_PORT +
+                        "\" must be nummerical");
+            }
 
             String database = params.get(SRU_DATABASE);
             if ((database == null) || database.isEmpty()) {
                 throw new SRUConfigException("parameter \"" + SRU_DATABASE +
                         "\" is mandatory");
+            }
+
+            // cleanup: remove leading slashed 
+            while (database.startsWith("/")) {
+                database = database.substring(1);
             }
 
             String s;
@@ -666,13 +697,19 @@ public final class SRUEndpointConfig {
                 echoRequests = Boolean.valueOf(s).booleanValue();
             }
 
-            return new SRUEndpointConfig(transport, host, port, database,
+            return new SRUServerConfig(transport, host, port, database,
                     echoRequests, databaseInfo, indexInfo,
                     schemaInfo);
+        } catch (IOException e) {
+            throw new SRUConfigException("error reading configuration file", e);
+        } catch (XPathException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
+        } catch (ParserConfigurationException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
+        } catch (SAXException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
         } catch (SRUConfigException e) {
             throw e;
-        } catch (Exception e) {
-            throw new SRUConfigException("error parsing config", e);
         }
     }
 
