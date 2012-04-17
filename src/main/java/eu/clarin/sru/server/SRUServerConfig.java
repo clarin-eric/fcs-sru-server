@@ -635,7 +635,6 @@ public final class SRUServerConfig {
 
             List<SchemaInfo> schemaInfo = buildSchemaInfo(xpath, doc);
 
-
             String transport = params.get(SRU_TRANSPORT);
             if ((transport == null) || transport.isEmpty()) {
                 throw new SRUConfigException("parameter \"" + SRU_TRANSPORT +
@@ -754,6 +753,14 @@ public final class SRUServerConfig {
                 Element e = (Element) result.item(i);
                 String identifier = e.getAttribute("identifier");
                 String name       = e.getAttribute("name");
+                if (identifier.isEmpty()) {
+                    throw new SRUConfigException("attribute 'identifier' may "+
+                            "on element '/indexInfo/set' may not be empty");
+                }
+                if (name.isEmpty()) {
+                    throw new SRUConfigException("attribute 'name' may on " +
+                            "element '/indexInfo/set' may not be empty");
+                }
                 List<LocalizedString> title =
                         fromNodeList(e.getElementsByTagName("title"));
                 sets.add(new IndexInfo.Set(identifier, name, title));
@@ -787,13 +794,45 @@ public final class SRUServerConfig {
                             }
                             foundPrimary = true;
                         }
-                        String set = e2.getAttribute("set");
-                        String name = e2.getTextContent();
+                        String set  = null;
+                        String name = null;
+                        NodeList result3 = e2.getElementsByTagName("name");
+                        if ((result3 != null) && (result3.getLength() > 0)) {
+                            Element e3 = (Element) result3.item(0);
+                            set  = e3.getAttribute("set");
+                            name = e3.getTextContent();
+                            if (set.isEmpty()) {
+                                throw new SRUConfigException("attribute 'set'" +
+                                        " on element '/indexInfo/index/map/" + 
+                                        "name' may not be empty");
+                            }
+                            if ((name == null) || name.isEmpty()) {
+                                throw new SRUConfigException("element " +
+                                        "'/indexInfo/index/map/name' may not " +
+                                        "be empty");
+                            }
+                        }
                         maps.add(new IndexInfo.Index.Map(primary, set, name));
                     }
                 }
-                indexes.add(new IndexInfo.Index(title, can_search, can_scan, can_sort, maps));
+                indexes.add(new IndexInfo.Index(title, can_search, can_scan,
+                        can_sort, maps));
             } // for
+            
+            // sanity check (/index/map/name/@set exists in any set/@name)
+            if (sets != null) {
+                for (IndexInfo.Index index : indexes) {
+                    if (index.getMaps() != null) {
+                        for (IndexInfo.Index.Map maps : index.getMaps()) {
+                            if (findSetByName(sets, maps.getSet()) == null) {
+                                throw new SRUConfigException("/index/map/" +
+                                        "name refers to nonexitsing set (" +
+                                        maps.getSet() + ")");
+                            }
+                        }
+                    }
+                }
+            }
         } // if
         return new IndexInfo(sets, indexes);
     }
@@ -827,6 +866,17 @@ public final class SRUServerConfig {
     }
 
 
+    private static IndexInfo.Set findSetByName(List<IndexInfo.Set> sets,
+            String name) {
+        for (IndexInfo.Set set : sets) {
+            if (set.getName().equals(name)) {
+                return set;
+            }
+        }
+        return null;
+    }
+
+    
     private static List<LocalizedString> buildList(XPath xpath, Document doc,
             String expression) throws SRUConfigException,
             XPathExpressionException {
