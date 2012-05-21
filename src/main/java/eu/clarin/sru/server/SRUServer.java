@@ -539,6 +539,9 @@ public class SRUServer {
         int position = (request.getStartRecord() > 0)
                      ? request.getStartRecord() : 1;
         if (result.getRecordCount() > 0) {
+            final int maxPositionOffset =
+                    (request.getMaximumRecords() != -1)
+                    ? (position + request.getMaximumRecords() - 1) : - 1;
             try {
                 out.writeStartElement(SRU_NS, "records");
                 while (result.hasMoreRecords()) {
@@ -547,9 +550,9 @@ public class SRUServer {
                      * requested records. If database implementation does
                      * not honor limit truncate the result set.
                      */
-                    if ((request.getMaximumRecords() != -1) &&
-                            (position > request.getMaximumRecords())) {
-                        logger.error("Database implementation did not " +
+                    if ((maxPositionOffset != -1) &&
+                            (position > maxPositionOffset)) {
+                        logger.error("SRUSearchEngine implementation did not " +
                                 "honor limit for the amount of requsted " +
                                 "records. Result set truncated!");
                         break;
