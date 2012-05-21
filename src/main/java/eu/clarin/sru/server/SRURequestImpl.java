@@ -543,7 +543,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (name == null) {
             throw new NullPointerException("name == null");
         }
-        if (name.startsWith(PARAM_EXTENSION_PREFIX)) {
+        if (!name.startsWith(PARAM_EXTENSION_PREFIX)) {
             throw new IllegalArgumentException(
                     "name must start with \"" + PARAM_EXTENSION_PREFIX + "\"");
         }
