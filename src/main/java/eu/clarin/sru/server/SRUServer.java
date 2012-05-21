@@ -495,7 +495,7 @@ public class SRUServer {
 
     private void search(SRURequestImpl request, HttpServletResponse response)
             throws IOException, XMLStreamException, SRUException {
-        logger.info("searchRetrieve: query = \"{}\", start = {}, " +
+        logger.info("searchRetrieve: query = \"{}\", startRecord = {}, " +
                 "maximumRecords = {}, recordSchema = {}, resultSetTTL = {}",
                 new Object[] { request.getRawQuery(), request.getStartRecord(),
                         request.getMaximumRecords(),
