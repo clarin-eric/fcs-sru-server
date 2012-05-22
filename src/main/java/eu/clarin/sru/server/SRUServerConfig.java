@@ -54,7 +54,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * SRU server configuration.
- * 
+ *
  * <p>
  * Example:
  * </p>
@@ -64,7 +64,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * if (url == null) {
  *     throw new ServletException(&quot;not found, url == null&quot;);
  * }
- * 
+ *
  * // other runtime configuration, usually obtained from servlet context
  * HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
  * params.put(SRUServerConfig.SRU_TRANSPORT, "http");
@@ -74,7 +74,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * SRUServerConfig config = SRUServerConfig.parse(params, url);
  * </pre>
- * 
+ *
  * <p>
  * The XML configuration file must validate against the "sru-server-config.xsd"
  * W3C schema bundled with the package and need to have the
@@ -82,11 +82,20 @@ import org.xml.sax.helpers.DefaultHandler;
  * </p>
  */
 public final class SRUServerConfig {
-    public static final String SRU_TRANSPORT     = "sru.transport";
-    public static final String SRU_HOST          = "sru.host";
-    public static final String SRU_PORT          = "sru.port";
-    public static final String SRU_DATABASE      = "sru.database";
-    public static final String SRU_ECHO_REQUESTS = "sru.echoRequests";
+    public static final String SRU_TRANSPORT         = "sru.transport";
+    public static final String SRU_HOST              = "sru.host";
+    public static final String SRU_PORT              = "sru.port";
+    public static final String SRU_DATABASE          = "sru.database";
+    public static final String SRU_NUMBER_OF_RECORDS = "sru.numberOfRecords";
+    public static final String SRU_MAXIMUM_RECORDS   = "sru.maximumRecords";
+    public static final String SRU_ECHO_REQUESTS     = "sru.echoRequests";
+    public static final String SRU_INDENT_RESPONSE   = "sru.indentResponse";
+    public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
+            "sru.allowOverrideMaximumRecords";
+    public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
+            "sru.allowOverrideIndentResponse";
+    public static final int DEFAULT_NUMBER_OF_RECORDS = 100;
+    public static final int DEFAULT_MAXIMUM_RECORDS = 250;
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
     private static final String CONFIG_FILE_SCHEMA_URL =
@@ -416,35 +425,49 @@ public final class SRUServerConfig {
 
     private final String transport;
     private final String host;
-    private final String port;
+    private final int port;
     private final String database;
+    private final int numberOfRecords;
+    private final int maximumRecords;
     private final boolean echoRequests;
+    private final int indentResponse;
+    private final boolean allowOverrideMaximumRecords;
+    private final boolean allowOverrideIndentResponse;
     private final String baseUrl;
     private final DatabaseInfo databaseInfo;
     private final IndexInfo indexInfo;
     private final List<SchemaInfo> schemaInfo;
 
 
-    private SRUServerConfig(String transport, String host, String port,
-            String database, boolean echoRequests, DatabaseInfo databaseinfo,
-            IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
-        this.transport    = transport;
-        this.host         = host;
-        this.port         = port;
-        this.database     = database;
-        this.databaseInfo = databaseinfo;
-        this.indexInfo    = indexInfo;
+    private SRUServerConfig(String transport, String host, int port,
+            String database, int numberOfRecords, int maximumRecords,
+            boolean echoRequests, int indentResponse,
+            boolean allowOverrideMaximumRecords,
+            boolean allowOverrideIndentResponse,
+            DatabaseInfo databaseinfo, IndexInfo indexInfo,
+            List<SchemaInfo> schemaInfo) {
+        this.transport                   = transport;
+        this.host                        = host;
+        this.port                        = port;
+        this.database                    = database;
+        this.numberOfRecords             = numberOfRecords;
+        this.maximumRecords              = maximumRecords;
+        this.echoRequests                = echoRequests;
+        this.indentResponse              = indentResponse;
+        this.allowOverrideMaximumRecords = allowOverrideMaximumRecords;
+        this.allowOverrideIndentResponse = allowOverrideIndentResponse;
+        this.databaseInfo                = databaseinfo;
+        this.indexInfo                   = indexInfo;
         if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
             this.schemaInfo = Collections.unmodifiableList(schemaInfo);
         } else {
             this.schemaInfo = null;
         }
-        this.echoRequests = echoRequests;
 
         // build baseUrl
         StringBuilder sb = new StringBuilder();
         sb.append(host);
-        if (!"80".equals(port)) {
+        if (port != 80) {
             sb.append(":").append(port);
         }
         sb.append("/").append(database);
@@ -477,7 +500,7 @@ public final class SRUServerConfig {
     }
 
 
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
@@ -489,6 +512,31 @@ public final class SRUServerConfig {
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+
+    public int getNumberOfRecords() {
+        return numberOfRecords;
+    }
+
+
+    public int getMaximumRecords() {
+        return maximumRecords;
+    }
+
+
+    public int getIndentResponse() {
+        return indentResponse;
+    }
+
+
+    public boolean allowOverrideMaximumRecords() {
+        return allowOverrideMaximumRecords;
+    }
+
+
+    public boolean allowOverrideIndentResponse() {
+        return allowOverrideIndentResponse;
     }
 
 
@@ -538,7 +586,7 @@ public final class SRUServerConfig {
     /**
      * Parse a SRU server XML configuration file and create an configuration
      * object from it.
-     * 
+     *
      * @param params
      *            additional settings
      * @param configFile
@@ -662,22 +710,7 @@ public final class SRUServerConfig {
                         "\" is mandatory");
             }
 
-            String port = params.get(SRU_PORT);
-            if ((port == null) || port.isEmpty()) {
-                throw new SRUConfigException("parameter \"" + SRU_PORT +
-                        "\" is mandatory");
-            }
-            // sanity check
-            try {
-                int num = Integer.parseInt(port);
-                if ((num < 1) && (num > 65535)) {
-                    throw new SRUConfigException("parameter \"" + SRU_PORT +
-                            "\" must be between 1 and 65535");
-                }
-            } catch (NumberFormatException e) {
-                throw new SRUConfigException("parameter \"" + SRU_PORT +
-                        "\" must be nummerical");
-            }
+            int port = parseNumber(params, SRU_PORT, true, -1, 1, 65535);
 
             String database = params.get(SRU_DATABASE);
             if ((database == null) || database.isEmpty()) {
@@ -685,19 +718,34 @@ public final class SRUServerConfig {
                         "\" is mandatory");
             }
 
-            // cleanup: remove leading slashed 
+            // cleanup: remove leading slashed
             while (database.startsWith("/")) {
                 database = database.substring(1);
             }
 
-            String s;
-            boolean echoRequests = false;
-            if ((s = params.get(SRU_ECHO_REQUESTS)) != null) {
-                echoRequests = Boolean.valueOf(s).booleanValue();
-            }
+
+            int numberOfRecords = parseNumber(params, SRU_NUMBER_OF_RECORDS,
+                    false, DEFAULT_NUMBER_OF_RECORDS, 1, -1);
+
+            int maximumRecords = parseNumber(params, SRU_MAXIMUM_RECORDS,
+                    false, DEFAULT_MAXIMUM_RECORDS, numberOfRecords, -1);
+
+            boolean echoRequests = parseBoolean(params, SRU_ECHO_REQUESTS,
+                    false, true);
+
+            int indentResponse = parseNumber(params, SRU_INDENT_RESPONSE,
+                    false, -1, -1, 8);
+
+            boolean allowOverrideMaximumRecords = parseBoolean(params,
+                    SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS, false, false);
+
+            boolean allowOverrideIndentResponse = parseBoolean(params,
+                    SRU_ALLOW_OVERRIDE_INDENT_RESPONSE, false, false);
 
             return new SRUServerConfig(transport, host, port, database,
-                    echoRequests, databaseInfo, indexInfo,
+                    numberOfRecords, maximumRecords, echoRequests,
+                    indentResponse, allowOverrideMaximumRecords,
+                    allowOverrideIndentResponse, databaseInfo, indexInfo,
                     schemaInfo);
         } catch (IOException e) {
             throw new SRUConfigException("error reading configuration file", e);
@@ -709,6 +757,68 @@ public final class SRUServerConfig {
             throw new SRUConfigException("error parsing configuration file", e);
         } catch (SRUConfigException e) {
             throw e;
+        }
+    }
+
+
+    private static int parseNumber(Map<String, String> params, String name,
+            boolean mandatory, int defaultValue, int minValue, int maxValue)
+            throws SRUConfigException {
+        String value = params.get(name);
+        if ((value == null) || value.isEmpty()) {
+            if (mandatory) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" is mandatory");
+            } else {
+                return defaultValue;
+            }
+        } else {
+            try {
+                int num = Integer.parseInt(value);
+
+                // sanity checks
+                if ((minValue != -1) && (maxValue != -1)) {
+                    if ((num < minValue) || (num > maxValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be between " + minValue + " and " +
+                                maxValue + ": " + num);
+                    }
+                } else {
+                    if ((minValue != -1) && (num < minValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be larger than " + minValue + ": " +
+                                num);
+
+                    }
+                    if ((maxValue != -1) && (num > maxValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be smaller than " + maxValue + ": " +
+                                num);
+                    }
+                }
+                return num;
+            } catch (NumberFormatException e) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" must be nummerical and less than " +
+                        Integer.MAX_VALUE + ": " + value);
+            }
+        }
+    }
+
+
+    private static boolean parseBoolean(Map<String, String> params,
+            String name, boolean mandatory, boolean defaultValue)
+            throws SRUConfigException {
+        String value = params.get(name);
+        if ((value == null) || value.isEmpty()) {
+            if (mandatory) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" is mandatory");
+            } else {
+                return defaultValue;
+            }
+        } else {
+            return Boolean.valueOf(value).booleanValue();
         }
     }
 
@@ -803,7 +913,7 @@ public final class SRUServerConfig {
                             name = e3.getTextContent();
                             if (set.isEmpty()) {
                                 throw new SRUConfigException("attribute 'set'" +
-                                        " on element '/indexInfo/index/map/" + 
+                                        " on element '/indexInfo/index/map/" +
                                         "name' may not be empty");
                             }
                             if ((name == null) || name.isEmpty()) {
@@ -818,7 +928,7 @@ public final class SRUServerConfig {
                 indexes.add(new IndexInfo.Index(title, can_search, can_scan,
                         can_sort, maps));
             } // for
-            
+
             // sanity check (/index/map/name/@set exists in any set/@name)
             if (sets != null) {
                 for (IndexInfo.Index index : indexes) {
@@ -876,7 +986,7 @@ public final class SRUServerConfig {
         return null;
     }
 
-    
+
     private static List<LocalizedString> buildList(XPath xpath, Document doc,
             String expression) throws SRUConfigException,
             XPathExpressionException {

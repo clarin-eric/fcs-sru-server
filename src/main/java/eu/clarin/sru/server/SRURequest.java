@@ -100,16 +100,6 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>query</em> parameter for the request in raw string format.
-     * Only available for <em>searchRetrieve</em> requests.
-     *
-     * @return the raw query or <code>null</code> if not a
-     *         <em>searchRetrieve</em> request
-     */
-    public String getRawQuery();
-
-
-    /**
      * Get the <em>startRecord</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests.
      *
@@ -122,9 +112,10 @@ public interface SRURequest {
     /**
      * Get the <em>maximumRecords</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests.
+     * If no value was supplied with the request, the server will automatically
+     * set a default value.
      *
-     * @return the maximum number of records or <code>-1</code> if no value was
-     *         supplied for this request
+     * @return the maximum number of records
      */
     public int getMaximumRecords();
 
@@ -189,16 +180,6 @@ public interface SRURequest {
      *         <em>scan</em> request
      */
     public CQLNode getScanClause();
-
-
-    /**
-     * Get the <em>scanClause</em> parameter of this request in raw string
-     * format. Only available for <em>scan</em> requests.
-     *
-     * @return the raw scan clause or <code>null</code> if not a <em>scan</em>
-     *         request
-     */
-    public String getRawScanClause();
 
 
     /**

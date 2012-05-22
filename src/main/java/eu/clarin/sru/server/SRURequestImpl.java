@@ -52,6 +52,9 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final String RECORD_PACKING_XML      = "xml";
     private static final String RECORD_PACKING_STRING   = "string";
     private static final String PARAM_EXTENSION_PREFIX  = "x-";
+    private static final String X_UNLIMITED_RESULTSET   = "x-unlimited-resultset";
+    private static final String X_INDENT_RESPONSE       = "x-indent-response";
+    private final SRUServerConfig config;
     private final HttpServletRequest request;
     private List<SRUDiagnostic> diagnostics;
     private SRUOperation operation;
@@ -185,15 +188,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     };
 
 
-    SRURequestImpl(HttpServletRequest request, SRUVersion defaultVersion,
-            SRURecordPacking defaultRecordPacking) {
+    SRURequestImpl(SRUServerConfig config, HttpServletRequest request) {
+        this.config        = config;
         this.request       = request;
-        this.version       = defaultVersion;
-        this.recordPacking = defaultRecordPacking;
     }
 
 
-    boolean checkParameters(SRUServerConfig config) {
+    boolean checkParameters() {
         // parse mandatory operation parameter
         final String op = getParameter(PARAM_OPERATION, false);
         if (op != null) {
@@ -385,6 +386,49 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
+    SRUVersion getRawVersion() {
+        return version;
+    }
+
+
+    SRURecordPacking getRawRecordPacking() {
+        return recordPacking;
+    }
+
+
+    String getRawQuery() {
+        return rawQuery;
+    }
+
+
+    int getRawMaximumRecords() {
+        return maximumRecords;
+    }
+
+
+    String getRawScanClause() {
+        return rawScanClause;
+    }
+
+
+    int getIndentResponse() {
+        if (config.allowOverrideIndentResponse()) {
+            String s = getExtraRequestData(X_INDENT_RESPONSE);
+            if (s != null) {
+                try {
+                    int x = Integer.parseInt(s);
+                    if ((x > -2) && (x < 9)) {
+                        return x;
+                    }
+                } catch (NumberFormatException e) {
+                    /* IGNORE */
+                }
+            }
+        }
+        return config.getIndentResponse();
+    }
+
+
     @Override
     public SRUOperation getOperation() {
         return operation;
@@ -393,7 +437,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public SRUVersion getVersion() {
-        return version;
+        return (version != null) ? version : config.getDefaultVersion();
     }
 
 
@@ -402,7 +446,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (version == null) {
             throw new NullPointerException("version == null");
         }
-        return this.version.equals(version);
+        return getVersion().equals(version);
     }
 
 
@@ -417,26 +461,23 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (min.getVersionNumber() > max.getVersionNumber()) {
             throw new IllegalArgumentException("min > max");
         }
-        return (min.getVersionNumber() >= version.getVersionNumber()) &&
-                (version.getVersionNumber() <= max.getVersionNumber());
+        final SRUVersion v = getVersion();
+        return (min.getVersionNumber() >= v.getVersionNumber()) &&
+                (v.getVersionNumber() <= max.getVersionNumber());
     }
 
 
     @Override
     public SRURecordPacking getRecordPacking() {
-        return recordPacking;
+        return (recordPacking != null)
+                ? recordPacking
+                : config.getDeaultRecordPacking();
     }
 
 
     @Override
     public CQLNode getQuery() {
         return query;
-    }
-
-
-    @Override
-    public String getRawQuery() {
-        return rawQuery;
     }
 
 
@@ -448,7 +489,19 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getMaximumRecords() {
-        return maximumRecords;
+        if (config.allowOverrideIndentResponse() &&
+                (getExtraRequestData(X_UNLIMITED_RESULTSET) != null)) {
+            return -1;
+        }
+        if (maximumRecords == -1) {
+            return config.getNumberOfRecords();
+        } else {
+            if (maximumRecords > config.getMaximumRecords()) {
+                return config.getMaximumRecords();
+            } else {
+                return maximumRecords;
+            }
+        }
     }
 
 
@@ -487,11 +540,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         return scanClause;
     }
 
-
-    @Override
-    public String getRawScanClause() {
-        return rawScanClause;
-    }
 
     @Override
     public int getResponsePosition() {

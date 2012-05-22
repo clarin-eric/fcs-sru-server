@@ -124,7 +124,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
          */
         this.xmlwriter = factory.createXMLStreamWriter(this.writer);
 
-        if (indent > 1) {
+        if (indent > 0) {
             this.indent = indent;
             this.state = IndentingState.SEEN_NOTHING;
             this.stateStack = new ArrayDeque<IndentingState>(16);

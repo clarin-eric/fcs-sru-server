@@ -47,8 +47,8 @@ import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
  * <pre>
  * public class MySRUServlet extends HttpServlet {
  *     private transient SRUServer sruServer;
- * 
- * 
+ *
+ *
  *     public void init() throws ServletException {
  *         final ServletContext ctx = getServletContext();
  *         try {
@@ -57,7 +57,7 @@ import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
  *             if (url == null) {
  *                 throw new ServletException(&quot;not found, url == null&quot;);
  *             }
- * 
+ *
  *             // get additional runtime configuration from Servlet context
  *             HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
  *             for (Enumeration&lt;?&gt; i = ctx.getInitParameterNames(); i
@@ -68,7 +68,7 @@ import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
  *                     params.put(key, value);
  *                 }
  *             }
- * 
+ *
  *             SRUServerConfig config = SRUServerConfig.parse(params,
  *                     url.openStream());
  *             SRUSearchEngine searchEngine = new MySRUSearchEngine(config, params);
@@ -77,21 +77,21 @@ import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
  *             throw new ServletException(&quot;error initializing endpoint&quot;, e);
  *         }
  *     }
- * 
- * 
+ *
+ *
  *     protected void doGet(HttpServletRequest request,
  *             HttpServletResponse response) throws ServletException, IOException {
  *         sruServer.handleRequest(request, response);
  *     }
- * 
- * 
+ *
+ *
  *     protected void doPost(HttpServletRequest request,
  *             HttpServletResponse response) throws ServletException, IOException {
  *         sruServer.handleRequest(request, response);
  *     }
  * }
  * </pre>
- * 
+ *
  * @see SRUServerConfig
  * @see SRUSearchEngine
  * @see <a href="http://www.loc.gov/standards/sru/">SRU/CQL protocol 1.2</a>
@@ -122,7 +122,7 @@ public class SRUServer {
 
     /**
      * Constructor.
-     * 
+     *
      * @param config
      *            a SRUEndpointConfig object
      * @param searchEngine
@@ -148,7 +148,7 @@ public class SRUServer {
 
     /**
      * Handle a SRL/CQL request.
-     * 
+     *
      * @param request
      *            a HttpServletRequest request
      * @param response
@@ -156,8 +156,7 @@ public class SRUServer {
      */
     public void handleRequest(HttpServletRequest request,
             HttpServletResponse response) {
-        final SRURequestImpl req = new SRURequestImpl(request,
-                config.getDefaultVersion(), config.getDeaultRecordPacking());
+        final SRURequestImpl req = new SRURequestImpl(config, request);
         try {
             // set response properties
             response.setContentType(RESPONSE_CONTENT_TYPE);
@@ -167,7 +166,7 @@ public class SRUServer {
             response.setBufferSize(RESPONSE_BUFFER_SIZE);
 
             try {
-                if (req.checkParameters(config)) {
+                if (req.checkParameters()) {
                     switch (req.getOperation()) {
                     case EXPLAIN:
                         explain(req, response);
@@ -228,7 +227,7 @@ public class SRUServer {
 
         // commence explain ...
         SRUExplainResult result = searchEngine.explain(config,
-                (SRURequest) request, (SRUDiagnosticList) request);
+                request, request);
 
         // send results
         SRUXMLStreamWriter out =
@@ -271,7 +270,7 @@ public class SRUServer {
         out.writeCharacters(config.getHost());
         out.writeEndElement(); // "host" element
         out.writeStartElement(SRU_EXPLAIN_NS, "port");
-        out.writeCharacters(config.getPort());
+        out.writeCharacters(Integer.toString(config.getPort()));
         out.writeEndElement(); // "port" element
         out.writeStartElement(SRU_EXPLAIN_NS, "database");
         out.writeCharacters(config.getDatabase());
@@ -371,6 +370,21 @@ public class SRUServer {
         }
 
         // explain/configInfo
+        out.writeStartElement(SRU_EXPLAIN_NS, "configInfo");
+        // numberOfRecords (default)
+        out.writeStartElement(SRU_EXPLAIN_NS, "default");
+        out.writeAttribute("type", "numberOfRecords");
+        out.writeCharacters(Integer.toString(config.getNumberOfRecords()));
+        out.writeEndElement(); // default" element
+
+        // maximumRecords (setting)
+        out.writeStartElement(SRU_EXPLAIN_NS, "setting");
+        out.writeAttribute("type", "maximumRecords");
+        out.writeCharacters(Integer.toString(config.getMaximumRecords()));
+        out.writeEndElement(); // "setting" element
+
+        out.writeEndElement(); // "configInfo" element
+
         out.writeEndElement(); // "explain" element
 
         out.endRecord();
@@ -405,7 +419,7 @@ public class SRUServer {
 
         // commence scan
         final SRUScanResultSet result = searchEngine.scan(config,
-                (SRURequest) request, (SRUDiagnosticList) request);
+                request, request);
         if (result == null) {
             throw new SRUException(SRUConstants.SRU_UNSUPPORTED_OPERATION,
                     "The 'scan' operation is not supported by this endpoint.");
@@ -507,7 +521,7 @@ public class SRUServer {
 
         // commence search ...
         final SRUSearchResultSet result = searchEngine.search(config,
-                (SRURequest) request, (SRUDiagnosticList) request);
+                request, request);
         if (result == null) {
             throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     "Database implementation returned invalid result (null).");
@@ -776,16 +790,20 @@ public class SRUServer {
 
 
     private void writeEchoedExplainRequest(SRUXMLStreamWriter out,
-            SRURequest request) throws XMLStreamException,
+            SRURequestImpl request) throws XMLStreamException,
             SRUException {
         // echoedSearchRetrieveRequest
         out.writeStartElement(SRU_NS, "echoedExplainRequest");
 
         // echoedExplainRequest/version
-        writeVersion(out, request.getVersion());
+        if (request.getRawVersion() != null) {
+            writeVersion(out, request.getRawVersion());
+        }
 
         // echoedExplainRequest/recordPacking
-        writeRecordPacking(out, request.getRecordPacking());
+        if (request.getRawRecordPacking() != null) {
+            writeRecordPacking(out, request.getRawRecordPacking());
+        }
 
         // echoedExplainRequest/stylesheet
         if (request.getStylesheet() != null) {
@@ -804,13 +822,15 @@ public class SRUServer {
 
 
     private void writeEchoedScanRequest(SRUXMLStreamWriter out,
-            SRURequest request, CQLNode cql) throws XMLStreamException,
+            SRURequestImpl request, CQLNode cql) throws XMLStreamException,
             SRUException {
         // echoedScanRequest
         out.writeStartElement(SRU_NS, "echoedScanRequest");
 
         // echoedScanRequest/version
-        writeVersion(out, request.getVersion());
+        if (request.getRawVersion() != null) {
+            writeVersion(out, request.getRawVersion());
+        }
 
         // echoedScanRequest/scanClause
         out.writeStartElement(SRU_NS, "scanClause");
@@ -856,13 +876,15 @@ public class SRUServer {
 
 
     private void writeEchoedSearchRetrieveRequest(SRUXMLStreamWriter out,
-            SRURequest request, CQLNode cql) throws XMLStreamException,
+            SRURequestImpl request, CQLNode cql) throws XMLStreamException,
             SRUException {
         // echoedSearchRetrieveRequest
         out.writeStartElement(SRU_NS, "echoedSearchRetrieveRequest");
 
         // echoedSearchRetrieveRequest/version
-        writeVersion(out, request.getVersion());
+        if (request.getRawVersion() != null) {
+            writeVersion(out, request.getRawVersion());
+        }
 
         // echoedSearchRetrieveRequest/query
         out.writeStartElement(SRU_NS, "query");
@@ -884,14 +906,17 @@ public class SRUServer {
         }
 
         // echoedSearchRetrieveRequest/maximumRecords
-        if (request.getMaximumRecords() > 0) {
+        if (request.getRawMaximumRecords() > 0) {
             out.writeStartElement(SRU_NS, "maximumRecords");
-            out.writeCharacters(Integer.toString(request.getMaximumRecords()));
+            out.writeCharacters(
+                    Integer.toString(request.getRawMaximumRecords()));
             out.writeEndElement(); // "startRecord" element
         }
 
         // echoedSearchRetrieveRequest/recordPacking
-        writeRecordPacking(out, request.getRecordPacking());
+        if (request.getRawRecordPacking() != null) {
+            writeRecordPacking(out, request.getRawRecordPacking());
+        }
 
         // echoedSearchRetrieveRequest/recordSchema
         if (request.getRecordSchemaName() != null) {
@@ -1010,9 +1035,9 @@ public class SRUServer {
         }
     }
 
-    
-    private static int getIndent(SRURequestImpl request) {
-        return -1;
+
+    private int getIndent(SRURequestImpl request) {
+        return request.getIndentResponse();
     }
 
 } // class SRUService
