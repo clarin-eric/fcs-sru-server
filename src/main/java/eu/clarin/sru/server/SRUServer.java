@@ -183,7 +183,7 @@ public class SRUServer {
                     // (some) parameters are malformed, send error
                     SRUXMLStreamWriter out =
                         createXMLStreamWriter(response.getOutputStream(),
-                                SRURecordPacking.XML);
+                                SRURecordPacking.XML, getIndent(req));
                     writeFatalError(out, req, req.getDiagnostics());
                 }
             } catch (XMLStreamException e) {
@@ -208,7 +208,7 @@ public class SRUServer {
                     }
                     SRUXMLStreamWriter out =
                             createXMLStreamWriter(response.getOutputStream(),
-                                    SRURecordPacking.XML);
+                                    SRURecordPacking.XML, getIndent(req));
                     writeFatalError(out, req, diagnostics);
                 } catch (Exception ex) {
                     logger.error("An exception occured while in error state",
@@ -233,7 +233,8 @@ public class SRUServer {
         // send results
         SRUXMLStreamWriter out =
                 createXMLStreamWriter(response.getOutputStream(),
-                                      request.getRecordPacking());
+                                      request.getRecordPacking(),
+                                      getIndent(request));
 
         beginResponse(out, request);
 
@@ -411,8 +412,10 @@ public class SRUServer {
         }
 
         // send results
-        SRUXMLStreamWriter out = createXMLStreamWriter(
-                response.getOutputStream(), request.getRecordPacking());
+        SRUXMLStreamWriter out =
+                createXMLStreamWriter(response.getOutputStream(),
+                                      request.getRecordPacking(),
+                                      getIndent(request));
 
         beginResponse(out, request);
 
@@ -511,8 +514,10 @@ public class SRUServer {
         }
 
         // send results
-        SRUXMLStreamWriter out = createXMLStreamWriter(
-                response.getOutputStream(), request.getRecordPacking());
+        SRUXMLStreamWriter out =
+                createXMLStreamWriter(response.getOutputStream(),
+                                      request.getRecordPacking(),
+                                      getIndent(request));
 
         beginResponse(out, request);
 
@@ -994,14 +999,20 @@ public class SRUServer {
 
 
     private SRUXMLStreamWriter createXMLStreamWriter(OutputStream out,
-            SRURecordPacking recordPacking) throws SRUException {
+            SRURecordPacking recordPacking, int indent) throws SRUException {
         try {
-            return new SRUXMLStreamWriter(out, writerFactory, recordPacking);
+            return new SRUXMLStreamWriter(out, writerFactory, recordPacking,
+                    indent);
         } catch (Exception e) {
             throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     "Error creating output stream.", e);
 
         }
+    }
+
+    
+    private static int getIndent(SRURequestImpl request) {
+        return -1;
     }
 
 } // class SRUService

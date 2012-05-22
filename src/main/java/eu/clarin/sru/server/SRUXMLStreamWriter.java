@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.SAXParser;
@@ -36,20 +38,30 @@ import org.xml.sax.helpers.DefaultHandler;
 import org.z3950.zing.cql.CQLNode;
 
 final class SRUXMLStreamWriter implements XMLStreamWriter {
+    private enum IndentingState {
+        SEEN_NOTHING,
+        SEEN_ELEMENT,
+        SEEN_DATA;
+    }
     private static final SAXParserFactory factory;
+    private final SRURecordPacking packing;
     private final Writer writer;
     private final XMLStreamWriter xmlwriter;
+    private int indent = -1;
+    private int depth = 0;
+    private Deque<IndentingState> stateStack;
+    private IndentingState state;
     private boolean writingRecord = false;
 
     SRUXMLStreamWriter(OutputStream stream, XMLOutputFactory factory,
-            final SRURecordPacking recordPacking) throws IOException,
+            SRURecordPacking recordPacking, int indent) throws IOException,
             XMLStreamException {
+        this.packing = recordPacking;
         this.writer = new OutputStreamWriter(stream,
                 SRUServer.RESPONSE_ENCODING) {
             @Override
             public void write(int c) throws IOException {
-                if (writingRecord &&
-                        (recordPacking == SRURecordPacking.STRING)) {
+                if (writingRecord && (packing == SRURecordPacking.STRING)) {
                     /*
                      * NOTE: need to write single characters here, because
                      * super.write(String) will call us again, and we would
@@ -84,8 +96,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
             @Override
             public void write(char[] c, int off, int len) throws IOException {
-                if (writingRecord &&
-                        (recordPacking == SRURecordPacking.STRING)) {
+                if (writingRecord && (packing == SRURecordPacking.STRING)) {
                     for (int i = off; i < len; i++) {
                         this.write(c[i]);
                     }
@@ -96,8 +107,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
             @Override
             public void write(String s, int off, int len) throws IOException {
-                if (writingRecord &&
-                        (recordPacking == SRURecordPacking.STRING)) {
+                if (writingRecord && (packing == SRURecordPacking.STRING)) {
                     for (int i = off; i < len; i++) {
                         this.write(s.charAt(i));
                     }
@@ -112,50 +122,80 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
          * are thread-save ...
          */
         this.xmlwriter = factory.createXMLStreamWriter(this.writer);
+        
+        if (indent > 1) {
+            this.indent = indent;
+            this.state = IndentingState.SEEN_NOTHING;
+            this.stateStack = new ArrayDeque<IndentingState>(16);
+        }
     }
 
     @Override
     public void writeStartElement(String localName) throws XMLStreamException {
+        if (indent > 0) {
+            onStartElement();
+        }
         xmlwriter.writeStartElement(localName);
     }
 
     @Override
     public void writeStartElement(String namespaceURI, String localName)
             throws XMLStreamException {
+        if (indent > 0) {
+            onStartElement();
+        }
         xmlwriter.writeStartElement(namespaceURI, localName);
     }
 
     @Override
     public void writeStartElement(String prefix, String localName,
             String namespaceURI) throws XMLStreamException {
+        if (indent > 0) {
+            onStartElement();
+        }
         xmlwriter.writeStartElement(prefix, localName, namespaceURI);
     }
 
     @Override
     public void writeEmptyElement(String namespaceURI, String localName)
             throws XMLStreamException {
+        if (indent > 0) {
+            onEmptyElement();
+        }
         xmlwriter.writeEmptyElement(namespaceURI, localName);
     }
 
     @Override
     public void writeEmptyElement(String prefix, String localName,
             String namespaceURI) throws XMLStreamException {
+        if (indent > 0) {
+            onEmptyElement();
+        }
         xmlwriter.writeEmptyElement(prefix, localName, namespaceURI);
     }
 
     @Override
     public void writeEmptyElement(String localName) throws XMLStreamException {
+        if (indent > 0) {
+            onEmptyElement();
+        }
         xmlwriter.writeEmptyElement(localName);
     }
 
     @Override
     public void writeEndElement() throws XMLStreamException {
+        if (indent > 0) {
+            onEndElement();
+        }
         xmlwriter.writeEndElement();
     }
 
     @Override
     public void writeEndDocument() throws XMLStreamException {
         xmlwriter.writeEndDocument();
+        if (indent > 0) {
+            xmlwriter.writeCharacters("\n");
+        }
     }
 
     @Override
@@ -217,6 +257,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
     @Override
     public void writeCData(String data) throws XMLStreamException {
+        if (indent > 0) {
+            state = IndentingState.SEEN_DATA;
+        }
         xmlwriter.writeCData(data);
     }
 
@@ -233,27 +276,42 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     @Override
     public void writeStartDocument() throws XMLStreamException {
         xmlwriter.writeStartDocument();
+        if (indent > 0) {
+            xmlwriter.writeCharacters("\n");
+        }
     }
 
     @Override
     public void writeStartDocument(String version) throws XMLStreamException {
         xmlwriter.writeStartDocument(version);
+        if (indent > 0) {
+            xmlwriter.writeCharacters("\n");
+        }
     }
 
     @Override
     public void writeStartDocument(String encoding, String version)
             throws XMLStreamException {
         xmlwriter.writeStartDocument(encoding, version);
+        if (indent > 0) {
+            xmlwriter.writeCharacters("\n");
+        }
     }
 
     @Override
     public void writeCharacters(String text) throws XMLStreamException {
+        if (indent > 0) {
+            state = IndentingState.SEEN_DATA;
+        }
         xmlwriter.writeCharacters(text);
     }
 
     @Override
     public void writeCharacters(char[] text, int start, int len)
             throws XMLStreamException {
+        if (indent > 0) {
+            state = IndentingState.SEEN_DATA;
+        }
         xmlwriter.writeCharacters(text, start, len);
     }
 
@@ -337,9 +395,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                         String qName, Attributes attributes)
                         throws SAXException {
                     try {
-                        xmlwriter.writeStartElement(qName);
+                        SRUXMLStreamWriter.this.writeStartElement(qName);
                         for (int i = 0; i < attributes.getLength(); i++) {
-                            xmlwriter.writeAttribute(attributes.getQName(i),
+                            SRUXMLStreamWriter.this.writeAttribute(attributes.getQName(i),
                                     attributes.getValue(i));
                         }
                     } catch (XMLStreamException e) {
@@ -351,7 +409,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 public void endElement(String uri, String localName,
                         String qName) throws SAXException {
                     try {
-                        xmlwriter.writeEndElement();
+                        SRUXMLStreamWriter.this.writeEndElement();
                     } catch (XMLStreamException e) {
                         throw new SAXException(e);
                     }
@@ -369,7 +427,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                             }
                         }
                         if (!isWhitespaceOnly) {
-                            xmlwriter.writeCharacters(text, start, length);
+                            SRUXMLStreamWriter.this.writeCharacters(text, start, length);
                         }
                     } catch (XMLStreamException e) {
                         throw new SAXException(e);
@@ -378,6 +436,51 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
             });
         } catch (Exception e) {
             throw new XMLStreamException("cannot write XCQL", e);
+        }
+    }
+
+
+    private void onStartElement() throws XMLStreamException {
+        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+            stateStack.push(IndentingState.SEEN_ELEMENT);
+            state = IndentingState.SEEN_NOTHING;
+            if (depth > 0) {
+                xmlwriter.writeCharacters("\n");
+            }
+            doIndent();
+            depth++;
+        }
+    }
+
+
+    private void onEndElement() throws XMLStreamException {
+        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+            depth--;
+            if (state == IndentingState.SEEN_ELEMENT) {
+                xmlwriter.writeCharacters("\n");
+                doIndent();
+            }
+            state = stateStack.pop();
+        }
+    }
+
+    
+    private void onEmptyElement() throws XMLStreamException {
+        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+            state = IndentingState.SEEN_ELEMENT;
+            if (depth > 0) {
+                xmlwriter.writeCharacters("\n");
+            }
+            doIndent();
+        }
+    }
+
+
+    private void doIndent() throws XMLStreamException {
+        if (depth > 0) {
+            for (int i = 0; i < (depth * indent); i++) {
+                xmlwriter.writeCharacters(" ");
+            }
         }
     }
 
