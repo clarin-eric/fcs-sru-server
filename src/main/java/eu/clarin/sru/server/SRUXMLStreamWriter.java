@@ -53,6 +53,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     private IndentingState state;
     private boolean writingRecord = false;
 
+
     SRUXMLStreamWriter(OutputStream stream, XMLOutputFactory factory,
             SRURecordPacking recordPacking, int indent) throws IOException,
             XMLStreamException {
@@ -122,13 +123,14 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
          * are thread-save ...
          */
         this.xmlwriter = factory.createXMLStreamWriter(this.writer);
-        
+
         if (indent > 1) {
             this.indent = indent;
             this.state = IndentingState.SEEN_NOTHING;
             this.stateStack = new ArrayDeque<IndentingState>(16);
         }
     }
+
 
     @Override
     public void writeStartElement(String localName) throws XMLStreamException {
@@ -137,6 +139,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
         xmlwriter.writeStartElement(localName);
     }
+
 
     @Override
     public void writeStartElement(String namespaceURI, String localName)
@@ -147,6 +150,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeStartElement(namespaceURI, localName);
     }
 
+
     @Override
     public void writeStartElement(String prefix, String localName,
             String namespaceURI) throws XMLStreamException {
@@ -155,6 +159,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
         xmlwriter.writeStartElement(prefix, localName, namespaceURI);
     }
+
 
     @Override
     public void writeEmptyElement(String namespaceURI, String localName)
@@ -165,6 +170,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeEmptyElement(namespaceURI, localName);
     }
 
+
     @Override
     public void writeEmptyElement(String prefix, String localName,
             String namespaceURI) throws XMLStreamException {
@@ -174,6 +180,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeEmptyElement(prefix, localName, namespaceURI);
     }
 
+
     @Override
     public void writeEmptyElement(String localName) throws XMLStreamException {
         if (indent > 0) {
@@ -181,6 +188,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
         xmlwriter.writeEmptyElement(localName);
     }
+
 
     @Override
     public void writeEndElement() throws XMLStreamException {
@@ -190,6 +198,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeEndElement();
     }
 
+
     @Override
     public void writeEndDocument() throws XMLStreamException {
         xmlwriter.writeEndDocument();
@@ -198,15 +207,18 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
     }
 
+
     @Override
     public void close() throws XMLStreamException {
         xmlwriter.close();
     }
 
+
     @Override
     public void flush() throws XMLStreamException {
         xmlwriter.flush();
     }
+
 
     @Override
     public void writeAttribute(String localName, String value)
@@ -214,11 +226,13 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeAttribute(localName, value);
     }
 
+
     @Override
     public void writeAttribute(String prefix, String namespaceURI,
             String localName, String value) throws XMLStreamException {
         xmlwriter.writeAttribute(prefix, namespaceURI, localName, value);
     }
+
 
     @Override
     public void writeAttribute(String namespaceURI, String localName,
@@ -226,11 +240,13 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeAttribute(namespaceURI, localName, value);
     }
 
+
     @Override
     public void writeNamespace(String prefix, String namespaceURI)
             throws XMLStreamException {
         xmlwriter.writeNamespace(prefix, namespaceURI);
     }
+
 
     @Override
     public void writeDefaultNamespace(String namespaceURI)
@@ -238,10 +254,12 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeDefaultNamespace(namespaceURI);
     }
 
+
     @Override
     public void writeComment(String data) throws XMLStreamException {
         xmlwriter.writeComment(data);
     }
+
 
     @Override
     public void writeProcessingInstruction(String target)
@@ -249,11 +267,13 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeProcessingInstruction(target);
     }
 
+
     @Override
     public void writeProcessingInstruction(String target, String data)
             throws XMLStreamException {
         xmlwriter.writeProcessingInstruction(target, data);
     }
+
 
     @Override
     public void writeCData(String data) throws XMLStreamException {
@@ -263,15 +283,18 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeCData(data);
     }
 
+
     @Override
     public void writeDTD(String dtd) throws XMLStreamException {
         xmlwriter.writeDTD(dtd);
     }
 
+
     @Override
     public void writeEntityRef(String name) throws XMLStreamException {
         xmlwriter.writeEntityRef(name);
     }
+
 
     @Override
     public void writeStartDocument() throws XMLStreamException {
@@ -281,6 +304,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
     }
 
+
     @Override
     public void writeStartDocument(String version) throws XMLStreamException {
         xmlwriter.writeStartDocument(version);
@@ -288,6 +312,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
             xmlwriter.writeCharacters("\n");
         }
     }
+
 
     @Override
     public void writeStartDocument(String encoding, String version)
@@ -298,6 +323,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
     }
 
+
     @Override
     public void writeCharacters(String text) throws XMLStreamException {
         if (indent > 0) {
@@ -305,6 +331,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
         xmlwriter.writeCharacters(text);
     }
+
 
     @Override
     public void writeCharacters(char[] text, int start, int len)
@@ -315,20 +342,24 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeCharacters(text, start, len);
     }
 
+
     @Override
     public String getPrefix(String uri) throws XMLStreamException {
         return xmlwriter.getPrefix(uri);
     }
+
 
     @Override
     public void setPrefix(String prefix, String uri) throws XMLStreamException {
         xmlwriter.setPrefix(prefix, uri);
     }
 
+
     @Override
     public void setDefaultNamespace(String uri) throws XMLStreamException {
         xmlwriter.setDefaultNamespace(uri);
     }
+
 
     @Override
     public void setNamespaceContext(NamespaceContext context)
@@ -336,10 +367,12 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.setNamespaceContext(context);
     }
 
+
     @Override
     public NamespaceContext getNamespaceContext() {
         return xmlwriter.getNamespaceContext();
     }
+
 
     @Override
     public Object getProperty(String name) throws IllegalArgumentException {
@@ -364,6 +397,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         xmlwriter.writeCharacters("");
         writingRecord = true;
     }
+
 
     public void endRecord() throws XMLStreamException {
         if (!writingRecord) {
@@ -393,7 +427,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 @Override
                 public void startElement(String uri, String localName,
                         String qName, Attributes attributes)
-                        throws SAXException {
+                                throws SAXException {
                     try {
                         SRUXMLStreamWriter.this.writeStartElement(qName);
                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -464,7 +498,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         }
     }
 
-    
+
     private void onEmptyElement() throws XMLStreamException {
         if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
             state = IndentingState.SEEN_ELEMENT;
