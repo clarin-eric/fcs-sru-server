@@ -601,13 +601,13 @@ public class SRUServer {
                      * Output either record data or surrogate diagnostic ...
                      */
                     out.writeStartElement(SRU_NS, "recordData");
+                    out.startRecord();
                     if (diagnostic == null) {
-                        out.startRecord();
                         result.writeRecord(out);
-                        out.endRecord();
                     } else {
                         writeSurrogateDiagnostic(out, diagnostic);
                     }
+                    out.endRecord();
                     out.writeEndElement(); // "recordData" element
 
                     /*
