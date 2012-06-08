@@ -65,7 +65,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private int startRecord    = -1;
     private int maximumRecords = -1;
     private String recordSchemaName;
-    private String recordSchemaidentifier;
+    private String recordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
     private int resultSetTTL   = -1;
@@ -306,19 +306,24 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         if (value != null) {
                             /*
                              * If the recordSchema is supplied, check if it is
-                             * supported by this endpoint.
-                             * If not, raise an error.
+                             * supported by this endpoint. If not, raise
+                             * an error. recoedSchema may contain either
+                             * schema identifier or the short name.
                              */
-                            recordSchemaidentifier =
-                                config.getRecordSchemaIdentifier(value);
-                            if (recordSchemaidentifier == null) {
+                            SRUServerConfig.SchemaInfo schemaInfo =
+                                    config.findSchemaInfo(value);
+                            if (schemaInfo != null) {
+                                recordSchemaIdentifier =
+                                        schemaInfo.getIdentifier();
+                                recordSchemaName =
+                                        schemaInfo.getName();
+                            } else {
                                 addDiagnostic(
                                         SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL,
                                         value,
                                         "Record schema \"" + value +
                                         "\" is not supported for retrieval.");
                             }
-                            recordSchemaName = value;
                         }
                         break;
                     case RECORD_XPATH:
@@ -513,7 +518,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public String getRecordSchemaIdentifier() {
-        return recordSchemaidentifier;
+        return recordSchemaIdentifier;
     }
 
 

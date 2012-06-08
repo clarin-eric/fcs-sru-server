@@ -559,7 +559,7 @@ public final class SRUServerConfig {
         if (recordSchemaName != null) {
             if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
                 for (SchemaInfo schema : schemaInfo) {
-                    if (recordSchemaName.equals(schema.getName())) {
+                    if (schema.getName().equals(recordSchemaName)) {
                         return schema.getIdentifier();
                     }
                 }
@@ -573,11 +573,26 @@ public final class SRUServerConfig {
         if (schemaIdentifier != null) {
            if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
                for (SchemaInfo schema : schemaInfo) {
-                   if (schemaIdentifier.equals(schema.getIdentifier())) {
+                   if (schema.getIdentifier().equals(schemaIdentifier)) {
                        return schema.getName();
                    }
                }
            }
+        }
+        return null;
+    }
+
+
+    public SchemaInfo findSchemaInfo(String value) {
+        if (value != null) {
+            if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
+                for (SchemaInfo schema : schemaInfo) {
+                    if (schema.getIdentifier().equals(value) ||
+                            schema.getName().equals(value)) {
+                        return schema;
+                    }
+                }
+            }
         }
         return null;
     }
@@ -970,7 +985,6 @@ public final class SRUServerConfig {
                 schemaInfos.add(new SchemaInfo(identifier, name, location,
                         sort, retrieve, title));
             }
-
         }
         return schemaInfos;
     }
