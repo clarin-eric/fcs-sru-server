@@ -104,4 +104,18 @@ abstract class SRUAbstractResult {
             throws XMLStreamException {
     }
 
+
+    /**
+     * Release this result and free any associated resources.
+     * <p>
+     * This method <strong>must not</strong> throw any exceptions
+     * </p>
+     * <p>
+     * Calling the method <code>close</code> on a result object that is already
+     * closed is a no-op.
+     * </p>
+     */
+    public void close() {
+    }
+
 } // abstract class SRUAbstractResult

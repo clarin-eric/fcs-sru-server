@@ -44,7 +44,7 @@ public interface SRUSearchEngine {
      *            the <code>SRUDiagnosticList</code> object for storing
      *            non-fatal diagnostics
      * @return a <code>SRUExplainResult</code> object or <code>null</code> if
-     *         the database does not want to provide
+     *         the search engine does not want to provide
      *         <em>writeExtraResponseData</em>
      * @throws SRUException
      *             if an fatal error occurred
@@ -57,7 +57,7 @@ public interface SRUSearchEngine {
 
     /**
      * Handle a <em>searchRetrieve</em> operation. Implementing this method is
-     * mandatory. The query arguments are availavle trough the request object.
+     * mandatory. The query arguments are available trough the request object.
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -91,7 +91,7 @@ public interface SRUSearchEngine {
      *            the <code>SRUDiagnosticList</code> object for storing
      *            non-fatal diagnostics
      * @return a <code>SRUScanResultSet</code> object or <code>null</code> if
-     *         this operation is not supported by this database
+     *         this operation is not supported by this serach engine
      * @throws SRUException
      *             if an fatal error occurred
      * @see SRUExplainResult
