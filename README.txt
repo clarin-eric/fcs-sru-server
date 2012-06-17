@@ -30,10 +30,14 @@ which contains the (static) server configuration. It must conform to the
 You can either write your own Servlet implementation to drive the SRUServer or
 can use supplied SRUServerServlet from the "de.clarin.sru.server.utils"
 package. If you do so, your search engine needs to inherit from the abstract
-class SRUSearchEngineBase. Check the Java API docs (and the code) of these
-classes for more information.
-Of couse, you can use frameworks like Spring or similar to assemble your
+class SRUSearchEngineBase. Check the Java API documentation (and the code) of
+these classes for more information.
+Of course, you can use frameworks like Spring or similar to assemble your
 web application.
+An usage example for this library is available from:
+  http://clarin.ids-mannheim.de/downloads/clarin/
+NB: you cannot deploy and use it, because it uses internal IDS services, but
+it should give you a basic idea how to use the library. 
 
 
 HOW TO BUILD:
