@@ -39,14 +39,14 @@ import eu.clarin.sru.server.SRUServerConfig;
 
 
 /**
- * A Servlet implementation, which provides an enviroment for running a
- * {@link SRUServer} in a servlet container. Your search engine <b>must</b> use
+ * A Servlet implementation, which provides an environment for running a
+ * {@link SRUServer} in a Servlet container. Your search engine <b>must</b> use
  * {@link SRUSearchEngineBase} as base class.
  *
  * <p>
  * Add the following to the web.xml of your web applications web.xml to define a
- * SRU server. Of couse, the value of the servlet paramter
- * "sruServerSerachEngineClass" must be adpated to match the name of your search
+ * SRU server. Of course, the value of the Servlet parameter
+ * "sruServerSerachEngineClass" must be adapted to match the name of your search
  * engine implementation. Furthermore, you can choose different url-pattern, to
  * match your needs.
  * </p>
