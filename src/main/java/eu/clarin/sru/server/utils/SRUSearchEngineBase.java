@@ -39,6 +39,14 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     }
 
 
+
+    /**
+     * Handle a <em>scan</em> operation. The default implementation is a no-op.
+     * Override this method, if you want to provide a custom behavior.
+     *
+     * @see SRUSearchEngine#explain(SRUServerConfig, SRURequest,
+     *      SRUDiagnosticList)
+     */
     @Override
     public SRUExplainResult explain(SRUServerConfig config, SRURequest request,
             SRUDiagnosticList diagnostics) throws SRUException {
@@ -46,16 +54,27 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     }
 
 
+    /**
+     * Handle a <em>scan</em> operation. The default implementation is a no-op.
+     * Override this method, if you want to provide a custom behavior.
+     *
+     * @see SRUSearchEngine#scan(SRUServerConfig, SRURequest, SRUDiagnosticList)
+     */
     @Override
-    public SRUSearchResultSet search(SRUServerConfig config,
+    public SRUScanResultSet scan(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException {
         return null;
     }
 
 
+    /**
+     * Handle a <em>searchRetrieve</em> operation.
+     *
+     * @see SRUSearchEngine#search(SRUServerConfig, SRURequest, SRUDiagnosticList)
+     */
     @Override
-    public abstract SRUScanResultSet scan(SRUServerConfig config,
+    public abstract SRUSearchResultSet search(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
