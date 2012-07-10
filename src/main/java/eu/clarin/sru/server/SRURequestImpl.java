@@ -670,6 +670,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         PARAM_VERSION, "Mandatory parameter \"" +
                                 PARAM_VERSION + "\" was not supplied.");
             }
+            
+            /*
+             * this is an explain operation, assume default version
+             */
+            this.version = config.getDefaultVersion();
         }
     }
 
