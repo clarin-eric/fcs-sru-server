@@ -242,8 +242,16 @@ public final class SRUServer {
             beginResponse(out, request);
 
             try {
-                out.writeStartElement(SRU_NS, "terms");
+                boolean wroteTerms = false;
+                /*
+                 * a scan result without a list of terms is a valid response;
+                 * make sure, to produce the correct output and omit in that case
+                 * the <terms> ...
+                 */
                 while (result.nextTerm()) {
+                    if (!wroteTerms) {
+                        out.writeStartElement(SRU_NS, "terms");
+                    }
                     out.writeStartElement(SRU_NS, "term");
 
                     out.writeStartElement(SRU_NS, "value");
@@ -290,7 +298,9 @@ public final class SRUServer {
 
                     out.writeEndElement(); // "term" element
                 } // while
-                out.writeEndElement(); // "terms" element
+                if (wroteTerms) {
+                    out.writeEndElement(); // "terms" element
+                }
             } catch (NoSuchElementException e) {
                 throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                         "An internal error occurred while "
