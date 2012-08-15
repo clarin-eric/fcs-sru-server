@@ -229,7 +229,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
         if (diagnostics == null) {
             // check mandatory/optional parameters for operation
-            ParameterInfo[] parameters = null;
+            ParameterInfo[] parameters;
             switch (operation) {
             case EXPLAIN:
                 parameters = PARAMS_EXPLAIN;
@@ -382,7 +382,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        return (diagnostics == null) ? true : false;
+        // diagnostics != null -> consider as sucesss 
+        return (diagnostics == null);
     }
 
 

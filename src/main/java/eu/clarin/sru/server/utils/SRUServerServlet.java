@@ -105,7 +105,7 @@ public final class SRUServerServlet extends HttpServlet {
             sruServerConfigLocation = SRU_SERVER_CONFIG_LOCATION_DEFAULT;
         }
 
-        URL sruServerConfigFile = null;
+        URL sruServerConfigFile;
         try {
             sruServerConfigFile = ctx.getResource(sruServerConfigLocation);
         } catch (MalformedURLException e) {
@@ -169,7 +169,7 @@ public final class SRUServerServlet extends HttpServlet {
                               ctx.getContextPath());
 
         // parse configuration
-        SRUServerConfig sruServerConfig = null;
+        SRUServerConfig sruServerConfig;
         try {
             sruServerConfig =
                     SRUServerConfig.parse(params, sruServerConfigFile);

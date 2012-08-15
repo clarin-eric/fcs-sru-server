@@ -770,8 +770,6 @@ public final class SRUServerConfig {
             throw new SRUConfigException("error parsing configuration file", e);
         } catch (SAXException e) {
             throw new SRUConfigException("error parsing configuration file", e);
-        } catch (SRUConfigException e) {
-            throw e;
         }
     }
 
@@ -833,7 +831,7 @@ public final class SRUServerConfig {
                 return defaultValue;
             }
         } else {
-            return Boolean.valueOf(value).booleanValue();
+            return Boolean.valueOf(value);
         }
     }
 
@@ -1040,7 +1038,7 @@ public final class SRUServerConfig {
         boolean result = defaultValue;
         Attr attr = e.getAttributeNode(localName);
         if ((attr != null) && attr.getSpecified()) {
-            result = Boolean.valueOf(attr.getValue()).booleanValue();
+            result = Boolean.valueOf(attr.getValue());
         }
         return result;
     }

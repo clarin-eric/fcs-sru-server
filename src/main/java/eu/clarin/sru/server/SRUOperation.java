@@ -33,5 +33,5 @@ public enum SRUOperation {
     /**
      * A <em>scan</em> operation
      */
-    SCAN;
+    SCAN
 } // enum SRUOperation

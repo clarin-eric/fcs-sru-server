@@ -41,7 +41,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     private enum IndentingState {
         SEEN_NOTHING,
         SEEN_ELEMENT,
-        SEEN_DATA;
+        SEEN_DATA
     }
     private static final SAXParserFactory factory;
     private final SRURecordPacking packing;

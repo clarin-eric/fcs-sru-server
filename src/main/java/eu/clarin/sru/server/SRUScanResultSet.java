@@ -65,8 +65,8 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
         /**
          * Any other term (<em>inner</em>)
          */
-        INNER;
-    };
+        INNER
+    }
 
 
     /**

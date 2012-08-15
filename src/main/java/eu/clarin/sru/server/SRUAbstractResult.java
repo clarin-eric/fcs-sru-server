@@ -27,7 +27,7 @@ abstract class SRUAbstractResult {
     private final SRUDiagnosticList diagnostics;
 
 
-    protected SRUAbstractResult(SRUDiagnosticList diagnosticList) {
+    SRUAbstractResult(SRUDiagnosticList diagnosticList) {
         if (diagnosticList == null) {
             throw new NullPointerException("Implementation error: "
                     + "diagnosticList must not be null!");
