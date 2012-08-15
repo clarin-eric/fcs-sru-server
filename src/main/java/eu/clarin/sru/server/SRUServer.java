@@ -242,12 +242,12 @@ public final class SRUServer {
             beginResponse(out, request);
 
             try {
-                boolean wroteTerms = false;
                 /*
                  * a scan result without a list of terms is a valid response;
                  * make sure, to produce the correct output and omit in that case
                  * the <terms> ...
                  */
+                boolean wroteTerms = false;
                 while (result.nextTerm()) {
                     if (!wroteTerms) {
                         out.writeStartElement(SRU_NS, "terms");
