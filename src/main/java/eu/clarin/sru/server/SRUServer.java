@@ -251,6 +251,7 @@ public final class SRUServer {
                 while (result.nextTerm()) {
                     if (!wroteTerms) {
                         out.writeStartElement(SRU_NS, "terms");
+                        wroteTerms = true;
                     }
                     out.writeStartElement(SRU_NS, "term");
 
