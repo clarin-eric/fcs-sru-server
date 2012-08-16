@@ -17,22 +17,29 @@
 package eu.clarin.sru.server;
 
 /**
- * Interface for connecting the SRU protocol implementation to an actual
- * search engine.
- * <p>Implementing the
+ * Interface for connecting the SRU protocol implementation to an actual search
+ * engine.
+ * <p>
+ * Implementing the
  * {@link #explain(SRUServerConfig, SRURequest, SRUDiagnosticList)} and
  * {@link #scan(SRUServerConfig, SRURequest, SRUDiagnosticList)} is optional,
  * but implementing
- * {@link #search(SRUServerConfig, SRURequest, SRUDiagnosticList)} is
- * mandatory.</p>
- * <p>The implementation of these methods is required to be thread-safe.</p>
+ * {@link #search(SRUServerConfig, SRURequest, SRUDiagnosticList)} is mandatory.
+ * </p>
+ * <p>
+ * The implementation of these methods <em>must</em> be thread-safe.
+ * </p>
  */
 public interface SRUSearchEngine {
 
     /**
-     * Handle a <em>explain</em> operation. Implementing this method is
-     * optional, but is required, if the <em>writeExtraResponseData</em>
-     * block of the SRU response needs to be filled.
+     * Handle an <em>explain</em> operation. Implementing this method is
+     * optional, but is required, if the <em>writeExtraResponseData</em> block
+     * of the SRU response needs to be filled. The arguments for this operation
+     * are provides by the {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -57,7 +64,11 @@ public interface SRUSearchEngine {
 
     /**
      * Handle a <em>searchRetrieve</em> operation. Implementing this method is
-     * mandatory. The query arguments are available trough the request object.
+     * mandatory. The arguments for this operation are provides by the
+     * {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -78,8 +89,16 @@ public interface SRUSearchEngine {
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
+
     /**
      * Handle a <em>scan</em> operation. Implementing this method is optional.
+     * If you don't need to handle the <em>scan</em> operation, just return
+     * <code>null</code> and the SRU server will return the appropiate
+     * diagnostic to the client. The arguments for this operation are provides
+     * by the {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -91,7 +110,7 @@ public interface SRUSearchEngine {
      *            the <code>SRUDiagnosticList</code> object for storing
      *            non-fatal diagnostics
      * @return a <code>SRUScanResultSet</code> object or <code>null</code> if
-     *         this operation is not supported by this serach engine
+     *         this operation is not supported by this search engine
      * @throws SRUException
      *             if an fatal error occurred
      * @see SRUExplainResult
