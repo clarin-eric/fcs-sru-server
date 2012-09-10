@@ -202,9 +202,6 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     @Override
     public void writeEndDocument() throws XMLStreamException {
         xmlwriter.writeEndDocument();
-        if (indent > 0) {
-            xmlwriter.writeCharacters("\n");
-        }
     }
 
 
