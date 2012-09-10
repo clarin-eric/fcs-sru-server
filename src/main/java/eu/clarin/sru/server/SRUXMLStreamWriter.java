@@ -413,7 +413,8 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     }
 
 
-    public void writeXCQL(CQLNode query) throws XMLStreamException {
+    public void writeXCQL(CQLNode query, final boolean searchRetrieveMode)
+            throws XMLStreamException {
         /*
          * HACK: Parsing the XCQL to serialize is wasting resources.
          * Alternative would be to serialize to XCQL from CQLNode, but
@@ -428,6 +429,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 public void startElement(String uri, String localName,
                         String qName, Attributes attributes)
                                 throws SAXException {
+                    if (!searchRetrieveMode && qName.equals("searchClause")) {
+                        return;
+                    }
                     try {
                         SRUXMLStreamWriter.this.writeStartElement(qName);
                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -442,6 +446,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 @Override
                 public void endElement(String uri, String localName,
                         String qName) throws SAXException {
+                    if (!searchRetrieveMode && qName.equals("searchClause")) {
+                        return;
+                    }
                     try {
                         SRUXMLStreamWriter.this.writeEndElement();
                     } catch (XMLStreamException e) {

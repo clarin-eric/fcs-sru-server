@@ -851,7 +851,7 @@ public final class SRUServer {
         out.setDefaultNamespace(SRU_XCQL_NS);
         out.writeStartElement(SRU_NS, "xScanClause");
         out.writeDefaultNamespace(SRU_XCQL_NS);
-        out.writeXCQL(cql);
+        out.writeXCQL(cql, false);
         out.writeEndElement(); // "xScanClause" element
 
         // echoedScanRequest/responsePosition
@@ -905,7 +905,7 @@ public final class SRUServer {
         out.setDefaultNamespace(SRU_XCQL_NS);
         out.writeStartElement(SRU_NS, "xQuery");
         out.writeDefaultNamespace(SRU_XCQL_NS);
-        out.writeXCQL(cql);
+        out.writeXCQL(cql, true);
         out.writeEndElement(); // "xQuery" element
 
         // echoedSearchRetrieveRequest/startRecord
