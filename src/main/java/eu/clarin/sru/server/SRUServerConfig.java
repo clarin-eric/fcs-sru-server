@@ -16,7 +16,7 @@
  */
 package eu.clarin.sru.server;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.Schema;
@@ -36,6 +37,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -51,33 +53,53 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * Endpoint configuration. Most of the endpoint configuration is created from
- * the XML file.
- * 
- * <p>Example:</p>
+ * SRU server configuration.
+ *
+ * <p>
+ * Example:
+ * </p>
  * <pre>
- * URL url = MySRUServlet.class.getClassLoader().getResource("META-INF/endpoint-config.xml");
+ * URL url = MySRUServlet.class.getClassLoader()
+ *               .getResource("META-INF/sru-server-config.xml");
  * if (url == null) {
- *     throw new ServletException("not found, url == null");
+ *     throw new ServletException(&quot;not found, url == null&quot;);
  * }
- * 
+ *
+ * // other runtime configuration, usually obtained from servlet context
  * HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
- * SRUEndpointConfig config = SRUEndpointConfig.parse(params, url.openStream());
+ * params.put(SRUServerConfig.SRU_TRANSPORT, "http");
+ * params.put(SRUServerConfig.SRU_HOST, "127.0.0.1");
+ * params.put(SRUServerConfig.SRU_PORT, "80");
+ * params.put(SRUServerConfig.SRU_DATABASE, "sru-server");
+ *
+ * SRUServerConfig config = SRUServerConfig.parse(params, url);
  * </pre>
- * 
- * <p>The XML configuration file must validate against the "endpoint-config.xsd"
- * schema bundled with the package and need to have the
+ *
+ * <p>
+ * The XML configuration file must validate against the "sru-server-config.xsd"
+ * W3C schema bundled with the package and need to have the
  * <code>http://www.clarin.eu/sru-server/1.0/</code> XML namespace.
- * </p> 
+ * </p>
  */
-public final class SRUEndpointConfig {
-    public static final String SRU_TRANSPORT     = "sru.transport";
-    public static final String SRU_HOST          = "sru.host";
-    public static final String SRU_PORT          = "sru.port";
-    public static final String SRU_DATABASE      = "sru.database";
-    public static final String SRU_ECHO_REQUESTS = "sru.echoRequests";
+public final class SRUServerConfig {
+    public static final String SRU_TRANSPORT         = "sru.transport";
+    public static final String SRU_HOST              = "sru.host";
+    public static final String SRU_PORT              = "sru.port";
+    public static final String SRU_DATABASE          = "sru.database";
+    public static final String SRU_NUMBER_OF_RECORDS = "sru.numberOfRecords";
+    public static final String SRU_MAXIMUM_RECORDS   = "sru.maximumRecords";
+    public static final String SRU_ECHO_REQUESTS     = "sru.echoRequests";
+    public static final String SRU_INDENT_RESPONSE   = "sru.indentResponse";
+    public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
+            "sru.allowOverrideMaximumRecords";
+    public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
+            "sru.allowOverrideIndentResponse";
+    public static final int DEFAULT_NUMBER_OF_RECORDS = 100;
+    public static final int DEFAULT_MAXIMUM_RECORDS = 250;
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
+    private static final String CONFIG_FILE_SCHEMA_URL =
+            "META-INF/sru-server-config.xsd";
 
     public static final class LocalizedString {
         private final boolean primary;
@@ -403,35 +425,49 @@ public final class SRUEndpointConfig {
 
     private final String transport;
     private final String host;
-    private final String port;
+    private final int port;
     private final String database;
+    private final int numberOfRecords;
+    private final int maximumRecords;
     private final boolean echoRequests;
+    private final int indentResponse;
+    private final boolean allowOverrideMaximumRecords;
+    private final boolean allowOverrideIndentResponse;
     private final String baseUrl;
     private final DatabaseInfo databaseInfo;
     private final IndexInfo indexInfo;
     private final List<SchemaInfo> schemaInfo;
 
 
-    private SRUEndpointConfig(String transport, String host, String port,
-            String database, boolean echoRequests, DatabaseInfo databaseinfo,
-            IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
-        this.transport    = transport;
-        this.host         = host;
-        this.port         = port;
-        this.database     = database;
-        this.databaseInfo = databaseinfo;
-        this.indexInfo    = indexInfo;
+    private SRUServerConfig(String transport, String host, int port,
+            String database, int numberOfRecords, int maximumRecords,
+            boolean echoRequests, int indentResponse,
+            boolean allowOverrideMaximumRecords,
+            boolean allowOverrideIndentResponse,
+            DatabaseInfo databaseinfo, IndexInfo indexInfo,
+            List<SchemaInfo> schemaInfo) {
+        this.transport                   = transport;
+        this.host                        = host;
+        this.port                        = port;
+        this.database                    = database;
+        this.numberOfRecords             = numberOfRecords;
+        this.maximumRecords              = maximumRecords;
+        this.echoRequests                = echoRequests;
+        this.indentResponse              = indentResponse;
+        this.allowOverrideMaximumRecords = allowOverrideMaximumRecords;
+        this.allowOverrideIndentResponse = allowOverrideIndentResponse;
+        this.databaseInfo                = databaseinfo;
+        this.indexInfo                   = indexInfo;
         if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
             this.schemaInfo = Collections.unmodifiableList(schemaInfo);
         } else {
             this.schemaInfo = null;
         }
-        this.echoRequests = echoRequests;
 
         // build baseUrl
         StringBuilder sb = new StringBuilder();
         sb.append(host);
-        if (!"80".equals(port)) {
+        if (port != 80) {
             sb.append(":").append(port);
         }
         sb.append("/").append(database);
@@ -464,7 +500,7 @@ public final class SRUEndpointConfig {
     }
 
 
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
@@ -476,6 +512,31 @@ public final class SRUEndpointConfig {
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+
+    public int getNumberOfRecords() {
+        return numberOfRecords;
+    }
+
+
+    public int getMaximumRecords() {
+        return maximumRecords;
+    }
+
+
+    public int getIndentResponse() {
+        return indentResponse;
+    }
+
+
+    public boolean allowOverrideMaximumRecords() {
+        return allowOverrideMaximumRecords;
+    }
+
+
+    public boolean allowOverrideIndentResponse() {
+        return allowOverrideIndentResponse;
     }
 
 
@@ -498,7 +559,7 @@ public final class SRUEndpointConfig {
         if (recordSchemaName != null) {
             if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
                 for (SchemaInfo schema : schemaInfo) {
-                    if (recordSchemaName.equals(schema.getName())) {
+                    if (schema.getName().equals(recordSchemaName)) {
                         return schema.getIdentifier();
                     }
                 }
@@ -512,7 +573,7 @@ public final class SRUEndpointConfig {
         if (schemaIdentifier != null) {
            if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
                for (SchemaInfo schema : schemaInfo) {
-                   if (schemaIdentifier.equals(schema.getIdentifier())) {
+                   if (schema.getIdentifier().equals(schemaIdentifier)) {
                        return schema.getName();
                    }
                }
@@ -522,33 +583,50 @@ public final class SRUEndpointConfig {
     }
 
 
+    public SchemaInfo findSchemaInfo(String value) {
+        if (value != null) {
+            if ((schemaInfo != null) && !schemaInfo.isEmpty()) {
+                for (SchemaInfo schema : schemaInfo) {
+                    if (schema.getIdentifier().equals(value) ||
+                            schema.getName().equals(value)) {
+                        return schema;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+
     /**
-     * Parse the XML endpoint configuration.
-     * 
+     * Parse a SRU server XML configuration file and create an configuration
+     * object from it.
+     *
      * @param params
      *            additional settings
-     * @param in
-     *            an {@link InputSource} to the XML configuration file
+     * @param configFile
+     *            an {@link URL} pointing to the XML configuration file
      * @return a initialized <code>SRUEndpointConfig</code> instance
      * @throws NullPointerException
-     *             if <em>params</em> or <em>in</em> is <code>null</code>
+     *             if <em>params</em> or <em>configFile</em> is
+     *             <code>null</code>
      * @throws SRUConfigException
-     *             if an error occured
+     *             if an error occurred
      */
-    public static SRUEndpointConfig parse(Map<String, String> params,
-            InputStream in) throws SRUConfigException {
+    public static SRUServerConfig parse(Map<String, String> params,
+            URL configFile) throws SRUConfigException {
         if (params == null) {
             throw new NullPointerException("params == null");
         }
-        if (in == null) {
+        if (configFile == null) {
             throw new NullPointerException("in == null");
         }
         try {
-            URL url = SRUEndpointConfig.class.getClassLoader()
-                    .getResource("META-INF/endpoint-config.xsd");
+            URL url = SRUServerConfig.class.getClassLoader()
+                    .getResource(CONFIG_FILE_SCHEMA_URL);
             if (url == null) {
-                throw new SRUConfigException("cannot open " +
-                        "\"META-INF/endpoint-config.xsd\"");
+                throw new SRUConfigException("cannot open \"" +
+                        CONFIG_FILE_SCHEMA_URL + "\"");
             }
             SchemaFactory sfactory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -563,7 +641,7 @@ public final class SRUEndpointConfig {
 
             // parse input
             DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource input = new InputSource(in);
+            InputSource input = new InputSource(configFile.openStream());
             input.setPublicId(CONFIG_FILE_NAMESPACE_URI);
             input.setSystemId(CONFIG_FILE_NAMESPACE_URI);
             Document doc = builder.parse(input);
@@ -605,7 +683,7 @@ public final class SRUEndpointConfig {
                         throw new NullPointerException("prefix == null");
                     }
                     if (prefix.equals("sru")) {
-                        return "http://www.ids-mannheim.de/ns/sru/1.0/";
+                        return CONFIG_FILE_NAMESPACE_URI;
                     } else if (prefix.equals(XMLConstants.XML_NS_PREFIX)) {
                         return XMLConstants.XML_NS_URI;
                     } else {
@@ -619,7 +697,6 @@ public final class SRUEndpointConfig {
             IndexInfo indexInfo = buildIndexInfo(xpath, doc);
 
             List<SchemaInfo> schemaInfo = buildSchemaInfo(xpath, doc);
-
 
             String transport = params.get(SRU_TRANSPORT);
             if ((transport == null) || transport.isEmpty()) {
@@ -648,11 +725,7 @@ public final class SRUEndpointConfig {
                         "\" is mandatory");
             }
 
-            String port = params.get(SRU_PORT);
-            if ((port == null) || port.isEmpty()) {
-                throw new SRUConfigException("parameter \"" + SRU_PORT +
-                        "\" is mandatory");
-            }
+            int port = parseNumber(params, SRU_PORT, true, -1, 1, 65535);
 
             String database = params.get(SRU_DATABASE);
             if ((database == null) || database.isEmpty()) {
@@ -660,19 +733,105 @@ public final class SRUEndpointConfig {
                         "\" is mandatory");
             }
 
-            String s;
-            boolean echoRequests = false;
-            if ((s = params.get(SRU_ECHO_REQUESTS)) != null) {
-                echoRequests = Boolean.valueOf(s).booleanValue();
+            // cleanup: remove leading slashed
+            while (database.startsWith("/")) {
+                database = database.substring(1);
             }
 
-            return new SRUEndpointConfig(transport, host, port, database,
-                    echoRequests, databaseInfo, indexInfo,
+
+            int numberOfRecords = parseNumber(params, SRU_NUMBER_OF_RECORDS,
+                    false, DEFAULT_NUMBER_OF_RECORDS, 1, -1);
+
+            int maximumRecords = parseNumber(params, SRU_MAXIMUM_RECORDS,
+                    false, DEFAULT_MAXIMUM_RECORDS, numberOfRecords, -1);
+
+            boolean echoRequests = parseBoolean(params, SRU_ECHO_REQUESTS,
+                    false, true);
+
+            int indentResponse = parseNumber(params, SRU_INDENT_RESPONSE,
+                    false, -1, -1, 8);
+
+            boolean allowOverrideMaximumRecords = parseBoolean(params,
+                    SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS, false, false);
+
+            boolean allowOverrideIndentResponse = parseBoolean(params,
+                    SRU_ALLOW_OVERRIDE_INDENT_RESPONSE, false, false);
+
+            return new SRUServerConfig(transport, host, port, database,
+                    numberOfRecords, maximumRecords, echoRequests,
+                    indentResponse, allowOverrideMaximumRecords,
+                    allowOverrideIndentResponse, databaseInfo, indexInfo,
                     schemaInfo);
-        } catch (SRUConfigException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SRUConfigException("error parsing config", e);
+        } catch (IOException e) {
+            throw new SRUConfigException("error reading configuration file", e);
+        } catch (XPathException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
+        } catch (ParserConfigurationException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
+        } catch (SAXException e) {
+            throw new SRUConfigException("error parsing configuration file", e);
+        }
+    }
+
+
+    private static int parseNumber(Map<String, String> params, String name,
+            boolean mandatory, int defaultValue, int minValue, int maxValue)
+            throws SRUConfigException {
+        String value = params.get(name);
+        if ((value == null) || value.isEmpty()) {
+            if (mandatory) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" is mandatory");
+            } else {
+                return defaultValue;
+            }
+        } else {
+            try {
+                int num = Integer.parseInt(value);
+
+                // sanity checks
+                if ((minValue != -1) && (maxValue != -1)) {
+                    if ((num < minValue) || (num > maxValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be between " + minValue + " and " +
+                                maxValue + ": " + num);
+                    }
+                } else {
+                    if ((minValue != -1) && (num < minValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be larger than " + minValue + ": " +
+                                num);
+
+                    }
+                    if ((maxValue != -1) && (num > maxValue)) {
+                        throw new SRUConfigException("parameter \"" + name +
+                                "\" must be smaller than " + maxValue + ": " +
+                                num);
+                    }
+                }
+                return num;
+            } catch (NumberFormatException e) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" must be nummerical and less than " +
+                        Integer.MAX_VALUE + ": " + value);
+            }
+        }
+    }
+
+
+    private static boolean parseBoolean(Map<String, String> params,
+            String name, boolean mandatory, boolean defaultValue)
+            throws SRUConfigException {
+        String value = params.get(name);
+        if ((value == null) || value.isEmpty()) {
+            if (mandatory) {
+                throw new SRUConfigException("parameter \"" + name +
+                        "\" is mandatory");
+            } else {
+                return defaultValue;
+            }
+        } else {
+            return Boolean.valueOf(value);
         }
     }
 
@@ -717,6 +876,14 @@ public final class SRUEndpointConfig {
                 Element e = (Element) result.item(i);
                 String identifier = e.getAttribute("identifier");
                 String name       = e.getAttribute("name");
+                if (identifier.isEmpty()) {
+                    throw new SRUConfigException("attribute 'identifier' may "+
+                            "on element '/indexInfo/set' may not be empty");
+                }
+                if (name.isEmpty()) {
+                    throw new SRUConfigException("attribute 'name' may on " +
+                            "element '/indexInfo/set' may not be empty");
+                }
                 List<LocalizedString> title =
                         fromNodeList(e.getElementsByTagName("title"));
                 sets.add(new IndexInfo.Set(identifier, name, title));
@@ -750,13 +917,45 @@ public final class SRUEndpointConfig {
                             }
                             foundPrimary = true;
                         }
-                        String set = e2.getAttribute("set");
-                        String name = e2.getTextContent();
+                        String set  = null;
+                        String name = null;
+                        NodeList result3 = e2.getElementsByTagName("name");
+                        if ((result3 != null) && (result3.getLength() > 0)) {
+                            Element e3 = (Element) result3.item(0);
+                            set  = e3.getAttribute("set");
+                            name = e3.getTextContent();
+                            if (set.isEmpty()) {
+                                throw new SRUConfigException("attribute 'set'" +
+                                        " on element '/indexInfo/index/map/" +
+                                        "name' may not be empty");
+                            }
+                            if ((name == null) || name.isEmpty()) {
+                                throw new SRUConfigException("element " +
+                                        "'/indexInfo/index/map/name' may not " +
+                                        "be empty");
+                            }
+                        }
                         maps.add(new IndexInfo.Index.Map(primary, set, name));
                     }
                 }
-                indexes.add(new IndexInfo.Index(title, can_search, can_scan, can_sort, maps));
+                indexes.add(new IndexInfo.Index(title, can_search, can_scan,
+                        can_sort, maps));
             } // for
+
+            // sanity check (/index/map/name/@set exists in any set/@name)
+            if (sets != null) {
+                for (IndexInfo.Index index : indexes) {
+                    if (index.getMaps() != null) {
+                        for (IndexInfo.Index.Map maps : index.getMaps()) {
+                            if (findSetByName(sets, maps.getSet()) == null) {
+                                throw new SRUConfigException("/index/map/" +
+                                        "name refers to nonexitsing set (" +
+                                        maps.getSet() + ")");
+                            }
+                        }
+                    }
+                }
+            }
         } // if
         return new IndexInfo(sets, indexes);
     }
@@ -784,9 +983,19 @@ public final class SRUEndpointConfig {
                 schemaInfos.add(new SchemaInfo(identifier, name, location,
                         sort, retrieve, title));
             }
-
         }
         return schemaInfos;
+    }
+
+
+    private static IndexInfo.Set findSetByName(List<IndexInfo.Set> sets,
+            String name) {
+        for (IndexInfo.Set set : sets) {
+            if (set.getName().equals(name)) {
+                return set;
+            }
+        }
+        return null;
     }
 
 
@@ -829,7 +1038,7 @@ public final class SRUEndpointConfig {
         boolean result = defaultValue;
         Attr attr = e.getAttributeNode(localName);
         if ((attr != null) && attr.getSpecified()) {
-            result = Boolean.valueOf(attr.getValue()).booleanValue();
+            result = Boolean.valueOf(attr.getValue());
         }
         return result;
     }

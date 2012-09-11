@@ -18,7 +18,7 @@ package eu.clarin.sru.server;
 
 /**
  * Constants for SRU diagnostics.
- * 
+ *
  * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html"> SRU
  *      Diagnostics</a>
  * @see <a

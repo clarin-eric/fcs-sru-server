@@ -1,62 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>eu.clarin.sru</groupId>
-	<artifactId>sru-server</artifactId>
-	<version>0.6.0-SNAPSHOT</version>
-	<packaging>jar</packaging>
-	<name>SRU/CQL Server</name>
-	<description>A SRU/CQL server implementation conforming to SRU/CQL protocol version 1.1 and 1.2</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>eu.clarin.sru</groupId>
+    <artifactId>sru-server</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>SRU/CQL Server</name>
+    <description>A SRU/CQL server implementation conforming to SRU/CQL protocol version 1.1 and 1.2</description>
 
-	<properties>
-		<!-- project settings -->
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- plug-in settings -->
-		<maven.compiler.source>1.6</maven.compiler.source>
-		<maven.compiler.target>1.6</maven.compiler.target>
-		<!-- dependency versions -->
-		<slf4j.version>1.6.4</slf4j.version>
-	</properties>
+    <properties>
+        <!-- project settings -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- plug-in settings -->
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <!-- dependency versions -->
+        <slf4j.version>1.6.4</slf4j.version>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
-        <!--
-          Did you read the "README.txt" file and manually installed the artifact
-          in your Maven repository?  
-        -->
-		<dependency>
-			<groupId>org.z3950.zing</groupId>
-			<artifactId>cql-java</artifactId>
-			<version>1.7</version>
-		</dependency>
+        <!-- Did you read the "README.txt" file and manually installed the 
+            artifact in your Maven repository? -->
+        <dependency>
+            <groupId>org.z3950.zing</groupId>
+            <artifactId>cql-java</artifactId>
+            <version>1.7</version>
+        </dependency>
 
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.5</version>
-			<type>jar</type>
-			<scope>provided</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.1</version>
-				<configuration>
-					<source>${maven.compiler.source}</source>
-					<target>${maven.compiler.target}</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadoc</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-source</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

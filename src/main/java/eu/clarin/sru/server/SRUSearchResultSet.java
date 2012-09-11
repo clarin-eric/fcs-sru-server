@@ -23,12 +23,21 @@ import javax.xml.stream.XMLStreamWriter;
 
 
 /**
- * A result set of a <em>searchRetrieve</em> operation. It allows to iterate
+ * A result set of a <em>searchRetrieve</em> operation. It it used to iterate
  * over the result set and provides a method to serialize the record in the
  * requested format.
- * 
- * <p>This class needs to be implemented for the target data source.</p>
- * 
+ * <p>
+ * A <code>SRUSearchResultSet</code> object maintains a cursor pointing to its
+ * current record. Initially the cursor is positioned before the first record.
+ * The <code>next</code> method moves the cursor to the next record, and because
+ * it returns <code>false</code> when there are no more records in the
+ * <code>SRUSearchResultSet</code> object, it can be used in a
+ * <code>while</code> loop to iterate through the result set.
+ * </p>
+ * <p>
+ * This class needs to be implemented for the target search engine.
+ * </p>
+ *
  * @see <a href="http://www.loc.gov/standards/sru/specs/search-retrieve.html">
  *      SRU Search Retrieve Operation</a>
  */
@@ -99,24 +108,20 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * Returns true if the search result set has more records. (In other words,
-     * returns <code>true</code> if <code>nextRecord()</code> would move the
-     * internal result pointer to a new record instead of throwing an
-     * exception.)
+     * Moves the cursor forward one record from its current position. A
+     * <code>SRUSearchResultSet</code> cursor is initially positioned before the
+     * first record; the first call to the method <code>next</code> makes the
+     * first record the current record; the second call makes the second record
+     * the current record, and so on.
+     * <p>
+     * When a call to the <code>next</code> method returns <code>false</code>,
+     * the cursor is positioned after the last record.
+     * </p>
      *
-     * @return <code>true</code> if the search result set has more records,
-     *         <code>false</code> otherwise
+     * @return <code>true</code> if the new current record is valid;
+     *         <code>false</code> if there are no more records
      */
-    public abstract boolean hasMoreRecords();
-
-
-    /**
-     * Move to the next record.
-     *
-     * @throws NoSuchElementException
-     *             result set has no more records
-     */
-    public abstract void nextRecord();
+    public abstract boolean nextRecord();
 
 
     /**

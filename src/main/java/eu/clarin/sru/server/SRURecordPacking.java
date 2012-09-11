@@ -28,5 +28,5 @@ public enum SRURecordPacking {
     /**
      * String record packing
      */
-    STRING;
+    STRING
 } // enum SRURecordPacking

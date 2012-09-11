@@ -17,22 +17,29 @@
 package eu.clarin.sru.server;
 
 /**
- * Interface for connecting the SRU protocol implementation to an actual
- * search engine.
- * <p>Implementing the
- * {@link #explain(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} and
- * {@link #scan(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} is optional,
+ * Interface for connecting the SRU protocol implementation to an actual search
+ * engine.
+ * <p>
+ * Implementing the
+ * {@link #explain(SRUServerConfig, SRURequest, SRUDiagnosticList)} and
+ * {@link #scan(SRUServerConfig, SRURequest, SRUDiagnosticList)} is optional,
  * but implementing
- * {@link #search(SRUEndpointConfig, SRURequest, SRUDiagnosticList)} is
- * mandatory.</p>
- * <p>The implementation of these methods is required to be thread-safe.</p>
+ * {@link #search(SRUServerConfig, SRURequest, SRUDiagnosticList)} is mandatory.
+ * </p>
+ * <p>
+ * The implementation of these methods <em>must</em> be thread-safe.
+ * </p>
  */
 public interface SRUSearchEngine {
 
     /**
-     * Handle a <em>explain</em> operation. Implementing this method is
-     * optional, but is required, if the <em>writeExtraResponseData</em>
-     * block of the SRU response needs to be filled.
+     * Handle an <em>explain</em> operation. Implementing this method is
+     * optional, but is required, if the <em>writeExtraResponseData</em> block
+     * of the SRU response needs to be filled. The arguments for this operation
+     * are provides by the {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -44,20 +51,24 @@ public interface SRUSearchEngine {
      *            the <code>SRUDiagnosticList</code> object for storing
      *            non-fatal diagnostics
      * @return a <code>SRUExplainResult</code> object or <code>null</code> if
-     *         the database does not want to provide
+     *         the search engine does not want to provide
      *         <em>writeExtraResponseData</em>
      * @throws SRUException
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUExplainResult explain(SRUEndpointConfig config,
+    public SRUExplainResult explain(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
 
     /**
      * Handle a <em>searchRetrieve</em> operation. Implementing this method is
-     * mandatory. The query arguments are availavle trough the request object.
+     * mandatory. The arguments for this operation are provides by the
+     * {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -74,12 +85,20 @@ public interface SRUSearchEngine {
      * @see SRURequest
      * @see SRUExplainResult
      */
-    public SRUSearchResultSet search(SRUEndpointConfig config,
+    public SRUSearchResultSet search(SRUServerConfig config,
             SRURequest request, SRUDiagnosticList diagnostics)
             throws SRUException;
 
+
     /**
      * Handle a <em>scan</em> operation. Implementing this method is optional.
+     * If you don't need to handle the <em>scan</em> operation, just return
+     * <code>null</code> and the SRU server will return the appropiate
+     * diagnostic to the client. The arguments for this operation are provides
+     * by the {@link SRURequest} object.
+     * <p>
+     * The implementation of this method <em>must</em> be thread-safe.
+     * </p>
      *
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
@@ -91,12 +110,12 @@ public interface SRUSearchEngine {
      *            the <code>SRUDiagnosticList</code> object for storing
      *            non-fatal diagnostics
      * @return a <code>SRUScanResultSet</code> object or <code>null</code> if
-     *         this operation is not supported by this database
+     *         this operation is not supported by this search engine
      * @throws SRUException
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUScanResultSet scan(SRUEndpointConfig config, SRURequest request,
+    public SRUScanResultSet scan(SRUServerConfig config, SRURequest request,
             SRUDiagnosticList diagnostics) throws SRUException;
 
 } // interface SRUSearchEngine
