@@ -165,8 +165,23 @@ public final class SRUServerServlet extends HttpServlet {
                               "127.0.0.1");
         setDefaultConfigParam(params, SRUServerConfig.SRU_PORT,
                               "8080");
+        String contextPath;
+        try {
+            /*
+             * this only works with Servlet 2.5 API ...
+             */
+            contextPath = ctx.getContextPath();
+        } catch (RuntimeException e) {
+            /*
+             * if we fail, put at least something here ...
+             */
+            contextPath = "/";
+            log("NOTE: auto-configuration for parameter '" +
+                    SRUServerConfig.SRU_DATABASE +
+                    "' failed and will contain only a dummy value!");
+        }
         setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
-                              ctx.getContextPath());
+                              contextPath);
 
         // parse configuration
         SRUServerConfig sruServerConfig;
