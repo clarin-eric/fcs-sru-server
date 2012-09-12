@@ -16,6 +16,17 @@
  */
 package eu.clarin.sru.server.utils;
 
+import eu.clarin.sru.server.SRUConfigException;
+import eu.clarin.sru.server.SRUException;
+import eu.clarin.sru.server.SRUServer;
+import eu.clarin.sru.server.SRUServerConfig;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -24,18 +35,6 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import eu.clarin.sru.server.SRUConfigException;
-import eu.clarin.sru.server.SRUException;
-import eu.clarin.sru.server.SRUServer;
-import eu.clarin.sru.server.SRUServerConfig;
 
 
 /**
@@ -171,7 +170,7 @@ public final class SRUServerServlet extends HttpServlet {
              * this only works with Servlet 2.5 API ...
              */
             contextPath = ctx.getContextPath();
-        } catch (RuntimeException e) {
+        } catch (NoSuchMethodError e) {
             /*
              * if we fail, put at least something here ...
              */
