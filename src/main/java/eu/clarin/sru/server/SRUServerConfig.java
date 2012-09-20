@@ -62,7 +62,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * URL url = MySRUServlet.class.getClassLoader()
  *               .getResource("META-INF/sru-server-config.xml");
  * if (url == null) {
- *     throw new ServletException(&quot;not found, url == null&quot;);
+ *     throw new ServletException("not found, url == null");
  * }
  *
  * // other runtime configuration, usually obtained from servlet context

@@ -29,6 +29,7 @@ public enum SRUVersion {
             return ((1 << 16) | 1);
         }
 
+
         @Override
         String getVersionString() {
             return "1.1";
@@ -44,6 +45,7 @@ public enum SRUVersion {
             return ((1 << 16) | 2);
         }
 
+
         @Override
         String getVersionString() {
             return "1.2";
@@ -51,6 +53,7 @@ public enum SRUVersion {
     };
 
     abstract int getVersionNumber();
+
 
     abstract String getVersionString();
 

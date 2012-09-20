@@ -40,7 +40,7 @@ public interface SRUSearchEngine {
      * <p>
      * The implementation of this method <em>must</em> be thread-safe.
      * </p>
-     *
+     * 
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
      *            endpoint configuration
@@ -57,9 +57,8 @@ public interface SRUSearchEngine {
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUExplainResult explain(SRUServerConfig config,
-            SRURequest request, SRUDiagnosticList diagnostics)
-            throws SRUException;
+    public SRUExplainResult explain(SRUServerConfig config, SRURequest request,
+            SRUDiagnosticList diagnostics) throws SRUException;
 
 
     /**
@@ -69,7 +68,7 @@ public interface SRUSearchEngine {
      * <p>
      * The implementation of this method <em>must</em> be thread-safe.
      * </p>
-     *
+     * 
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
      *            endpoint configuration
@@ -99,7 +98,7 @@ public interface SRUSearchEngine {
      * <p>
      * The implementation of this method <em>must</em> be thread-safe.
      * </p>
-     *
+     * 
      * @param config
      *            the <code>SRUEndpointConfig</code> object that contains the
      *            endpoint configuration

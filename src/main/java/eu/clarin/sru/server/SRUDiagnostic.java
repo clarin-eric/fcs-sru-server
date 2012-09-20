@@ -18,11 +18,13 @@ package eu.clarin.sru.server;
 
 /**
  * Class to hold a SRU diagnostic.
- *
+ * 
  * @see SRUConstants
  * @see SRUDiagnosticList
- * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">SRU Diagnostics</a>
- * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">SRU Diagnostics List</a>
+ * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">SRU
+ *      Diagnostics</a>
+ * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">SRU
+ *      Diagnostics List</a>
  */
 public final class SRUDiagnostic {
     private final int code;
@@ -32,7 +34,7 @@ public final class SRUDiagnostic {
 
     /**
      * Constructor.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      * @param details
@@ -43,7 +45,7 @@ public final class SRUDiagnostic {
      *            <code>null</code>
      */
     public SRUDiagnostic(int code, String details, String message) {
-        this.code = code;
+        this.code    = code;
         this.details = details;
         this.message = message;
     }
@@ -51,7 +53,7 @@ public final class SRUDiagnostic {
 
     /**
      * Constructor.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      * @param details
@@ -65,7 +67,7 @@ public final class SRUDiagnostic {
 
     /**
      * Constructor.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      */
@@ -76,7 +78,7 @@ public final class SRUDiagnostic {
 
     /**
      * Get code for this diagnostic.
-     *
+     * 
      * @return diagnostic code
      * @see SRUConstants
      */
@@ -88,7 +90,7 @@ public final class SRUDiagnostic {
     /**
      * Get supplementary information for this diagnostic. The format for this
      * value is often specified by the diagnostic code.
-     *
+     * 
      * @return supplementary information
      */
     public String getDetails() {
@@ -98,7 +100,7 @@ public final class SRUDiagnostic {
 
     /**
      * Get human readable message.
-     *
+     * 
      * @return human readable message
      */
     public String getMessage() {

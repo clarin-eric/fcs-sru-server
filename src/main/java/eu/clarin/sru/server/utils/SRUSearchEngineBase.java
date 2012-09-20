@@ -39,11 +39,10 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     }
 
 
-
     /**
      * Handle a <em>scan</em> operation. The default implementation is a no-op.
      * Override this method, if you want to provide a custom behavior.
-     *
+     * 
      * @see SRUSearchEngine#explain(SRUServerConfig, SRURequest,
      *      SRUDiagnosticList)
      */
@@ -57,21 +56,21 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Handle a <em>scan</em> operation. The default implementation is a no-op.
      * Override this method, if you want to provide a custom behavior.
-     *
+     * 
      * @see SRUSearchEngine#scan(SRUServerConfig, SRURequest, SRUDiagnosticList)
      */
     @Override
-    public SRUScanResultSet scan(SRUServerConfig config,
-            SRURequest request, SRUDiagnosticList diagnostics)
-            throws SRUException {
+    public SRUScanResultSet scan(SRUServerConfig config, SRURequest request,
+            SRUDiagnosticList diagnostics) throws SRUException {
         return null;
     }
 
 
     /**
      * Handle a <em>searchRetrieve</em> operation.
-     *
-     * @see SRUSearchEngine#search(SRUServerConfig, SRURequest, SRUDiagnosticList)
+     * 
+     * @see SRUSearchEngine#search(SRUServerConfig, SRURequest,
+     *      SRUDiagnosticList)
      */
     @Override
     public abstract SRUSearchResultSet search(SRUServerConfig config,
@@ -81,13 +80,14 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
     /**
      * Initialize the search engine.
-     *
+     * 
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
      * @param params
      *            additional parameters gathered from the Servlet configuration
      *            and Servlet context.
-     * @throws SRUConfigException an error occurred during initialization of the search engine
+     * @throws SRUConfigException
+     *             an error occurred during initialization of the search engine
      */
     public void init(SRUServerConfig config, Map<String, String> params)
             throws SRUConfigException {

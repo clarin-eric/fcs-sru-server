@@ -16,16 +16,33 @@
  */
 package eu.clarin.sru.server;
 
+/**
+ * An exception raised, if some error occurred with the SRUServer configuration.
+ */
 @SuppressWarnings("serial")
 public class SRUConfigException extends Exception {
 
+    /**
+     * Constructor.
+     * 
+     * @param msg
+     *            a message
+     */
     public SRUConfigException(String msg) {
         super(msg);
     }
 
 
-    public SRUConfigException(String msg, Throwable t) {
-        super(msg, t);
+    /**
+     * Constructor.
+     * 
+     * @param msg
+     *            a message
+     * @param cause
+     *            the cause of the error
+     */
+    public SRUConfigException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 
 } // class SRUConfigException

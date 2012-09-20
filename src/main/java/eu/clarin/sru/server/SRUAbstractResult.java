@@ -38,7 +38,7 @@ abstract class SRUAbstractResult {
 
     /**
      * Add a non surrogate diagnostic to the response.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      * @param details
@@ -55,7 +55,7 @@ abstract class SRUAbstractResult {
 
     /**
      * Add a non surrogate diagnostic to the response.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      * @param details
@@ -69,7 +69,7 @@ abstract class SRUAbstractResult {
 
     /**
      * Add a non surrogate diagnostic to the response.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      */
@@ -82,7 +82,7 @@ abstract class SRUAbstractResult {
      * Check, if extra response data should be serialized for this request.
      * Default implementation is provided for convince and always returns
      * <code>false</code>.
-     *
+     * 
      * @return <code>true</code> if extra response data should be serialized.
      * @see #writeExtraResponseData(XMLStreamWriter)
      */
@@ -93,7 +93,7 @@ abstract class SRUAbstractResult {
 
     /**
      * Serialize extra response data for this request.
-     *
+     * 
      * @param writer
      *            the {@link XMLStreamException} instance to be used
      * @throws XMLStreamException
