@@ -16,44 +16,110 @@
  */
 package eu.clarin.sru.server;
 
+/**
+ * An exception raised if something went wrong processing the request. For
+ * diagnostic codes, see constants in {@link SRUConstants}.
+ * 
+ * @see SRUConstants
+ */
 @SuppressWarnings("serial")
 public class SRUException extends Exception {
     private final int code;
     private final String details;
 
 
-    public SRUException(int code, String details, String message, Throwable t) {
-        super(message, t);
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     * @param details
+     *            diagnostic details or <code>null</code>
+     * @param message
+     *            diagnostic message or <code>null</code>
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(int code, String details, String message,
+            Throwable cause) {
+        super(message, cause);
         this.code    = code;
         this.details = details;
     }
 
 
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     * @param details
+     *            diagnostic details or <code>null</code>
+     * @param message
+     *            diagnostic message or <code>null</code>
+     */
     public SRUException(int code, String details, String message) {
         this(code, details, message, null);
     }
 
 
-    public SRUException(int code, String message, Throwable t) {
-        this(code, null, message, t);
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     * @param message
+     *            diagnostic message or <code>null</code>
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(int code, String message, Throwable cause) {
+        this(code, null, message, cause);
     }
 
 
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     * @param message
+     *            diagnostic message or <code>null</code>
+     */
     public SRUException(int code, String message) {
         this(code, null, message, null);
     }
 
 
-    public SRUException(int code, Throwable t) {
-        this(code, null, null, t);
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(int code, Throwable cause) {
+        this(code, null, null, cause);
     }
 
 
+    /**
+     * Constructor.
+     * 
+     * @param code
+     *            the diagnostic code
+     */
     public SRUException(int code) {
         this(code, null, null, null);
     }
 
 
+    /**
+     * Create a SRU diagnostic from this exception.
+     * 
+     * @return a {@link SRUDiagnostic} instance
+     */
     public SRUDiagnostic getDiagnostic() {
         return new SRUDiagnostic(code, details, this.getMessage());
     }

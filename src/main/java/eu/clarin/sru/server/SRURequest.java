@@ -31,7 +31,7 @@ public interface SRURequest {
     /**
      * Get the <em>operation</em> parameter of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @return the operation
      * @see SRUOperation
      */
@@ -41,7 +41,7 @@ public interface SRURequest {
     /**
      * Get the <em>version</em> parameter of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @return the version
      * @see SRUVersion
      */
@@ -50,7 +50,7 @@ public interface SRURequest {
 
     /**
      * Check if this request is of a specific version.
-     *
+     * 
      * @param version
      *            the version to check
      * @return <code>true</code> if this request is in the requested version,
@@ -62,9 +62,9 @@ public interface SRURequest {
 
 
     /**
-     * Check if version of this request is at least <em>min</em> and at
-     * most <em>max</em>.
-     *
+     * Check if version of this request is at least <em>min</em> and at most
+     * <em>max</em>.
+     * 
      * @param min
      *            the minimum version
      * @param max
@@ -82,7 +82,7 @@ public interface SRURequest {
     /**
      * Get the <em>recordPacking</em> parameter of this request. Only available
      * for <em>explain</em> and <em>searchRetrieve</em> requests.
-     *
+     * 
      * @return the record packing method
      * @see SRURecordPacking
      */
@@ -92,7 +92,7 @@ public interface SRURequest {
     /**
      * Get the <em>query</em> parameter of this request. Only available for
      * <em>searchRetrieve</em> requests.
-     *
+     * 
      * @return the parsed query or <code>null</code> if not a
      *         <em>searchRetrieve</em> request
      */
@@ -102,7 +102,7 @@ public interface SRURequest {
     /**
      * Get the <em>startRecord</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests.
-     *
+     * 
      * @return the number of the start record or <code>-1</code> if no value was
      *         supplied for this request
      */
@@ -111,10 +111,9 @@ public interface SRURequest {
 
     /**
      * Get the <em>maximumRecords</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
-     * If no value was supplied with the request, the server will automatically
-     * set a default value.
-     *
+     * for <em>searchRetrieve</em> requests. If no value was supplied with the
+     * request, the server will automatically set a default value.
+     * 
      * @return the maximum number of records
      */
     public int getMaximumRecords();
@@ -123,18 +122,19 @@ public interface SRURequest {
     /**
      * Get the <em>recordSchema</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests.
-     *
+     * 
      * @return the record schema name or <code>null</code> if no value was
      *         supplied for this request
-     *         @see #getRecordSchemaIdentifier()
+     * @see #getRecordSchemaIdentifier()
      */
     public String getRecordSchemaName();
+
 
     /**
      * Get the record schema identifier derived from the <em>recordSchema</em>
      * parameter of this request. Only available for <em>searchRetrieve</em>
      * requests.
-     *
+     * 
      * @return the record schema identifier or <code>null</code> if no
      *         <em>recordSchema</em> parameter was supplied for this request
      * @see #getRecordSchemaName()
@@ -145,7 +145,7 @@ public interface SRURequest {
     /**
      * Get the <em>recordXPath</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests and version 1.1 requests.
-     *
+     * 
      * @return the record XPath or <code>null</code> of no value was supplied
      *         for this request
      */
@@ -155,7 +155,7 @@ public interface SRURequest {
     /**
      * Get the <em>resultSetTTL</em> parameter of this request. Only available
      * for <em>searchRetrieve</em> requests.
-     *
+     * 
      * @return the result set TTL or <code>-1</code> if no value was supplied
      *         for this request
      */
@@ -163,9 +163,9 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>sortKeys</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests and version 1.1 requests.
-     *
+     * Get the <em>sortKeys</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests and version 1.1 requests.
+     * 
      * @return the record XPath or <code>null</code> of no value was supplied
      *         for this request
      */
@@ -175,7 +175,7 @@ public interface SRURequest {
     /**
      * Get the <em>scanClause</em> parameter of this request. Only available for
      * <em>scan</em> requests.
-     *
+     * 
      * @return the parsed scan clause or <code>null</code> if not a
      *         <em>scan</em> request
      */
@@ -185,7 +185,7 @@ public interface SRURequest {
     /**
      * Get the <em>responsePosition</em> parameter of this request. Only
      * available for <em>scan</em> requests.
-     *
+     * 
      * @return the response position or <code>-1</code> if no value was supplied
      *         for this request
      */
@@ -195,7 +195,7 @@ public interface SRURequest {
     /**
      * Get the <em>maximumTerms</em> parameter of this request. Available for
      * any type of request.
-     *
+     * 
      * @return the maximum number of terms or <code>-1</code> if no value was
      *         supplied for this request
      */
@@ -205,7 +205,7 @@ public interface SRURequest {
     /**
      * Get the <em>stylesheet</em> parameter of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @return the stylesheet or <code>null</code> if no value was supplied for
      *         this request
      */
@@ -215,7 +215,7 @@ public interface SRURequest {
     /**
      * Get the protocol schema which was used of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @return the protocol scheme
      */
     public String getProtocolScheme();
@@ -224,7 +224,7 @@ public interface SRURequest {
     /**
      * Get the names of extra parameters of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @return a possibly empty list of parameter names
      */
     public List<String> getExtraRequestDataNames();
@@ -233,7 +233,7 @@ public interface SRURequest {
     /**
      * Get the value of an extra parameter of this request. Available for
      * <em>explain</em>, <em>searchRetrieve</em> and <em>scan</em> requests.
-     *
+     * 
      * @param name
      *            name of the extra parameter. Must be prefixed with
      *            <code>x-</code>
@@ -249,7 +249,7 @@ public interface SRURequest {
 
     /**
      * Get the raw client request information from the servlet container.
-     *
+     * 
      * @return the servlet request
      */
     public HttpServletRequest getServletRequest();

@@ -22,8 +22,8 @@ package eu.clarin.sru.server;
  * 
  * @see SRUConstants
  * @see SRUDiagnostic
- * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">
- *      SRU Diagnostics</a>
+ * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html"> SRU
+ *      Diagnostics</a>
  * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">
  *      SRU Diagnostics List</a>
  */
@@ -31,7 +31,7 @@ public interface SRUDiagnosticList {
 
     /**
      * Add a non surrogate diagnostic to the response.
-     *
+     * 
      * @param code
      *            numerical diagnostic code
      * @param details

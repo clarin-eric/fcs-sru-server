@@ -42,7 +42,7 @@ import eu.clarin.sru.server.SRUServerConfig;
  * A Servlet implementation, which provides an environment for running a
  * {@link SRUServer} in a Servlet container. Your search engine <b>must</b> use
  * {@link SRUSearchEngineBase} as base class.
- *
+ * 
  * <p>
  * Add the following to the web.xml of your web applications web.xml to define a
  * SRU server. Of course, the value of the Servlet parameter
@@ -50,7 +50,7 @@ import eu.clarin.sru.server.SRUServerConfig;
  * engine implementation. Furthermore, you can choose different url-pattern, to
  * match your needs.
  * </p>
- *
+ * 
  * <pre>
  * &lt;servlet&gt;
  *   &lt;servlet-name&gt;SRUServerServlet&lt;/servlet-name&gt;
@@ -91,7 +91,7 @@ public final class SRUServerServlet extends HttpServlet {
 
     /**
      * Initialize the SRU server Servlet.
-     *
+     * 
      * @see javax.servlet.GenericServlet#init()
      */
     @Override
@@ -159,29 +159,37 @@ public final class SRUServerServlet extends HttpServlet {
          * Override those for a production deployment through your Servlet
          * container's context configuration!
          */
-        setDefaultConfigParam(params, SRUServerConfig.SRU_TRANSPORT,
-                              "http");
-        setDefaultConfigParam(params, SRUServerConfig.SRU_HOST,
-                              "127.0.0.1");
-        setDefaultConfigParam(params, SRUServerConfig.SRU_PORT,
-                              "8080");
-        String contextPath;
-        try {
-            /*
-             * this only works with Servlet 2.5 API ...
-             */
-            contextPath = ctx.getContextPath();
-        } catch (RuntimeException e) {
-            /*
-             * if we fail, put at least something here ...
-             */
-            contextPath = "/";
-            log("NOTE: auto-configuration for parameter '" +
-                    SRUServerConfig.SRU_DATABASE +
-                    "' failed and will contain only a dummy value!");
+        if (!params.containsKey(SRUServerConfig.SRU_TRANSPORT)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_TRANSPORT,
+                    "http");
         }
-        setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
-                              contextPath);
+        if (!params.containsKey(SRUServerConfig.SRU_HOST)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_HOST,
+                    "127.0.0.1");
+        }
+        if (!params.containsKey(SRUServerConfig.SRU_PORT)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_PORT,
+                    "8080");
+        }
+        if (!params.containsKey(SRUServerConfig.SRU_DATABASE)) {
+            String contextPath;
+            try {
+                /*
+                 * this only works with Servlet 2.5 API ...
+                 */
+                contextPath = ctx.getContextPath();
+            } catch (NoSuchMethodError e) {
+                /*
+                 * if we fail, put at least something here ...
+                 */
+                contextPath = "/";
+                log("NOTE: auto-configuration for parameter '" +
+                        SRUServerConfig.SRU_DATABASE +
+                        "' failed and will contain only a dummy value!");
+            }
+            setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
+                    contextPath);
+        }
 
         // parse configuration
         SRUServerConfig sruServerConfig;
@@ -236,7 +244,7 @@ public final class SRUServerServlet extends HttpServlet {
 
     /**
      * Destroy the SRU server Servlet.
-     *
+     * 
      * @see javax.servlet.GenericServlet#destroy()
      */
     @Override
@@ -250,10 +258,9 @@ public final class SRUServerServlet extends HttpServlet {
 
     /**
      * Handle a HTTP get request.
-     *
-     * @see
-     * javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest
-     * , javax.servlet.http.HttpServletResponse)
+     * 
+     * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest,
+     *      javax.servlet.http.HttpServletResponse)
      */
     @Override
     protected void doGet(HttpServletRequest request,
@@ -267,7 +274,7 @@ public final class SRUServerServlet extends HttpServlet {
 
     /**
      * Handle a HTTP post request.
-     *
+     * 
      * @see javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest,
      *      javax.servlet.http.HttpServletResponse)
      */

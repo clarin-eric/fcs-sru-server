@@ -20,9 +20,11 @@ package eu.clarin.sru.server;
  * A result set of an <em>explain</em> operation. A database implementation may
  * use it implement extensions to the SRU protocol, i.e. providing
  * extraResponseData.
- *
- * <p>This class needs to be implemented for the target data source.</p>
- *
+ * 
+ * <p>
+ * This class needs to be implemented for the target data source.
+ * </p>
+ * 
  * @see <a href="http://www.loc.gov/standards/sru/specs/explain.html">SRU
  *      Explain Operation </a>
  */
@@ -30,7 +32,7 @@ public abstract class SRUExplainResult extends SRUAbstractResult {
 
     /**
      * Constructor.
-     *
+     * 
      * @param diagnostics
      *            an instance of a SRUDiagnosticList
      * @see SRUDiagnosticList

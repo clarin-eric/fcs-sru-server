@@ -42,7 +42,7 @@ import eu.clarin.sru.server.utils.SRUServerServlet;
 /**
  * SRU/CQL protocol implementation for the server-side (SRU/S). This class
  * implements SRU/CQL version 1.1 and and 1.2.
- *
+ * 
  * @see SRUServerConfig
  * @see SRUSearchEngine
  * @see SRUServerServlet
@@ -74,7 +74,7 @@ public final class SRUServer {
 
     /**
      * Constructor.
-     *
+     * 
      * @param config
      *            a SRUEndpointConfig object
      * @param searchEngine
@@ -99,8 +99,8 @@ public final class SRUServer {
 
 
     /**
-     * Handle a SRL/CQL request.
-     *
+     * Handle a SRU request.
+     * 
      * @param request
      *            a HttpServletRequest request
      * @param response
@@ -347,6 +347,13 @@ public final class SRUServer {
         if (result == null) {
             throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     "SRUSearchEngine implementation returned invalid result (null).");
+        }
+
+
+        // check, of startRecord position is greater than total record set
+        if ((result.getTotalRecordCount() > 0) && (request.getStartRecord() > 0) &&
+                (request.getStartRecord() > result.getTotalRecordCount())) {
+            throw new SRUException(SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE);
         }
 
         try {
