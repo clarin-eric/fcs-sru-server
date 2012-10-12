@@ -232,7 +232,7 @@ public final class SRUServerServlet extends HttpServlet {
          * finally initialize the SRU server ...
          */
         try {
-            searchEngine.init(sruServerConfig, params);
+            searchEngine.init(ctx, sruServerConfig, params);
             sruServer = new SRUServer(sruServerConfig, searchEngine);
         } catch (SRUConfigException e) {
             throw new ServletException("error inisializing sru server", e);

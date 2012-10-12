@@ -18,6 +18,8 @@ package eu.clarin.sru.server.utils;
 
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+
 import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUDiagnosticList;
 import eu.clarin.sru.server.SRUException;
@@ -81,6 +83,8 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Initialize the search engine.
      * 
+     * @param context
+     *            the {@link ServletContext} for the Servlet
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
      * @param params
@@ -89,6 +93,25 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      * @throws SRUConfigException
      *             an error occurred during initialization of the search engine
      */
+    public void init(ServletContext context, SRUServerConfig config,
+            Map<String, String> params) throws SRUConfigException {
+        init(config, params);
+    }
+
+
+    /**
+     * Initialize the search engine.
+     * 
+     * @param config
+     *            the {@link SRUServerConfig} object for this search engine
+     * @param params
+     *            additional parameters gathered from the Servlet configuration
+     *            and Servlet context.
+     * @throws SRUConfigException
+     *             an error occurred during initialization of the search engine
+     * @deprecated Replaced by {@link #init(ServletContext, SRUServerConfig, Map)}
+     */
+    @Deprecated
     public void init(SRUServerConfig config, Map<String, String> params)
             throws SRUConfigException {
     }
