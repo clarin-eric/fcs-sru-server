@@ -138,14 +138,14 @@ public final class SRUServer {
                     writeFatalError(out, req, req.getDiagnostics());
                 }
             } catch (XMLStreamException e) {
-                logger.error("An error occured while serializing response", e);
+                logger.error("An error occurred while serializing response", e);
                 throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                        "An error occured while serializing response.", e);
+                        "An error occurred while serializing response.", e);
             } catch (IOException e) {
                 /*
                  * Well, can't really do anything useful here ...
                  */
-                logger.error("An unexpected exception occured", e);
+                logger.error("An unexpected exception occurred", e);
             }
         } catch (SRUException e) {
             if (!response.isCommitted()) {
@@ -163,11 +163,11 @@ public final class SRUServer {
                                     req.getIndentResponse());
                     writeFatalError(out, req, diagnostics);
                 } catch (Exception ex) {
-                    logger.error("An exception occured while in error state",
+                    logger.error("An exception occurred while in error state",
                             ex);
                 }
             } else {
-                logger.error("A fatal error occured, but the response was "
+                logger.error("A fatal error occurred, but the response was "
                         + "already committed", e);
             }
         }
