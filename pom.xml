@@ -26,8 +26,8 @@
             <version>${slf4j.version}</version>
         </dependency>
 
-        <!-- Did you read the "README.txt" file and manually installed the
-            artifact in your Maven repository? -->
+        <!-- Did you read the "README.txt" file and manually install the
+             artifact in your Maven repository? -->
         <dependency>
             <groupId>org.z3950.zing</groupId>
             <artifactId>cql-java</artifactId>
