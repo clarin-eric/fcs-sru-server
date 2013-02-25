@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -17,6 +17,8 @@
 package eu.clarin.sru.server.utils;
 
 import java.util.Map;
+
+import javax.servlet.ServletContext;
 
 import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUDiagnosticList;
@@ -37,7 +39,6 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
     public SRUSearchEngineBase() {
     }
-
 
 
     /**
@@ -61,9 +62,8 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      * @see SRUSearchEngine#scan(SRUServerConfig, SRURequest, SRUDiagnosticList)
      */
     @Override
-    public SRUScanResultSet scan(SRUServerConfig config,
-            SRURequest request, SRUDiagnosticList diagnostics)
-            throws SRUException {
+    public SRUScanResultSet scan(SRUServerConfig config, SRURequest request,
+            SRUDiagnosticList diagnostics) throws SRUException {
         return null;
     }
 
@@ -71,7 +71,8 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Handle a <em>searchRetrieve</em> operation.
      *
-     * @see SRUSearchEngine#search(SRUServerConfig, SRURequest, SRUDiagnosticList)
+     * @see SRUSearchEngine#search(SRUServerConfig, SRURequest,
+     *      SRUDiagnosticList)
      */
     @Override
     public abstract SRUSearchResultSet search(SRUServerConfig config,
@@ -82,13 +83,35 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Initialize the search engine.
      *
+     * @param context
+     *            the {@link ServletContext} for the Servlet
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
      * @param params
      *            additional parameters gathered from the Servlet configuration
      *            and Servlet context.
-     * @throws SRUConfigException an error occurred during initialization of the search engine
+     * @throws SRUConfigException
+     *             an error occurred during initialization of the search engine
      */
+    public void init(ServletContext context, SRUServerConfig config,
+            Map<String, String> params) throws SRUConfigException {
+        init(config, params);
+    }
+
+
+    /**
+     * Initialize the search engine.
+     *
+     * @param config
+     *            the {@link SRUServerConfig} object for this search engine
+     * @param params
+     *            additional parameters gathered from the Servlet configuration
+     *            and Servlet context.
+     * @throws SRUConfigException
+     *             an error occurred during initialization of the search engine
+     * @deprecated Replaced by {@link #init(ServletContext, SRUServerConfig, Map)}
+     */
+    @Deprecated
     public void init(SRUServerConfig config, Map<String, String> params)
             throws SRUConfigException {
     }

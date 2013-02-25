@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -29,6 +29,7 @@ public enum SRUVersion {
             return ((1 << 16) | 1);
         }
 
+
         @Override
         String getVersionString() {
             return "1.1";
@@ -44,6 +45,7 @@ public enum SRUVersion {
             return ((1 << 16) | 2);
         }
 
+
         @Override
         String getVersionString() {
             return "1.2";
@@ -51,6 +53,7 @@ public enum SRUVersion {
     };
 
     abstract int getVersionNumber();
+
 
     abstract String getVersionString();
 

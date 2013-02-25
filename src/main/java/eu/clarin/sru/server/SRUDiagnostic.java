@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -21,8 +21,10 @@ package eu.clarin.sru.server;
  *
  * @see SRUConstants
  * @see SRUDiagnosticList
- * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">SRU Diagnostics</a>
- * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">SRU Diagnostics List</a>
+ * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">SRU
+ *      Diagnostics</a>
+ * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">SRU
+ *      Diagnostics List</a>
  */
 public final class SRUDiagnostic {
     private final int code;
@@ -43,7 +45,7 @@ public final class SRUDiagnostic {
      *            <code>null</code>
      */
     public SRUDiagnostic(int code, String details, String message) {
-        this.code = code;
+        this.code    = code;
         this.details = details;
         this.message = message;
     }

@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -99,7 +99,7 @@ public final class SRUServer {
 
 
     /**
-     * Handle a SRL/CQL request.
+     * Handle a SRU request.
      *
      * @param request
      *            a HttpServletRequest request
@@ -138,14 +138,14 @@ public final class SRUServer {
                     writeFatalError(out, req, req.getDiagnostics());
                 }
             } catch (XMLStreamException e) {
-                logger.error("An error occured while serializing response", e);
+                logger.error("An error occurred while serializing response", e);
                 throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                        "An error occured while serializing response.", e);
+                        "An error occurred while serializing response.", e);
             } catch (IOException e) {
                 /*
                  * Well, can't really do anything useful here ...
                  */
-                logger.error("An unexpected exception occured", e);
+                logger.error("An unexpected exception occurred", e);
             }
         } catch (SRUException e) {
             if (!response.isCommitted()) {
@@ -163,11 +163,11 @@ public final class SRUServer {
                                     req.getIndentResponse());
                     writeFatalError(out, req, diagnostics);
                 } catch (Exception ex) {
-                    logger.error("An exception occured while in error state",
+                    logger.error("An exception occurred while in error state",
                             ex);
                 }
             } else {
-                logger.error("A fatal error occured, but the response was "
+                logger.error("A fatal error occurred, but the response was "
                         + "already committed", e);
             }
         }
@@ -347,6 +347,13 @@ public final class SRUServer {
         if (result == null) {
             throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     "SRUSearchEngine implementation returned invalid result (null).");
+        }
+
+
+        // check, of startRecord position is greater than total record set
+        if ((result.getTotalRecordCount() > 0) && (request.getStartRecord() > 0) &&
+                (request.getStartRecord() > result.getTotalRecordCount())) {
+            throw new SRUException(SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE);
         }
 
         try {

@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -32,6 +32,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUException;
 import eu.clarin.sru.server.SRUServer;
@@ -45,10 +48,16 @@ import eu.clarin.sru.server.SRUServerConfig;
  *
  * <p>
  * Add the following to the web.xml of your web applications web.xml to define a
- * SRU server. Of course, the value of the Servlet parameter
- * "sruServerSerachEngineClass" must be adapted to match the name of your search
- * engine implementation. Furthermore, you can choose different url-pattern, to
- * match your needs.
+ * SRU server. Of course, the value of the Servlet initialization parameter
+ * "eu.clarin.sru.server.utils.sruServerSerachEngineClass" must be adapted to
+ * match the name of your search engine implementation. Furthermore, you can
+ * choose different url-pattern, to match your needs.
+ * </p>
+ *
+ * <p>
+ * For example, if your implementation of {@link SRUSearchEngineBase} is
+ * "com.acme.MySearchEngine" and you want to map the Servlet to the URI "/sru"
+ * the following snippet in your "web.xml" should accomplish the task:
  * </p>
  *
  * <pre>
@@ -56,7 +65,7 @@ import eu.clarin.sru.server.SRUServerConfig;
  *   &lt;servlet-name&gt;SRUServerServlet&lt;/servlet-name&gt;
  *   &lt;servlet-class&gt;eu.clarin.sru.server.utils.SRUServerServlet&lt;/servlet-class&gt;
  *   &lt;init-param&gt;
- *     &lt;param-name&gt;sruServerSerachEngineClass&lt;/param-name&gt;
+ *     &lt;param-name&gt;eu.clarin.sru.server.utils.sruServerSerachEngineClass&lt;/param-name&gt;
  *     &lt;param-value&gt;com.acme.MySearchEngine&lt;/param-value&gt;
  *   &lt;/init-param&gt;
  * &lt;/servlet&gt;
@@ -72,19 +81,35 @@ public final class SRUServerServlet extends HttpServlet {
      * configuration.
      */
     public static final String SRU_SERVER_CONFIG_LOCATION_PARAM =
+            "eu.clarin.sru.server.utils.sruServerConfigLocation";
+    /**
+     * @deprecated use {@link #SRU_SERVER_CONFIG_LOCATION_PARAM}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM =
             "sruServerConfigLocation";
+
     /**
      * Servlet initialization parameter name for the class that implements the
      * SRU search engine.
      */
     public static final String SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
+            "eu.clarin.sru.server.utils.sruServerSerachEngineClass";
+    /**
+     * @deprecated use {@link #SRU_SERVER_SERACH_ENGINE_CLASS_PARAM}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
             "sruServerSerachEngineClass";
+
     /**
      * Default value for the location of the SRU server configuration.
      */
     public static final String SRU_SERVER_CONFIG_LOCATION_DEFAULT =
             "/WEB-INF/sru-server-config.xml";
     private static final long serialVersionUID = 1L;
+    private static final Logger logger =
+            LoggerFactory.getLogger(SRUServerServlet.class);
     private SRUServer sruServer;
     private SRUSearchEngineBase searchEngine;
 
@@ -102,7 +127,15 @@ public final class SRUServerServlet extends HttpServlet {
         String sruServerConfigLocation =
                 cfg.getInitParameter(SRU_SERVER_CONFIG_LOCATION_PARAM);
         if (sruServerConfigLocation == null) {
-            sruServerConfigLocation = SRU_SERVER_CONFIG_LOCATION_DEFAULT;
+            sruServerConfigLocation = cfg.getInitParameter(LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM);
+            if (sruServerConfigLocation != null) {
+                logger.warn("init parameter '" +
+                        LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM +
+                        "' is deprecated, please use init parameter '" +
+                        SRU_SERVER_CONFIG_LOCATION_PARAM + "' instead!");
+            } else {
+                sruServerConfigLocation = SRU_SERVER_CONFIG_LOCATION_DEFAULT;
+            }
         }
 
         URL sruServerConfigFile;
@@ -123,9 +156,17 @@ public final class SRUServerServlet extends HttpServlet {
         String sruServerSearchEngineClass =
                 cfg.getInitParameter(SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
         if (sruServerSearchEngineClass == null) {
-            throw new ServletException("init parameter '" +
-                    SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
-                    "' not defined in servlet configuration");
+            sruServerSearchEngineClass = cfg.getInitParameter(LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
+            if (sruServerSearchEngineClass != null) {
+                logger.warn("init parameter '" +
+                        LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
+                        "' is deprecated, please use init parameter '" +
+                        SRU_SERVER_SERACH_ENGINE_CLASS_PARAM + "' instead!");
+            } else {
+                throw new ServletException("init parameter '" +
+                        SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
+                        "' not defined in servlet configuration");
+            }
         }
 
         /*
@@ -154,34 +195,45 @@ public final class SRUServerServlet extends HttpServlet {
             }
         }
 
+        /* convert legacy parameters */
+        SRUServerConfig.convertLegacyParameter(params);
+
         /*
          * Set some defaults (aka "plug and play" for development deployment)
          * Override those for a production deployment through your Servlet
          * container's context configuration!
          */
-        setDefaultConfigParam(params, SRUServerConfig.SRU_TRANSPORT,
-                              "http");
-        setDefaultConfigParam(params, SRUServerConfig.SRU_HOST,
-                              "127.0.0.1");
-        setDefaultConfigParam(params, SRUServerConfig.SRU_PORT,
-                              "8080");
-        String contextPath;
-        try {
-            /*
-             * this only works with Servlet 2.5 API ...
-             */
-            contextPath = ctx.getContextPath();
-        } catch (RuntimeException e) {
-            /*
-             * if we fail, put at least something here ...
-             */
-            contextPath = "/";
-            log("NOTE: auto-configuration for parameter '" +
-                    SRUServerConfig.SRU_DATABASE +
-                    "' failed and will contain only a dummy value!");
+        if (!params.containsKey(SRUServerConfig.SRU_TRANSPORT)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_TRANSPORT,
+                    "http");
         }
-        setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
-                              contextPath);
+        if (!params.containsKey(SRUServerConfig.SRU_HOST)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_HOST,
+                    "127.0.0.1");
+        }
+        if (!params.containsKey(SRUServerConfig.SRU_PORT)) {
+            setDefaultConfigParam(params, SRUServerConfig.SRU_PORT,
+                    "8080");
+        }
+        if (!params.containsKey(SRUServerConfig.SRU_DATABASE)) {
+            String contextPath;
+            try {
+                /*
+                 * this only works with Servlet 2.5 API ...
+                 */
+                contextPath = ctx.getContextPath();
+            } catch (NoSuchMethodError e) {
+                /*
+                 * if we fail, put at least something here ...
+                 */
+                contextPath = "/";
+                log("NOTE: auto-configuration for parameter '" +
+                        SRUServerConfig.SRU_DATABASE +
+                        "' failed and will contain only a dummy value!");
+            }
+            setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
+                    contextPath);
+        }
 
         // parse configuration
         SRUServerConfig sruServerConfig;
@@ -224,7 +276,7 @@ public final class SRUServerServlet extends HttpServlet {
          * finally initialize the SRU server ...
          */
         try {
-            searchEngine.init(sruServerConfig, params);
+            searchEngine.init(ctx, sruServerConfig, params);
             sruServer = new SRUServer(sruServerConfig, searchEngine);
         } catch (SRUConfigException e) {
             throw new ServletException("error inisializing sru server", e);
@@ -251,9 +303,8 @@ public final class SRUServerServlet extends HttpServlet {
     /**
      * Handle a HTTP get request.
      *
-     * @see
-     * javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest
-     * , javax.servlet.http.HttpServletResponse)
+     * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest,
+     *      javax.servlet.http.HttpServletResponse)
      */
     @Override
     protected void doGet(HttpServletRequest request,

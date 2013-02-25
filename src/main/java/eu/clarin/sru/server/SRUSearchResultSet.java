@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -75,11 +75,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The result set id of this result. the default implementation
-     * returns <code>null</code>.
+     * The result set id of this result. the default implementation returns
+     * <code>null</code>.
      *
-     * @return the result set id or <code>null</code> if not
-     *         applicable for this result
+     * @return the result set id or <code>null</code> if not applicable for this
+     *         result
      */
     public String getResultSetId() {
         return null;
@@ -87,11 +87,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The idle time for this result. The default implementation
-     * returns <code>-1</code>.
+     * The idle time for this result. The default implementation returns
+     * <code>-1</code>.
      *
-     * @return the result set idle time or <code>-1</code> if not
-     *         applicable for this result
+     * @return the result set idle time or <code>-1</code> if not applicable for
+     *         this result
      */
     public int getResultSetIdleTime() {
         return -1;
@@ -99,8 +99,8 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The record schema identifier in which the records are
-     * returned (recordSchema parameter).
+     * The record schema identifier in which the records are returned
+     * (recordSchema parameter).
      *
      * @return the record schema identifier
      */

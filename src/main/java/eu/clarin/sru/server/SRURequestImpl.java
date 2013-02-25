@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -382,7 +382,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        // diagnostics != null -> consider as sucesss 
+        // diagnostics != null -> consider as sucesss
         return (diagnostics == null);
     }
 
@@ -671,7 +671,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         PARAM_VERSION, "Mandatory parameter \"" +
                                 PARAM_VERSION + "\" was not supplied.");
             }
-            
+
             /*
              * this is an explain operation, assume default version
              */

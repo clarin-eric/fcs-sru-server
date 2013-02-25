@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -57,9 +57,8 @@ public interface SRUSearchEngine {
      *             if an fatal error occurred
      * @see SRUExplainResult
      */
-    public SRUExplainResult explain(SRUServerConfig config,
-            SRURequest request, SRUDiagnosticList diagnostics)
-            throws SRUException;
+    public SRUExplainResult explain(SRUServerConfig config, SRURequest request,
+            SRUDiagnosticList diagnostics) throws SRUException;
 
 
     /**

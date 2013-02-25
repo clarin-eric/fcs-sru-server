@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -25,7 +25,7 @@ import javax.xml.stream.XMLStreamWriter;
 /**
  * A result set of a <em>scan</em> operation. It is used to iterate over the
  * term set and provides a method to serialize the terms.
- * 
+ *
  * <p>
  * A <code>SRUScanResultSet</code> object maintains a cursor pointing to its
  * current term. Initially the cursor is positioned before the first term. The
@@ -37,7 +37,7 @@ import javax.xml.stream.XMLStreamWriter;
  * <p>
  * This class needs to be implemented for the target search engine.
  * </p>
- * 
+ *
  * @see <a href="http://www.loc.gov/standards/sru/specs/scan.html"> SRU Scan
  *      Operation</a>
  */
@@ -82,11 +82,10 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
 
 
     /**
-     * Moves the cursor forward one term from its current position. A result
-     * set cursor is initially positioned before the first record; the first
-     * call to the method <code>next</code> makes the first term the current
-     * term; the second call makes the second term the current term, and
-     * so on.
+     * Moves the cursor forward one term from its current position. A result set
+     * cursor is initially positioned before the first record; the first call to
+     * the method <code>next</code> makes the first term the current term; the
+     * second call makes the second term the current term, and so on.
      * <p>
      * When a call to the <code>next</code> method returns <code>false</code>,
      * the cursor is positioned after the last term.
