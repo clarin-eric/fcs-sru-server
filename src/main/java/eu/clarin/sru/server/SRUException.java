@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -19,7 +19,7 @@ package eu.clarin.sru.server;
 /**
  * An exception raised if something went wrong processing the request. For
  * diagnostic codes, see constants in {@link SRUConstants}.
- * 
+ *
  * @see SRUConstants
  */
 @SuppressWarnings("serial")
@@ -30,7 +30,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      * @param details
@@ -50,7 +50,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      * @param details
@@ -65,7 +65,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      * @param message
@@ -80,7 +80,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      * @param message
@@ -93,7 +93,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      * @param cause
@@ -106,7 +106,7 @@ public class SRUException extends Exception {
 
     /**
      * Constructor.
-     * 
+     *
      * @param code
      *            the diagnostic code
      */
@@ -117,7 +117,7 @@ public class SRUException extends Exception {
 
     /**
      * Create a SRU diagnostic from this exception.
-     * 
+     *
      * @return a {@link SRUDiagnostic} instance
      */
     public SRUDiagnostic getDiagnostic() {

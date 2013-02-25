@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -19,7 +19,7 @@ package eu.clarin.sru.server;
 /**
  * Container for non surrogate diagnostics for the request. The will be put in
  * the <em>diagnostics</em> part of the response.
- * 
+ *
  * @see SRUConstants
  * @see SRUDiagnostic
  * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html"> SRU
@@ -31,7 +31,7 @@ public interface SRUDiagnosticList {
 
     /**
      * Add a non surrogate diagnostic to the response.
-     * 
+     *
      * @param code
      *            numerical diagnostic code
      * @param details

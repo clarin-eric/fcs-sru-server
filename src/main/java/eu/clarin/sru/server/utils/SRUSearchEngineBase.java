@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -44,7 +44,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Handle a <em>scan</em> operation. The default implementation is a no-op.
      * Override this method, if you want to provide a custom behavior.
-     * 
+     *
      * @see SRUSearchEngine#explain(SRUServerConfig, SRURequest,
      *      SRUDiagnosticList)
      */
@@ -58,7 +58,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
     /**
      * Handle a <em>scan</em> operation. The default implementation is a no-op.
      * Override this method, if you want to provide a custom behavior.
-     * 
+     *
      * @see SRUSearchEngine#scan(SRUServerConfig, SRURequest, SRUDiagnosticList)
      */
     @Override
@@ -70,7 +70,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
     /**
      * Handle a <em>searchRetrieve</em> operation.
-     * 
+     *
      * @see SRUSearchEngine#search(SRUServerConfig, SRURequest,
      *      SRUDiagnosticList)
      */
@@ -82,7 +82,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
     /**
      * Initialize the search engine.
-     * 
+     *
      * @param context
      *            the {@link ServletContext} for the Servlet
      * @param config
@@ -101,7 +101,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
     /**
      * Initialize the search engine.
-     * 
+     *
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
      * @param params
