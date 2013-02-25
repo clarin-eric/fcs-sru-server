@@ -42,6 +42,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -82,20 +84,169 @@ import org.xml.sax.helpers.DefaultHandler;
  * </p>
  */
 public final class SRUServerConfig {
-    public static final String SRU_TRANSPORT         = "sru.transport";
-    public static final String SRU_HOST              = "sru.host";
-    public static final String SRU_PORT              = "sru.port";
-    public static final String SRU_DATABASE          = "sru.database";
-    public static final String SRU_NUMBER_OF_RECORDS = "sru.numberOfRecords";
-    public static final String SRU_MAXIMUM_RECORDS   = "sru.maximumRecords";
-    public static final String SRU_ECHO_REQUESTS     = "sru.echoRequests";
-    public static final String SRU_INDENT_RESPONSE   = "sru.indentResponse";
+    /**
+     * Parameter constant for configuring the transports for this SRU server.
+     * <p>
+     * Valid values: "<code>http</code>", "<code>https</code>" or "
+     * <code>http https</code>" (without quotation marks) <br />
+     * <p>
+     * Used as part of the <em>Explain</em> response.
+     * </p>
+     */
+    public static final String SRU_TRANSPORT =
+            "eu.clarin.sru.server.transport";
+    /**
+     * Parameter constant for configuring the host of this SRU server.
+     * <p>
+     * Valid values: any fully qualified hostname, e.g.
+     * <code>sru.example.org</code> <br />
+     * Used as part of the <em>Explain</em> response.
+     * </p>
+     */
+    public static final String SRU_HOST =
+            "eu.clarin.sru.server.host";
+    /**
+     * Parameter constant for configuring the port number of this SRU server.
+     * <p>
+     * Valid values: number between 1 and 65535 (typically 80 or 8080) <br />
+     * Used as part of the <em>Explain</em> response.
+     * </p>
+     */
+    public static final String SRU_PORT =
+            "eu.clarin.sru.server.port";
+    /**
+     * Parameter constant for configuring the database of this SRU server. This
+     * is usually the path component of the SRU servers URI.
+     * <p>
+     * Valid values: typically the path component if the SRU server URI. <br />
+     * Used as part of the <em>Explain</em> response.
+     * </p>
+     */
+    public static final String SRU_DATABASE =
+            "eu.clarin.sru.server.database";
+    /**
+     * Parameter constant for configuring the <em>default</em> number of records
+     * the SRU server will provide in the response to a request if the client
+     * does not specify a limit.
+     * <p>
+     * Valid values: a integer greater than 0 (default value is 100)
+     * </p>
+     */
+    public static final String SRU_NUMBER_OF_RECORDS =
+            "eu.clarin.sru.server.numberOfRecords";
+    /**
+     * Parameter constant for configuring the <em>maximum</em> number of records
+     * the SRU server will support in one request. If a client requests more
+     * records, the number will be limited to this value.
+     * <p>
+     * Valid values: a integer greater than 0 (default value is 250)
+     * </p>
+     */
+    public static final String SRU_MAXIMUM_RECORDS =
+            "eu.clarin.sru.server.maximumRecords";
+    /**
+     * Parameter constant for configuring, if the SRU server will echo the
+     * request.
+     * <p>
+     * Valid values: <code>true</code> or <code>false</code>
+     * </p>
+     */
+    public static final String SRU_ECHO_REQUESTS =
+            "eu.clarin.sru.server.echoRequests";
+    /**
+     * Parameter constant for configuring, if the SRU server pretty-print the
+     * XML response. Setting this parameter can be useful for manual debugging,
+     * however it is not recommended for production setups.
+     * <p>
+     * Valid values: <code>true</code> or <code>false</code>
+     * </p>
+     */
+    public static final String SRU_INDENT_RESPONSE =
+            "eu.clarin.sru.server.indentResponse";
+    /**
+     * Parameter constant for configuring, if the SRU server will allow the
+     * client to override the maximum number of records the server supports.
+     * This parameter is solely intended for debugging and enabling it is
+     * <em>strongly</em> discouraged for production setups.
+     * <p>
+     * Valid values: <code>true</code> or <code>false</code>
+     * </p>
+     */
     public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
-            "sru.allowOverrideMaximumRecords";
+            "eu.clarin.sru.server.allowOverrideMaximumRecords";
+    /**
+     * Parameter constant for configuring, if the SRU server will allow the
+     * client to override the pretty-printing setting of the server. This
+     * parameter is solely intended for debugging and enabling it is
+     * <em>strongly</em> discouraged for production setups.
+     * <p>
+     * Valid values: <code>true</code> or <code>false</code>
+     * </p>
+     */
     public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
+            "eu.clarin.sru.server.allowOverrideIndentResponse";
+    /**
+     * @deprecated use {@link #SRU_TRANSPORT}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_TRANSPORT =
+            "sru.transport";
+    /**
+     * @deprecated use {@link #SRU_HOST}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_HOST =
+            "sru.host";
+    /**
+     * @deprecated use {@link #SRU_PORT}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_PORT =
+            "sru.port";
+    /**
+     * @deprecated use {@link #SRU_DATABASE}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_DATABASE =
+            "sru.database";
+    /**
+     * @deprecated use {@link #SRU_NUMBER_OF_RECORDS}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_NUMBER_OF_RECORDS =
+            "sru.numberOfRecords";
+    /**
+     * @deprecated use {@link #SRU_MAXIMUM_RECORDS}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_MAXIMUM_RECORDS =
+            "sru.maximumRecords";
+    /**
+     * @deprecated use {@link #SRU_ECHO_REQUESTS}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_ECHO_REQUESTS =
+            "sru.echoRequests";
+    /**
+     * @deprecated use {@link #SRU_INDENT_RESPONSE}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_INDENT_RESPONSE =
+            "sru.indentResponse";
+    /**
+     * @deprecated use {@link #SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
+            "sru.allowOverrideMaximumRecords";
+    /**
+     * @deprecated use {@link #SRU_ALLOW_OVERRIDE_INDENT_RESPONSE}
+     */
+    @Deprecated
+    private static final String LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "sru.allowOverrideIndentResponse";
-    public static final int DEFAULT_NUMBER_OF_RECORDS = 100;
-    public static final int DEFAULT_MAXIMUM_RECORDS = 250;
+    private static final int DEFAULT_NUMBER_OF_RECORDS = 100;
+    private static final int DEFAULT_MAXIMUM_RECORDS = 250;
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
     private static final String CONFIG_FILE_SCHEMA_URL =
@@ -423,6 +574,8 @@ public final class SRUServerConfig {
         }
     } // IndexInfo
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(SRUServerConfig.class);
     private final String transport;
     private final String host;
     private final int port;
@@ -698,6 +851,14 @@ public final class SRUServerConfig {
 
             List<SchemaInfo> schemaInfo = buildSchemaInfo(xpath, doc);
 
+            /*
+             * convert legacy parameters
+             */
+            convertLegacyParameter(params);
+
+            /*
+             * fetch parameters more parameters
+             */
             String transport = params.get(SRU_TRANSPORT);
             if ((transport == null) || transport.isEmpty()) {
                 throw new SRUConfigException("parameter \"" + SRU_TRANSPORT +
@@ -1041,6 +1202,54 @@ public final class SRUServerConfig {
             result = Boolean.valueOf(attr.getValue());
         }
         return result;
+    }
+
+
+    public static void convertLegacyParameter(Map<String, String> params) {
+        if ((params != null) && !params.isEmpty()) {
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_TRANSPORT,
+                    SRU_TRANSPORT);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_HOST,
+                    SRU_HOST);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_PORT,
+                    SRU_PORT);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_DATABASE,
+                    SRU_DATABASE);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_NUMBER_OF_RECORDS,
+                    SRU_NUMBER_OF_RECORDS);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_MAXIMUM_RECORDS,
+                    SRU_MAXIMUM_RECORDS);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_ECHO_REQUESTS,
+                    SRU_ECHO_REQUESTS);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_INDENT_RESPONSE,
+                    SRU_INDENT_RESPONSE);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS,
+                    SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS);
+            convertLegacyParameter1(params,
+                    LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE,
+                    SRU_ALLOW_OVERRIDE_INDENT_RESPONSE);
+        }
+    }
+
+
+    private static void convertLegacyParameter1(Map<String, String> params,
+            String legacyName, String name) {
+        final String value = params.get(legacyName);
+        if (value != null) {
+            params.put(name, value);
+            params.remove(legacyName);
+            logger.warn("parameter '{}' is deprecated, please use "
+                    + "paramter '{}' instead!", legacyName, name);
+        }
     }
 
 } // class SRUEndpointConfig
