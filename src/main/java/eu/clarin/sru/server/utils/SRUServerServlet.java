@@ -88,7 +88,6 @@ public final class SRUServerServlet extends HttpServlet {
     @Deprecated
     private static final String LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM =
             "sruServerConfigLocation";
-
     /**
      * Servlet initialization parameter name for the class that implements the
      * SRU search engine.
@@ -99,9 +98,14 @@ public final class SRUServerServlet extends HttpServlet {
      * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
      */
     @Deprecated
+    private static final String LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
+            "sruServerSerachEngineClass";
+    /**
+     * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
+     */
+    @Deprecated
     private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM =
             "sruServerSearchEngineClass";
-
     /**
      * Default value for the location of the SRU server configuration.
      */
@@ -127,7 +131,8 @@ public final class SRUServerServlet extends HttpServlet {
         String sruServerConfigLocation =
                 cfg.getInitParameter(SRU_SERVER_CONFIG_LOCATION_PARAM);
         if (sruServerConfigLocation == null) {
-            sruServerConfigLocation = cfg.getInitParameter(LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM);
+            sruServerConfigLocation = cfg.getInitParameter(
+                    LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM);
             if (sruServerConfigLocation != null) {
                 logger.warn("init parameter '" +
                         LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM +
@@ -153,20 +158,39 @@ public final class SRUServerServlet extends HttpServlet {
                     sruServerConfigLocation + ")");
         }
 
+        /* get search engine class name from servelet init parameters */
         String sruServerSearchEngineClass =
                 cfg.getInitParameter(SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
+
+        /* legacy compatibility (first try) */
         if (sruServerSearchEngineClass == null) {
-            sruServerSearchEngineClass = cfg.getInitParameter(LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
+            sruServerSearchEngineClass = cfg.getInitParameter(
+                    LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
             if (sruServerSearchEngineClass != null) {
                 logger.warn("init parameter '" +
                         LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
                         "' is deprecated, please use init parameter '" +
                         SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM + "' instead!");
-            } else {
-                throw new ServletException("init parameter '" +
-                        SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
-                        "' not defined in servlet configuration");
             }
+        }
+
+        /* legacy compatibility (second try) */
+        if (sruServerSearchEngineClass == null) {
+            sruServerSearchEngineClass = cfg.getInitParameter(
+                    LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
+            if (sruServerSearchEngineClass != null) {
+                logger.warn("init parameter '" +
+                        LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
+                        "' is deprecated, please use init parameter '" +
+                        SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM + "' instead!");
+            }
+        }
+
+        /* if still nothing, give up */
+        if (sruServerSearchEngineClass == null) {
+            throw new ServletException("init parameter '" +
+                    SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
+                    "' not defined in servlet configuration");
         }
 
         /*
