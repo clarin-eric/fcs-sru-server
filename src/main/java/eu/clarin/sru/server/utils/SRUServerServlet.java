@@ -105,7 +105,7 @@ public final class SRUServerServlet extends HttpServlet {
      */
     @Deprecated
     private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM =
-            "sruServerSearchEngineClass";
+            "sruServerSerachEngineClass";
     /**
      * Default value for the location of the SRU server configuration.
      */
