@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -27,7 +27,7 @@ abstract class SRUAbstractResult {
     private final SRUDiagnosticList diagnostics;
 
 
-    protected SRUAbstractResult(SRUDiagnosticList diagnosticList) {
+    SRUAbstractResult(SRUDiagnosticList diagnosticList) {
         if (diagnosticList == null) {
             throw new NullPointerException("Implementation error: "
                     + "diagnosticList must not be null!");
@@ -102,6 +102,20 @@ abstract class SRUAbstractResult {
      */
     public void writeExtraResponseData(XMLStreamWriter writer)
             throws XMLStreamException {
+    }
+
+
+    /**
+     * Release this result and free any associated resources.
+     * <p>
+     * This method <strong>must not</strong> throw any exceptions
+     * </p>
+     * <p>
+     * Calling the method <code>close</code> on a result object that is already
+     * closed is a no-op.
+     * </p>
+     */
+    public void close() {
     }
 
 } // abstract class SRUAbstractResult

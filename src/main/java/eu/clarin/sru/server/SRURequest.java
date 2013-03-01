@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -62,8 +62,8 @@ public interface SRURequest {
 
 
     /**
-     * Check if version of this request is at least <em>min</em> and at
-     * most <em>max</em>.
+     * Check if version of this request is at least <em>min</em> and at most
+     * <em>max</em>.
      *
      * @param min
      *            the minimum version
@@ -111,9 +111,8 @@ public interface SRURequest {
 
     /**
      * Get the <em>maximumRecords</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
-     * If no value was supplied with the request, the server will automatically
-     * set a default value.
+     * for <em>searchRetrieve</em> requests. If no value was supplied with the
+     * request, the server will automatically set a default value.
      *
      * @return the maximum number of records
      */
@@ -126,9 +125,10 @@ public interface SRURequest {
      *
      * @return the record schema name or <code>null</code> if no value was
      *         supplied for this request
-     *         @see #getRecordSchemaIdentifier()
+     * @see #getRecordSchemaIdentifier()
      */
     public String getRecordSchemaName();
+
 
     /**
      * Get the record schema identifier derived from the <em>recordSchema</em>
@@ -163,8 +163,8 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>sortKeys</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests and version 1.1 requests.
+     * Get the <em>sortKeys</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests and version 1.1 requests.
      *
      * @return the record XPath or <code>null</code> of no value was supplied
      *         for this request

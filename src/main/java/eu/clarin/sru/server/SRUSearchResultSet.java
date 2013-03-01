@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -23,12 +23,21 @@ import javax.xml.stream.XMLStreamWriter;
 
 
 /**
- * A result set of a <em>searchRetrieve</em> operation. It allows to iterate
+ * A result set of a <em>searchRetrieve</em> operation. It it used to iterate
  * over the result set and provides a method to serialize the record in the
  * requested format.
- * 
- * <p>This class needs to be implemented for the target data source.</p>
- * 
+ * <p>
+ * A <code>SRUSearchResultSet</code> object maintains a cursor pointing to its
+ * current record. Initially the cursor is positioned before the first record.
+ * The <code>next</code> method moves the cursor to the next record, and because
+ * it returns <code>false</code> when there are no more records in the
+ * <code>SRUSearchResultSet</code> object, it can be used in a
+ * <code>while</code> loop to iterate through the result set.
+ * </p>
+ * <p>
+ * This class needs to be implemented for the target search engine.
+ * </p>
+ *
  * @see <a href="http://www.loc.gov/standards/sru/specs/search-retrieve.html">
  *      SRU Search Retrieve Operation</a>
  */
@@ -48,9 +57,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
     /**
      * The number of records matched by the query. If the query fails this must
-     * be 0.
+     * be 0. If the search engine cannot determine the total number of matched
+     * by a query, it must return -1.
      *
-     * @return the total number of results or 0 if the query failed
+     * @return the total number of results or 0 if the query failed or -1 if the
+     *         search engine cannot determine the total number of results
      */
     public abstract int getTotalRecordCount();
 
@@ -66,11 +77,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The result set id of this result. the default implementation
-     * returns <code>null</code>.
+     * The result set id of this result. the default implementation returns
+     * <code>null</code>.
      *
-     * @return the result set id or <code>null</code> if not
-     *         applicable for this result
+     * @return the result set id or <code>null</code> if not applicable for this
+     *         result
      */
     public String getResultSetId() {
         return null;
@@ -78,11 +89,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The idle time for this result. The default implementation
-     * returns <code>-1</code>.
+     * The idle time for this result. The default implementation returns
+     * <code>-1</code>.
      *
-     * @return the result set idle time or <code>-1</code> if not
-     *         applicable for this result
+     * @return the result set idle time or <code>-1</code> if not applicable for
+     *         this result
      */
     public int getResultSetIdleTime() {
         return -1;
@@ -90,8 +101,8 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The record schema identifier in which the records are
-     * returned (recordSchema parameter).
+     * The record schema identifier in which the records are returned
+     * (recordSchema parameter).
      *
      * @return the record schema identifier
      */
@@ -99,24 +110,20 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * Returns true if the search result set has more records. (In other words,
-     * returns <code>true</code> if <code>nextRecord()</code> would move the
-     * internal result pointer to a new record instead of throwing an
-     * exception.)
+     * Moves the cursor forward one record from its current position. A
+     * <code>SRUSearchResultSet</code> cursor is initially positioned before the
+     * first record; the first call to the method <code>next</code> makes the
+     * first record the current record; the second call makes the second record
+     * the current record, and so on.
+     * <p>
+     * When a call to the <code>next</code> method returns <code>false</code>,
+     * the cursor is positioned after the last record.
+     * </p>
      *
-     * @return <code>true</code> if the search result set has more records,
-     *         <code>false</code> otherwise
+     * @return <code>true</code> if the new current record is valid;
+     *         <code>false</code> if there are no more records
      */
-    public abstract boolean hasMoreRecords();
-
-
-    /**
-     * Move to the next record.
-     *
-     * @throws NoSuchElementException
-     *             result set has no more records
-     */
-    public abstract void nextRecord();
+    public abstract boolean nextRecord();
 
 
     /**

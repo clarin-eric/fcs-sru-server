@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -41,7 +41,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     private enum IndentingState {
         SEEN_NOTHING,
         SEEN_ELEMENT,
-        SEEN_DATA;
+        SEEN_DATA
     }
     private static final SAXParserFactory factory;
     private final SRURecordPacking packing;
@@ -202,9 +202,6 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     @Override
     public void writeEndDocument() throws XMLStreamException {
         xmlwriter.writeEndDocument();
-        if (indent > 0) {
-            xmlwriter.writeCharacters("\n");
-        }
     }
 
 
@@ -413,7 +410,8 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     }
 
 
-    public void writeXCQL(CQLNode query) throws XMLStreamException {
+    public void writeXCQL(CQLNode query, final boolean searchRetrieveMode)
+            throws XMLStreamException {
         /*
          * HACK: Parsing the XCQL to serialize is wasting resources.
          * Alternative would be to serialize to XCQL from CQLNode, but
@@ -428,6 +426,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 public void startElement(String uri, String localName,
                         String qName, Attributes attributes)
                                 throws SAXException {
+                    if (!searchRetrieveMode && qName.equals("searchClause")) {
+                        return;
+                    }
                     try {
                         SRUXMLStreamWriter.this.writeStartElement(qName);
                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -442,6 +443,9 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
                 @Override
                 public void endElement(String uri, String localName,
                         String qName) throws SAXException {
+                    if (!searchRetrieveMode && qName.equals("searchClause")) {
+                        return;
+                    }
                     try {
                         SRUXMLStreamWriter.this.writeEndElement();
                     } catch (XMLStreamException e) {

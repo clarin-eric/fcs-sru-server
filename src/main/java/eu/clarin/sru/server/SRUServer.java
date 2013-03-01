@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -36,67 +36,19 @@ import eu.clarin.sru.server.SRUServerConfig.DatabaseInfo;
 import eu.clarin.sru.server.SRUServerConfig.IndexInfo;
 import eu.clarin.sru.server.SRUServerConfig.LocalizedString;
 import eu.clarin.sru.server.SRUServerConfig.SchemaInfo;
+import eu.clarin.sru.server.utils.SRUServerServlet;
 
 
 /**
  * SRU/CQL protocol implementation for the server-side (SRU/S). This class
  * implements SRU/CQL version 1.1 and and 1.2.
- * <p>
- * An example servlet using this class:
- * </p>
- * <pre>
- * public class MySRUServlet extends HttpServlet {
- *     private transient SRUServer sruServer;
- *
- *
- *     public void init() throws ServletException {
- *         final ServletContext ctx = getServletContext();
- *         try {
- *             URL url = MySRUServlet.class.getClassLoader().getResource(
- *                     &quot;META-INF/endpoint-config.xml&quot;);
- *             if (url == null) {
- *                 throw new ServletException(&quot;not found, url == null&quot;);
- *             }
- *
- *             // get additional runtime configuration from Servlet context
- *             HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
- *             for (Enumeration&lt;?&gt; i = ctx.getInitParameterNames(); i
- *                     .hasMoreElements();) {
- *                 String key = (String) i.nextElement();
- *                 String value = ctx.getInitParameter(key);
- *                 if ((value != null) &amp;&amp; !value.isEmpty()) {
- *                     params.put(key, value);
- *                 }
- *             }
- *
- *             SRUServerConfig config = SRUServerConfig.parse(params,
- *                     url.openStream());
- *             SRUSearchEngine searchEngine = new MySRUSearchEngine(config, params);
- *             sruServer = new SRUServer(config, searchEngine);
- *         } catch (Exception e) {
- *             throw new ServletException(&quot;error initializing endpoint&quot;, e);
- *         }
- *     }
- *
- *
- *     protected void doGet(HttpServletRequest request,
- *             HttpServletResponse response) throws ServletException, IOException {
- *         sruServer.handleRequest(request, response);
- *     }
- *
- *
- *     protected void doPost(HttpServletRequest request,
- *             HttpServletResponse response) throws ServletException, IOException {
- *         sruServer.handleRequest(request, response);
- *     }
- * }
- * </pre>
  *
  * @see SRUServerConfig
  * @see SRUSearchEngine
+ * @see SRUServerServlet
  * @see <a href="http://www.loc.gov/standards/sru/">SRU/CQL protocol 1.2</a>
  */
-public class SRUServer {
+public final class SRUServer {
     private static final String SRU_NS =
             "http://www.loc.gov/zing/srw/";
     private static final String SRU_PREFIX = "sru";
@@ -147,7 +99,7 @@ public class SRUServer {
 
 
     /**
-     * Handle a SRL/CQL request.
+     * Handle a SRU request.
      *
      * @param request
      *            a HttpServletRequest request
@@ -182,18 +134,18 @@ public class SRUServer {
                     // (some) parameters are malformed, send error
                     SRUXMLStreamWriter out =
                         createXMLStreamWriter(response.getOutputStream(),
-                                SRURecordPacking.XML, getIndent(req));
+                                SRURecordPacking.XML, req.getIndentResponse());
                     writeFatalError(out, req, req.getDiagnostics());
                 }
             } catch (XMLStreamException e) {
-                logger.error("An error occured while serializing reponse", e);
+                logger.error("An error occurred while serializing response", e);
                 throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                        "An error occured while serializing reponse", e);
+                        "An error occurred while serializing response.", e);
             } catch (IOException e) {
                 /*
                  * Well, can't really do anything useful here ...
                  */
-                logger.error("An unexpected exception occured", e);
+                logger.error("An unexpected exception occurred", e);
             }
         } catch (SRUException e) {
             if (!response.isCommitted()) {
@@ -207,14 +159,15 @@ public class SRUServer {
                     }
                     SRUXMLStreamWriter out =
                             createXMLStreamWriter(response.getOutputStream(),
-                                    SRURecordPacking.XML, getIndent(req));
+                                    SRURecordPacking.XML,
+                                    req.getIndentResponse());
                     writeFatalError(out, req, diagnostics);
                 } catch (Exception ex) {
-                    logger.error("An exception occured while in error state",
+                    logger.error("An exception occurred while in error state",
                             ex);
                 }
             } else {
-                logger.error("A fatal error occured, but the response was "
+                logger.error("A fatal error occurred, but the response was "
                         + "already committed", e);
             }
         }
@@ -226,17 +179,449 @@ public class SRUServer {
         logger.info("explain");
 
         // commence explain ...
-        SRUExplainResult result = searchEngine.explain(config,
-                request, request);
+        final SRUExplainResult result =
+                searchEngine.explain(config, request, request);
 
-        // send results
-        SRUXMLStreamWriter out =
-                createXMLStreamWriter(response.getOutputStream(),
-                                      request.getRecordPacking(),
-                                      getIndent(request));
+        try {
+            // send results
+            SRUXMLStreamWriter out =
+                    createXMLStreamWriter(response.getOutputStream(),
+                                          request.getRecordPacking(),
+                                          request.getIndentResponse());
 
-        beginResponse(out, request);
+            beginResponse(out, request);
 
+            // write the explain record
+            writeExplainRecord(out, request);
+
+            if (config.getEchoRequests()) {
+                writeEchoedExplainRequest(out, request);
+            }
+
+            // diagnostics
+            writeDiagnosticList(out, request.getDiagnostics());
+
+            // extraResponseData
+            if (result != null) {
+                if (result.hasExtraResponseData()) {
+                    out.writeStartElement(SRU_NS, "extraResponseData");
+                    result.writeExtraResponseData(out);
+                    out.writeEndElement(); // "extraResponseData" element
+                }
+            }
+
+            endResponse(out);
+        } finally {
+            if (result != null) {
+                result.close();
+            }
+        }
+    }
+
+
+    private void scan(SRURequestImpl request, HttpServletResponse response)
+            throws IOException, XMLStreamException, SRUException {
+        logger.info("scan: scanClause = \"{}\"",
+                new Object[] { request.getRawScanClause() });
+
+        // commence scan
+        final SRUScanResultSet result =
+                searchEngine.scan(config, request, request);
+        if (result == null) {
+            throw new SRUException(SRUConstants.SRU_UNSUPPORTED_OPERATION,
+                    "The 'scan' operation is not supported by this endpoint.");
+        }
+
+        try {
+            // send results
+            SRUXMLStreamWriter out =
+                    createXMLStreamWriter(response.getOutputStream(),
+                                          request.getRecordPacking(),
+                                          request.getIndentResponse());
+
+            beginResponse(out, request);
+
+            try {
+                /*
+                 * a scan result without a list of terms is a valid response;
+                 * make sure, to produce the correct output and omit in that case
+                 * the <terms> ...
+                 */
+                boolean wroteTerms = false;
+                while (result.nextTerm()) {
+                    if (!wroteTerms) {
+                        out.writeStartElement(SRU_NS, "terms");
+                        wroteTerms = true;
+                    }
+                    out.writeStartElement(SRU_NS, "term");
+
+                    out.writeStartElement(SRU_NS, "value");
+                    out.writeCharacters(result.getValue());
+                    out.writeEndElement(); // "value" element
+
+                    if (result.getNumberOfRecords() > -1) {
+                        out.writeStartElement(SRU_NS, "numberOfRecords");
+                        out.writeCharacters(
+                                Integer.toString(result.getNumberOfRecords()));
+                        out.writeEndElement(); // "numberOfRecords" element
+                    }
+
+                    if (result.getDisplayTerm() != null) {
+                        out.writeStartElement(SRU_NS, "displayTerm");
+                        out.writeCharacters(result.getDisplayTerm());
+                        out.writeEndElement(); // "displayTerm" element
+                    }
+
+                    if (result.getWhereInList() != null) {
+                        out.writeStartElement(SRU_NS, "whereInList");
+                        switch (result.getWhereInList()) {
+                        case FIRST:
+                            out.writeCharacters("first");
+                            break;
+                        case LAST:
+                            out.writeCharacters("last");
+                            break;
+                        case ONLY:
+                            out.writeCharacters("only");
+                            break;
+                        case INNER:
+                            out.writeCharacters("inner");
+                            break;
+                        } // switch
+                        out.writeEndElement(); // "whereInList" element
+                    }
+
+                    if (result.hasExtraTermData()) {
+                        out.writeStartElement(SRU_NS, "extraTermData");
+                        result.writeExtraTermData(out);
+                        out.writeEndElement(); // "extraTermData" element
+                    }
+
+                    out.writeEndElement(); // "term" element
+                } // while
+                if (wroteTerms) {
+                    out.writeEndElement(); // "terms" element
+                }
+            } catch (NoSuchElementException e) {
+                throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
+                        "An internal error occurred while "
+                                + "serializing scan results.");
+            }
+
+            // echoedScanRequest
+            if (config.getEchoRequests()) {
+                writeEchoedScanRequest(out, request, request.getScanClause());
+            }
+
+            // diagnostics
+            writeDiagnosticList(out, request.getDiagnostics());
+
+            // extraResponseData
+            if (result.hasExtraResponseData()) {
+                out.writeStartElement(SRU_NS, "extraResponseData");
+                result.writeExtraResponseData(out);
+                out.writeEndElement(); // "extraResponseData" element
+            }
+
+            endResponse(out);
+        } finally {
+            if (result != null) {
+                result.close();
+            }
+        }
+    }
+
+
+    private void search(SRURequestImpl request, HttpServletResponse response)
+            throws IOException, XMLStreamException, SRUException {
+        logger.info("searchRetrieve: query = \"{}\", startRecord = {}, " +
+                "maximumRecords = {}, recordSchema = {}, resultSetTTL = {}",
+                new Object[] { request.getRawQuery(), request.getStartRecord(),
+                        request.getMaximumRecords(),
+                        request.getRecordSchemaIdentifier(),
+                        request.getResultSetTTL() });
+
+        // commence search ...
+        final SRUSearchResultSet result =
+                searchEngine.search(config, request, request);
+        if (result == null) {
+            throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
+                    "SRUSearchEngine implementation returned invalid result (null).");
+        }
+
+
+        // check, of startRecord position is greater than total record set
+        if ((result.getTotalRecordCount() >= 0) &&
+            (request.getStartRecord() > 0) &&
+            (request.getStartRecord() > result.getTotalRecordCount())) {
+            throw new SRUException(SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE);
+        }
+
+        try {
+            // send results
+            SRUXMLStreamWriter out =
+                    createXMLStreamWriter(response.getOutputStream(),
+                                          request.getRecordPacking(),
+                                          request.getIndentResponse());
+
+            beginResponse(out, request);
+
+            // numberOfRecords
+            out.writeStartElement(SRU_NS, "numberOfRecords");
+            out.writeCharacters(
+                    Integer.toString(result.getTotalRecordCount()));
+            out.writeEndElement(); // "numberOfRecords" element
+
+            // resultSetId
+            if (result.getResultSetId() != null) {
+                out.writeStartElement(SRU_NS, "resultSetId");
+                out.writeCharacters(result.getResultSetId());
+                out.writeEndElement(); // "resultSetId" element
+            }
+
+            // resultSetIdleTime
+            if (result.getResultSetIdleTime() > 0) {
+                out.writeStartElement(SRU_NS, "resultSetIdleTime");
+                out.writeCharacters(Integer.toString(result
+                        .getResultSetIdleTime()));
+                out.writeEndElement(); // "resultSetIdleTime" element
+            }
+
+            int position = (request.getStartRecord() > 0)
+                    ? request.getStartRecord() : 1;
+            if (result.getRecordCount() > 0) {
+                final int maxPositionOffset =
+                        (request.getMaximumRecords() != -1)
+                        ? (position + request.getMaximumRecords() - 1)
+                        : -1;
+                try {
+                    out.writeStartElement(SRU_NS, "records");
+                    while (result.nextRecord()) {
+                        /*
+                         * Sanity check: do not return more then the maximum
+                         * requested records. If the search engine
+                         * implementation does not honor limit truncate the
+                         * result set.
+                         */
+                        if ((maxPositionOffset != -1) &&
+                                (position > maxPositionOffset)) {
+                            logger.error("SRUSearchEngine implementation did " +
+                                    "not honor limit for the amount of " +
+                                    "requsted records. Result set truncated!");
+                            break;
+                        }
+
+                        out.writeStartElement(SRU_NS, "record");
+
+                        /*
+                         * We need to output either the record or a surrogate
+                         * diagnostic. In case of the latter, we need to output
+                         * the appropriate record schema ...
+                         */
+                        final SRUDiagnostic diagnostic =
+                                result.getSurrogateDiagnostic();
+
+                        out.writeStartElement(SRU_NS, "recordSchema");
+                        if (diagnostic == null) {
+                            out.writeCharacters(
+                                    result.getRecordSchemaIdentifier());
+                        } else {
+                            out.writeCharacters(SRU_DIAGNOSTIC_RECORD_SCHEMA);
+                        }
+                        out.writeEndElement(); // "recordSchema" element
+
+                        // recordPacking
+                        writeRecordPacking(out, request.getRecordPacking());
+
+                        /*
+                         * Output either record data or surrogate diagnostic ...
+                         */
+                        out.writeStartElement(SRU_NS, "recordData");
+                        out.startRecord();
+                        if (diagnostic == null) {
+                            result.writeRecord(out);
+                        } else {
+                            // write a surrogate diagnostic
+                            writeDiagnostic(out, diagnostic, true);
+                        }
+                        out.endRecord();
+                        out.writeEndElement(); // "recordData" element
+
+                        /*
+                         * recordIdentifier is version 1.2 only
+                         */
+                        if (request.isVersion(SRUVersion.VERSION_1_2)) {
+                            final String identifier =
+                                    result.getRecordIdentifier();
+                            if (identifier != null) {
+                                out.writeStartElement(SRU_NS,
+                                                      "recordIdentifier");
+                                out.writeCharacters(identifier);
+                                out.writeEndElement(); // "recordIdentifier" element
+                            }
+                        }
+
+                        out.writeStartElement(SRU_NS, "recordPosition");
+                        out.writeCharacters(Integer.toString(position));
+                        out.writeEndElement(); // "recordPosition" element
+
+                        if (result.hasExtraRecordData()) {
+                            out.writeStartElement(SRU_NS, "extraRecordData");
+                            result.writeExtraRecordData(out);
+                            out.writeEndElement(); // "extraRecordData"
+                        }
+
+                        out.writeEndElement(); // "record" element
+
+                        position++;
+                    } // while
+                    out.writeEndElement(); // "records" element
+                } catch (NoSuchElementException e) {
+                    throw new SRUException(
+                            SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
+                            "An internal error occurred while " +
+                            "serializing search result set.");
+                }
+            }
+
+            // nextRecordPosition
+            if (position <= result.getTotalRecordCount()) {
+                out.writeStartElement(SRU_NS, "nextRecordPosition");
+                out.writeCharacters(Integer.toString(position));
+                out.writeEndElement();
+            }
+
+            // echoedSearchRetrieveRequest
+            if (config.getEchoRequests()) {
+                writeEchoedSearchRetrieveRequest(out, request,
+                                                 request.getQuery());
+            }
+
+            // diagnostics
+            writeDiagnosticList(out, request.getDiagnostics());
+
+            // extraResponseData
+            if (result.hasExtraResponseData()) {
+                out.writeStartElement(SRU_NS, "extraResponseData");
+                result.writeExtraResponseData(out);
+                out.writeEndElement(); // "extraResponseData" element
+            }
+
+            endResponse(out);
+        } finally {
+            result.close();
+        }
+    }
+
+
+    private void beginResponse(SRUXMLStreamWriter out, SRUOperation operation,
+            SRUVersion version, String stylesheet) throws XMLStreamException {
+        out.writeStartDocument("utf-8", "1.0");
+
+        if (stylesheet != null) {
+            StringBuilder param = new StringBuilder();
+            param.append("type=\"text/xsl\"");
+            param.append(" ");
+            param.append("href=\"");
+            param.append(stylesheet);
+            param.append("\"");
+            out.writeProcessingInstruction("xml-stylesheet", param.toString());
+        }
+
+        out.setPrefix(SRU_PREFIX, SRU_NS);
+        switch (operation) {
+        case EXPLAIN:
+            out.writeStartElement(SRU_NS, "explainResponse");
+            break;
+        case SCAN:
+            out.writeStartElement(SRU_NS, "scanResponse");
+            break;
+        case SEARCH_RETRIEVE:
+            out.writeStartElement(SRU_NS, "searchRetrieveResponse");
+            break;
+        }
+        out.writeNamespace(SRU_PREFIX, SRU_NS);
+
+        // version
+        writeVersion(out, version);
+    }
+
+
+    private void beginResponse(SRUXMLStreamWriter out, SRURequest request)
+            throws XMLStreamException {
+        beginResponse(out, request.getOperation(), request.getVersion(),
+                request.getStylesheet());
+    }
+
+
+    private void endResponse(SRUXMLStreamWriter out)
+            throws XMLStreamException {
+        out.writeEndElement(); // "root" element
+
+        out.writeEndDocument();
+        out.close();
+        try {
+            out.getWriter().close();
+        } catch (IOException e) {
+            /* IGNORE */
+        }
+    }
+
+
+    private void writeFatalError(SRUXMLStreamWriter out,
+            SRURequestImpl request, List<SRUDiagnostic> diagnotics)
+            throws XMLStreamException {
+        /*
+         * if operation is unknown, default to 'explain'
+         */
+        SRUOperation operation = request.getOperation();
+        if (operation == null) {
+            operation = SRUOperation.EXPLAIN;
+        }
+        SRUVersion version = request.getVersion();
+        if (version == null) {
+            version = config.getDefaultVersion();
+        }
+        /*
+         * write a response which conforms to the schema
+         */
+        beginResponse(out, operation, version, null);
+        switch (operation) {
+        case EXPLAIN:
+            // 'explain' requires a complete explain record ...
+            writeExplainRecord(out, request);
+            break;
+        case SCAN:
+            // 'scan' fortunately does not need any elements ...
+            break;
+        case SEARCH_RETRIEVE:
+            // 'searchRetrieve' needs numberOfRecords ..
+            out.writeStartElement(SRU_NS, "numberOfRecords");
+            out.writeCharacters("0");
+            out.writeEndElement(); // "numberOfRecords" element
+            break;
+        }
+        writeDiagnosticList(out, diagnotics);
+        endResponse(out);
+    }
+
+
+    private void writeDiagnosticList(SRUXMLStreamWriter out,
+            List<SRUDiagnostic> diagnostics) throws XMLStreamException {
+        if ((diagnostics != null) && !diagnostics.isEmpty()) {
+            out.setPrefix(SRU_DIAGNOSTIC_PREFIX, SRU_DIAGNOSIC_NS);
+            out.writeStartElement(SRU_NS, "diagnostics");
+            out.writeNamespace(SRU_DIAGNOSTIC_PREFIX, SRU_DIAGNOSIC_NS);
+            for (SRUDiagnostic diagnostic : diagnostics) {
+                writeDiagnostic(out, diagnostic, false);
+            }
+            out.writeEndElement(); // "diagnostics" element
+        }
+    }
+
+
+    private void writeExplainRecord(SRUXMLStreamWriter out,
+            SRURequestImpl request) throws XMLStreamException {
         out.writeStartElement(SRU_NS, "record");
 
         out.writeStartElement(SRU_NS, "recordSchema");
@@ -391,373 +776,6 @@ public class SRUServer {
 
         out.writeEndElement(); // "recordData" element
         out.writeEndElement(); // "record" element
-
-        if (config.getEchoRequests()) {
-            writeEchoedExplainRequest(out, request);
-        }
-
-        // diagnostics
-        writeDiagnosticList(out, request.getDiagnostics());
-
-        // extraResponseData
-        if (result != null) {
-            if (result.hasExtraResponseData()) {
-                out.writeStartElement(SRU_NS, "extraResponseData");
-                result.writeExtraResponseData(out);
-                out.writeEndElement(); // "extraResponseData" element
-            }
-        }
-
-        endResponse(out);
-    }
-
-
-    private void scan(SRURequestImpl request, HttpServletResponse response)
-            throws IOException, XMLStreamException, SRUException {
-        logger.info("scan: scanClause = \"{}\"",
-                new Object[] { request.getRawScanClause() });
-
-        // commence scan
-        final SRUScanResultSet result = searchEngine.scan(config,
-                request, request);
-        if (result == null) {
-            throw new SRUException(SRUConstants.SRU_UNSUPPORTED_OPERATION,
-                    "The 'scan' operation is not supported by this endpoint.");
-        }
-
-        // send results
-        SRUXMLStreamWriter out =
-                createXMLStreamWriter(response.getOutputStream(),
-                                      request.getRecordPacking(),
-                                      getIndent(request));
-
-        beginResponse(out, request);
-
-        try {
-            out.writeStartElement(SRU_NS, "terms");
-            while (result.hasMoreTerms()) {
-                out.writeStartElement(SRU_NS, "term");
-
-                out.writeStartElement(SRU_NS, "value");
-                out.writeCharacters(result.getValue());
-                out.writeEndElement(); // "value" element
-
-                if (result.getNumberOfRecords() > -1) {
-                    out.writeStartElement(SRU_NS, "numberOfRecords");
-                    out.writeCharacters(
-                            Integer.toString(result.getNumberOfRecords()));
-                    out.writeEndElement(); // "numberOfRecords" element
-                }
-
-                if (result.getDisplayTerm() != null) {
-                    out.writeStartElement(SRU_NS, "displayTerm");
-                    out.writeCharacters(result.getDisplayTerm());
-                    out.writeEndElement(); // "displayTerm" element
-                }
-
-                if (result.getWhereInList() != null) {
-                    out.writeStartElement(SRU_NS, "whereInList");
-                    switch (result.getWhereInList()) {
-                    case FIRST:
-                        out.writeCharacters("first");
-                        break;
-                    case LAST:
-                        out.writeCharacters("last");
-                        break;
-                    case ONLY:
-                        out.writeCharacters("only");
-                        break;
-                    case INNER:
-                        out.writeCharacters("inner");
-                        break;
-                    } // switch
-                    out.writeEndElement(); // "whereInList" element
-                }
-
-                if (result.hasExtraTermData()) {
-                    out.writeStartElement(SRU_NS, "extraTermData");
-                    result.writeExtraTermData(out);
-                    out.writeEndElement(); // "extraTermData" element
-                }
-
-                out.writeEndElement(); // "term" element
-
-                result.nextTerm();
-            }
-            out.writeEndElement(); // "terms" element
-        } catch (NoSuchElementException e) {
-            throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                    "An internal error occurred while " +
-                    "serializing scan results.");
-        }
-
-        // echoedScanRequest
-        if (config.getEchoRequests()) {
-            writeEchoedScanRequest(out, request, request.getScanClause());
-        }
-
-        // diagnostics
-        writeDiagnosticList(out, request.getDiagnostics());
-
-        // extraResponseData
-        if (result.hasExtraResponseData()) {
-            out.writeStartElement(SRU_NS, "extraResponseData");
-            result.writeExtraResponseData(out);
-            out.writeEndElement(); // "extraResponseData" element
-        }
-
-        endResponse(out);
-    }
-
-
-    private void search(SRURequestImpl request, HttpServletResponse response)
-            throws IOException, XMLStreamException, SRUException {
-        logger.info("searchRetrieve: query = \"{}\", startRecord = {}, " +
-                "maximumRecords = {}, recordSchema = {}, resultSetTTL = {}",
-                new Object[] { request.getRawQuery(), request.getStartRecord(),
-                        request.getMaximumRecords(),
-                        request.getRecordSchemaIdentifier(),
-                        request.getResultSetTTL() });
-
-        // commence search ...
-        final SRUSearchResultSet result = searchEngine.search(config,
-                request, request);
-        if (result == null) {
-            throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                    "Database implementation returned invalid result (null).");
-        }
-
-        // send results
-        SRUXMLStreamWriter out =
-                createXMLStreamWriter(response.getOutputStream(),
-                                      request.getRecordPacking(),
-                                      getIndent(request));
-
-        beginResponse(out, request);
-
-        // numberOfRecords
-        out.writeStartElement(SRU_NS, "numberOfRecords");
-        out.writeCharacters(Integer.toString(result.getTotalRecordCount()));
-        out.writeEndElement(); // "numberOfRecords" element
-
-        // resultSetId
-        if (result.getResultSetId() != null) {
-            out.writeStartElement(SRU_NS, "resultSetId");
-            out.writeCharacters(result.getResultSetId());
-            out.writeEndElement(); // "resultSetId" element
-        }
-
-        // resultSetIdleTime
-        if (result.getResultSetIdleTime() > 0) {
-            out.writeStartElement(SRU_NS, "resultSetIdleTime");
-            out.writeCharacters(
-                    Integer.toString(result.getResultSetIdleTime()));
-            out.writeEndElement();  // "resultSetIdleTime" element
-        }
-
-        int position = (request.getStartRecord() > 0)
-                     ? request.getStartRecord() : 1;
-        if (result.getRecordCount() > 0) {
-            final int maxPositionOffset =
-                    (request.getMaximumRecords() != -1)
-                    ? (position + request.getMaximumRecords() - 1) : - 1;
-            try {
-                out.writeStartElement(SRU_NS, "records");
-                while (result.hasMoreRecords()) {
-                    /*
-                     * Sanity check: do not return more then the maximum
-                     * requested records. If database implementation does
-                     * not honor limit truncate the result set.
-                     */
-                    if ((maxPositionOffset != -1) &&
-                            (position > maxPositionOffset)) {
-                        logger.error("SRUSearchEngine implementation did not " +
-                                "honor limit for the amount of requsted " +
-                                "records. Result set truncated!");
-                        break;
-                    }
-
-                    out.writeStartElement(SRU_NS, "record");
-
-                    /*
-                     *  We need to output either the record or a
-                     *  surrogate diagnostic. In case of the latter, we need
-                     *  to output the appropriate record schema ...
-                     */
-                    SRUDiagnostic diagnostic = result.getSurrogateDiagnostic();
-
-                    out.writeStartElement(SRU_NS, "recordSchema");
-                    if (diagnostic == null) {
-                        out.writeCharacters(result.getRecordSchemaIdentifier());
-                    } else {
-                        out.writeCharacters(SRU_DIAGNOSTIC_RECORD_SCHEMA);
-                    }
-                    out.writeEndElement(); // "recordSchema" element
-
-                    // recordPacking
-                    writeRecordPacking(out, request.getRecordPacking());
-
-                    /*
-                     * Output either record data or surrogate diagnostic ...
-                     */
-                    out.writeStartElement(SRU_NS, "recordData");
-                    if (diagnostic == null) {
-                        out.startRecord();
-                        result.writeRecord(out);
-                        out.endRecord();
-                    } else {
-                        writeSurrogateDiagnostic(out, diagnostic);
-                    }
-                    out.writeEndElement(); // "recordData" element
-
-                    /*
-                     * recordIdentifier is version 1.2 only
-                     */
-                    if (request.isVersion(SRUVersion.VERSION_1_2)) {
-                        final String identifier = result.getRecordIdentifier();
-                        if (identifier != null) {
-                            out.writeStartElement(SRU_NS, "recordIdentifier");
-                            out.writeCharacters(identifier);
-                            out.writeEndElement(); // "recordIdentifier" element
-                        }
-                    }
-
-                    out.writeStartElement(SRU_NS, "recordPosition");
-                    out.writeCharacters(Integer.toString(position));
-                    out.writeEndElement(); // "recordPosition" element
-
-                    if (result.hasExtraRecordData()) {
-                        out.writeStartElement(SRU_NS, "extraRecordData");
-                        result.writeExtraRecordData(out);
-                        out.writeEndElement(); // "extraRecordData"
-                    }
-
-                    out.writeEndElement(); // "record" element
-
-                    result.nextRecord();
-                    position++;
-                }
-                out.writeEndElement(); // "records" element
-            } catch (NoSuchElementException e) {
-                throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
-                        "An internal error occurred while " +
-                        "serializing search result set.");
-            }
-        }
-
-        // nextRecordPosition
-        if (position <= result.getTotalRecordCount()) {
-            out.writeStartElement(SRU_NS, "nextRecordPosition");
-            out.writeCharacters(Integer.toString(position));
-            out.writeEndElement();
-        }
-
-        // echoedSearchRetrieveRequest
-        if (config.getEchoRequests()) {
-            writeEchoedSearchRetrieveRequest(out, request, request.getQuery());
-        }
-
-        // diagnostics
-        writeDiagnosticList(out, request.getDiagnostics());
-
-        // extraResponseData
-        if (result.hasExtraResponseData()) {
-            out.writeStartElement(SRU_NS, "extraResponseData");
-            result.writeExtraResponseData(out);
-            out.writeEndElement(); // "extraResponseData" element
-        }
-
-        endResponse(out);
-    }
-
-
-    private void beginResponse(SRUXMLStreamWriter out, SRUOperation operation,
-            SRUVersion version, String stylesheet) throws XMLStreamException {
-        out.writeStartDocument("utf-8", "1.0");
-
-        if (stylesheet != null) {
-            StringBuilder param = new StringBuilder();
-            param.append("type=\"text/xsl\"");
-            param.append(" ");
-            param.append("href=\"");
-            param.append(stylesheet);
-            param.append("\"");
-            out.writeProcessingInstruction("xml-stylesheet", param.toString());
-        }
-
-        out.setPrefix(SRU_PREFIX, SRU_NS);
-        switch (operation) {
-        case EXPLAIN:
-            out.writeStartElement(SRU_NS, "explainResponse");
-            break;
-        case SCAN:
-            out.writeStartElement(SRU_NS, "scanResponse");
-            break;
-        case SEARCH_RETRIEVE:
-            out.writeStartElement(SRU_NS, "searchRetrieveResponse");
-            break;
-        }
-        out.writeNamespace(SRU_PREFIX, SRU_NS);
-
-        // version
-        writeVersion(out, version);
-    }
-
-
-    private void beginResponse(SRUXMLStreamWriter out, SRURequest request)
-            throws XMLStreamException {
-        beginResponse(out, request.getOperation(), request.getVersion(),
-                request.getStylesheet());
-    }
-
-
-    private void endResponse(SRUXMLStreamWriter out)
-            throws XMLStreamException {
-        out.writeEndElement(); // "root" element
-
-        out.writeEndDocument();
-        out.close();
-        try {
-            out.getWriter().close();
-        } catch (IOException e) {
-            /* IGNORE */
-        }
-    }
-
-
-    private void writeFatalError(SRUXMLStreamWriter out, SRURequest req,
-            List<SRUDiagnostic> diagnotics) throws XMLStreamException {
-        SRUOperation operation = req.getOperation();
-        if (operation == null) {
-            operation = SRUOperation.SEARCH_RETRIEVE;
-        }
-        SRUVersion version = req.getVersion();
-        if (version == null) {
-            version = config.getDefaultVersion();
-        }
-        beginResponse(out, operation, version, null);
-        writeDiagnosticList(out, diagnotics);
-        endResponse(out);
-    }
-
-
-    private void writeDiagnosticList(SRUXMLStreamWriter out,
-            List<SRUDiagnostic> diagnostics) throws XMLStreamException {
-        if ((diagnostics != null) && !diagnostics.isEmpty()) {
-            out.setPrefix(SRU_DIAGNOSTIC_PREFIX, SRU_DIAGNOSIC_NS);
-            out.writeStartElement(SRU_NS, "diagnostics");
-            out.writeNamespace(SRU_DIAGNOSTIC_PREFIX, SRU_DIAGNOSIC_NS);
-            for (SRUDiagnostic diagnostic : diagnostics) {
-                writeDiagnostic(out, diagnostic, false);
-            }
-            out.writeEndElement(); // "diagnostics" element
-        }
-    }
-
-
-    private void writeSurrogateDiagnostic(SRUXMLStreamWriter out,
-            SRUDiagnostic diagnostic) throws XMLStreamException {
-        writeDiagnostic(out, diagnostic, true);
     }
 
 
@@ -841,7 +859,7 @@ public class SRUServer {
         out.setDefaultNamespace(SRU_XCQL_NS);
         out.writeStartElement(SRU_NS, "xScanClause");
         out.writeDefaultNamespace(SRU_XCQL_NS);
-        out.writeXCQL(cql);
+        out.writeXCQL(cql, false);
         out.writeEndElement(); // "xScanClause" element
 
         // echoedScanRequest/responsePosition
@@ -895,7 +913,7 @@ public class SRUServer {
         out.setDefaultNamespace(SRU_XCQL_NS);
         out.writeStartElement(SRU_NS, "xQuery");
         out.writeDefaultNamespace(SRU_XCQL_NS);
-        out.writeXCQL(cql);
+        out.writeXCQL(cql, true);
         out.writeEndElement(); // "xQuery" element
 
         // echoedSearchRetrieveRequest/startRecord
@@ -1033,11 +1051,6 @@ public class SRUServer {
                     "Error creating output stream.", e);
 
         }
-    }
-
-
-    private int getIndent(SRURequestImpl request) {
-        return request.getIndentResponse();
     }
 
 } // class SRUService

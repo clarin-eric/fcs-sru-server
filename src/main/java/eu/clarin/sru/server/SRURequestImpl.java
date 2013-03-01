@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -65,7 +65,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private int startRecord    = -1;
     private int maximumRecords = -1;
     private String recordSchemaName;
-    private String recordSchemaidentifier;
+    private String recordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
     private int resultSetTTL   = -1;
@@ -229,7 +229,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
         if (diagnostics == null) {
             // check mandatory/optional parameters for operation
-            ParameterInfo[] parameters = null;
+            ParameterInfo[] parameters;
             switch (operation) {
             case EXPLAIN:
                 parameters = PARAMS_EXPLAIN;
@@ -306,19 +306,24 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         if (value != null) {
                             /*
                              * If the recordSchema is supplied, check if it is
-                             * supported by this endpoint.
-                             * If not, raise an error.
+                             * supported by this endpoint. If not, raise
+                             * an error. recoedSchema may contain either
+                             * schema identifier or the short name.
                              */
-                            recordSchemaidentifier =
-                                config.getRecordSchemaIdentifier(value);
-                            if (recordSchemaidentifier == null) {
+                            SRUServerConfig.SchemaInfo schemaInfo =
+                                    config.findSchemaInfo(value);
+                            if (schemaInfo != null) {
+                                recordSchemaIdentifier =
+                                        schemaInfo.getIdentifier();
+                                recordSchemaName =
+                                        schemaInfo.getName();
+                            } else {
                                 addDiagnostic(
                                         SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL,
                                         value,
                                         "Record schema \"" + value +
                                         "\" is not supported for retrieval.");
                             }
-                            recordSchemaName = value;
                         }
                         break;
                     case RECORD_XPATH:
@@ -377,7 +382,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        return (diagnostics == null) ? true : false;
+        // diagnostics != null -> consider as sucesss
+        return (diagnostics == null);
     }
 
 
@@ -513,7 +519,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public String getRecordSchemaIdentifier() {
-        return recordSchemaidentifier;
+        return recordSchemaIdentifier;
     }
 
 
@@ -665,6 +671,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         PARAM_VERSION, "Mandatory parameter \"" +
                                 PARAM_VERSION + "\" was not supplied.");
             }
+
+            /*
+             * this is an explain operation, assume default version
+             */
+            this.version = config.getDefaultVersion();
         }
     }
 
