@@ -99,7 +99,7 @@ public final class SRUServerServlet extends HttpServlet {
      */
     @Deprecated
     private static final String LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
-            "sruServerSerachEngineClass";
+            "eu.clarin.sru.server.utils.sruServerSerachEngineClass";
     /**
      * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
      */
