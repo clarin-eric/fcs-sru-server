@@ -49,7 +49,7 @@ import eu.clarin.sru.server.SRUServerConfig;
  * <p>
  * Add the following to the web.xml of your web applications web.xml to define a
  * SRU server. Of course, the value of the Servlet initialization parameter
- * "eu.clarin.sru.server.utils.sruServerSerachEngineClass" must be adapted to
+ * "eu.clarin.sru.server.utils.sruServerSearchEngineClass" must be adapted to
  * match the name of your search engine implementation. Furthermore, you can
  * choose different url-pattern, to match your needs.
  * </p>
@@ -65,7 +65,7 @@ import eu.clarin.sru.server.SRUServerConfig;
  *   &lt;servlet-name&gt;SRUServerServlet&lt;/servlet-name&gt;
  *   &lt;servlet-class&gt;eu.clarin.sru.server.utils.SRUServerServlet&lt;/servlet-class&gt;
  *   &lt;init-param&gt;
- *     &lt;param-name&gt;eu.clarin.sru.server.utils.sruServerSerachEngineClass&lt;/param-name&gt;
+ *     &lt;param-name&gt;eu.clarin.sru.server.utils.sruServerSearchEngineClass&lt;/param-name&gt;
  *     &lt;param-value&gt;com.acme.MySearchEngine&lt;/param-value&gt;
  *   &lt;/init-param&gt;
  * &lt;/servlet&gt;
@@ -93,14 +93,14 @@ public final class SRUServerServlet extends HttpServlet {
      * Servlet initialization parameter name for the class that implements the
      * SRU search engine.
      */
-    public static final String SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
-            "eu.clarin.sru.server.utils.sruServerSerachEngineClass";
+    public static final String SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM =
+            "eu.clarin.sru.server.utils.sruServerSearchEngineClass";
     /**
-     * @deprecated use {@link #SRU_SERVER_SERACH_ENGINE_CLASS_PARAM}
+     * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
      */
     @Deprecated
-    private static final String LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
-            "sruServerSerachEngineClass";
+    private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM =
+            "sruServerSearchEngineClass";
 
     /**
      * Default value for the location of the SRU server configuration.
@@ -154,17 +154,17 @@ public final class SRUServerServlet extends HttpServlet {
         }
 
         String sruServerSearchEngineClass =
-                cfg.getInitParameter(SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
+                cfg.getInitParameter(SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
         if (sruServerSearchEngineClass == null) {
-            sruServerSearchEngineClass = cfg.getInitParameter(LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
+            sruServerSearchEngineClass = cfg.getInitParameter(LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
             if (sruServerSearchEngineClass != null) {
                 logger.warn("init parameter '" +
-                        LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
+                        LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
                         "' is deprecated, please use init parameter '" +
-                        SRU_SERVER_SERACH_ENGINE_CLASS_PARAM + "' instead!");
+                        SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM + "' instead!");
             } else {
                 throw new ServletException("init parameter '" +
-                        SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
+                        SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
                         "' not defined in servlet configuration");
             }
         }
