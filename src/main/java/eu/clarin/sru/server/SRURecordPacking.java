@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -28,5 +28,5 @@ public enum SRURecordPacking {
     /**
      * String record packing
      */
-    STRING;
+    STRING
 } // enum SRURecordPacking
