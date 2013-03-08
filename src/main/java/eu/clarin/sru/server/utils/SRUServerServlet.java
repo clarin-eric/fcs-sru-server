@@ -158,7 +158,7 @@ public final class SRUServerServlet extends HttpServlet {
                     sruServerConfigLocation + ")");
         }
 
-        /* get search engine class name from servelet init parameters */
+        /* get search engine class name from Servlet init parameters */
         String sruServerSearchEngineClass =
                 cfg.getInitParameter(SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
 
@@ -208,7 +208,7 @@ public final class SRUServerServlet extends HttpServlet {
 
         /*
          * ... and get more init-parameters from ServletContext and potentially
-         * overriding parameters from servlet configuration.
+         * overriding parameters from Servlet configuration.
          */
         for (Enumeration<?> i = ctx.getInitParameterNames();
                 i.hasMoreElements();) {
@@ -279,21 +279,21 @@ public final class SRUServerServlet extends HttpServlet {
                     clazz.getConstructor();
             searchEngine = constructor.newInstance();
         } catch (ClassNotFoundException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (ClassCastException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (NoSuchMethodException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (SecurityException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (InstantiationException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (IllegalAccessException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (IllegalArgumentException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (InvocationTargetException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         }
 
         /*
@@ -303,9 +303,9 @@ public final class SRUServerServlet extends HttpServlet {
             searchEngine.init(ctx, sruServerConfig, params);
             sruServer = new SRUServer(sruServerConfig, searchEngine);
         } catch (SRUConfigException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         } catch (SRUException e) {
-            throw new ServletException("error inisializing sru server", e);
+            throw new ServletException("error initializing sru server", e);
         }
     }
 
@@ -334,7 +334,7 @@ public final class SRUServerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         if (sruServer == null) {
-            throw new ServletException("servlet is not properly initalized");
+            throw new ServletException("servlet is not properly initialized");
         }
         sruServer.handleRequest(request, response);
     }
