@@ -98,14 +98,14 @@ public final class SRUServerServlet extends HttpServlet {
      * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
      */
     @Deprecated
-    private static final String LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM =
-            "eu.clarin.sru.server.utils.sruServerSerachEngineClass";
+    private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_1 =
+            "sruServerSerachEngineClass";
     /**
      * @deprecated use {@link #SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM}
      */
     @Deprecated
-    private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM =
-            "sruServerSerachEngineClass";
+    private static final String LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_2 =
+            "eu.clarin.sru.server.utils.sruServerSerachEngineClass";
     /**
      * Default value for the location of the SRU server configuration.
      */
@@ -136,7 +136,7 @@ public final class SRUServerServlet extends HttpServlet {
             if (sruServerConfigLocation != null) {
                 logger.warn("init parameter '" +
                         LEGACY_SRU_SERVER_CONFIG_LOCATION_PARAM +
-                        "' is deprecated, please use init parameter '" +
+                        "' is deprecated, please use init-parameter '" +
                         SRU_SERVER_CONFIG_LOCATION_PARAM + "' instead!");
             } else {
                 sruServerConfigLocation = SRU_SERVER_CONFIG_LOCATION_DEFAULT;
@@ -147,29 +147,29 @@ public final class SRUServerServlet extends HttpServlet {
         try {
             sruServerConfigFile = ctx.getResource(sruServerConfigLocation);
         } catch (MalformedURLException e) {
-            throw new ServletException("init parameter '" +
+            throw new ServletException("init-parameter '" +
                     SRU_SERVER_CONFIG_LOCATION_PARAM + "' is not a valid URL",
                     e);
         }
         if (sruServerConfigFile == null) {
-            throw new ServletException("init parameter '" +
+            throw new ServletException("init-parameter '" +
                     SRU_SERVER_CONFIG_LOCATION_PARAM +
                     "' points to non-existing resource (" +
                     sruServerConfigLocation + ")");
         }
 
-        /* get search engine class name from Servlet init parameters */
+        /* get search engine class name from Servlet init-parameters */
         String sruServerSearchEngineClass =
                 cfg.getInitParameter(SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
 
         /* legacy compatibility (first try) */
         if (sruServerSearchEngineClass == null) {
             sruServerSearchEngineClass = cfg.getInitParameter(
-                    LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM);
+                    LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_1);
             if (sruServerSearchEngineClass != null) {
-                logger.warn("init parameter '" +
-                        LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
-                        "' is deprecated, please use init parameter '" +
+                logger.warn("init-parameter '" +
+                        LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_1 +
+                        "' is deprecated, please use init-parameter '" +
                         SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM + "' instead!");
             }
         }
@@ -177,18 +177,18 @@ public final class SRUServerServlet extends HttpServlet {
         /* legacy compatibility (second try) */
         if (sruServerSearchEngineClass == null) {
             sruServerSearchEngineClass = cfg.getInitParameter(
-                    LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM);
+                    LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_2);
             if (sruServerSearchEngineClass != null) {
-                logger.warn("init parameter '" +
-                        LEGACY_SRU_SERVER_SERACH_ENGINE_CLASS_PARAM +
-                        "' is deprecated, please use init parameter '" +
+                logger.warn("init-parameter '" +
+                        LEGACY_SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM_2 +
+                        "' is deprecated, please use init-parameter '" +
                         SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM + "' instead!");
             }
         }
 
         /* if still nothing, give up */
         if (sruServerSearchEngineClass == null) {
-            throw new ServletException("init parameter '" +
+            throw new ServletException("init-parameter '" +
                     SRU_SERVER_SEARCH_ENGINE_CLASS_PARAM +
                     "' not defined in servlet configuration");
         }
