@@ -17,7 +17,7 @@
 package eu.clarin.sru.server;
 
 /**
- * An exception raised if something went wrong processing the request. For
+ * An exception raised, if something went wrong processing the request. For
  * diagnostic codes, see constants in {@link SRUConstants}.
  *
  * @see SRUConstants

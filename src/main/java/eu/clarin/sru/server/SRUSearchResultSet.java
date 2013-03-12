@@ -57,9 +57,11 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
     /**
      * The number of records matched by the query. If the query fails this must
-     * be 0.
+     * be 0. If the search engine cannot determine the total number of matched
+     * by a query, it must return -1.
      *
-     * @return the total number of results or 0 if the query failed
+     * @return the total number of results or 0 if the query failed or -1 if the
+     *         search engine cannot determine the total number of results
      */
     public abstract int getTotalRecordCount();
 

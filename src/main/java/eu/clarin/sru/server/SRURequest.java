@@ -101,10 +101,10 @@ public interface SRURequest {
 
     /**
      * Get the <em>startRecord</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
+     * for <em>searchRetrieve</em> requests. If the client did not provide
+     * a value for the request, it is set to <code>1</code>.
      *
-     * @return the number of the start record or <code>-1</code> if no value was
-     *         supplied for this request
+     * @return the number of the start record
      */
     public int getStartRecord();
 
@@ -184,10 +184,10 @@ public interface SRURequest {
 
     /**
      * Get the <em>responsePosition</em> parameter of this request. Only
-     * available for <em>scan</em> requests.
+     * available for <em>scan</em> requests. If the client did not provide
+     * a value for the request, it is set to <code>1</code>.
      *
-     * @return the response position or <code>-1</code> if no value was supplied
-     *         for this request
+     * @return the response position
      */
     public int getResponsePosition();
 
