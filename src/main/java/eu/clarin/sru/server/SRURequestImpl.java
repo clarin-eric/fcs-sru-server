@@ -495,7 +495,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getMaximumRecords() {
-        if (config.allowOverrideIndentResponse() &&
+        if (config.allowOverrideMaximumRecords() &&
                 (getExtraRequestData(X_UNLIMITED_RESULTSET) != null)) {
             return -1;
         }
