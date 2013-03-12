@@ -177,10 +177,12 @@ public final class SRUServerConfig {
             "eu.clarin.sru.server.echoRequests";
     /**
      * Parameter constant for configuring, if the SRU server pretty-print the
-     * XML response. Setting this parameter can be useful for manual debugging,
-     * however it is not recommended for production setups.
+     * XML response. Setting this parameter can be useful for manual debugging
+     * of the XML response, however it is <em>not recommended</em> for
+     * production setups.
      * <p>
-     * Valid values: <code>true</code> or <code>false</code>
+     * Valid values: any integer greater or equal to <code>-1</code> (default)
+     * and less or equal to <code>8</code>
      * </p>
      */
     public static final String SRU_INDENT_RESPONSE =
@@ -188,21 +190,22 @@ public final class SRUServerConfig {
     /**
      * Parameter constant for configuring, if the SRU server will allow the
      * client to override the maximum number of records the server supports.
-     * This parameter is solely intended for debugging and enabling it is
-     * <em>strongly</em> discouraged for production setups.
+     * This parameter is solely intended for debugging and setting it to
+     * <code>true</code> is <em>strongly</em> discouraged for production setups.
      * <p>
-     * Valid values: <code>true</code> or <code>false</code>
+     * Valid values: <code>true</code> or <code>false</code> (default)
      * </p>
      */
     public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
             "eu.clarin.sru.server.allowOverrideMaximumRecords";
     /**
      * Parameter constant for configuring, if the SRU server will allow the
-     * client to override the maximum number of terms the server supports.
-     * This parameter is solely intended for debugging and enabling it is
-     * <em>strongly</em> discouraged for production setups.
+     * client to override the maximum number of terms the server supports. This
+     * parameter is solely intended for debugging and setting it to
+     * <code>true</code> it is <em>strongly</em> discouraged for production
+     * setups.
      * <p>
-     * Valid values: <code>true</code> or <code>false</code>
+     * Valid values: <code>true</code> or <code>false</code> (default)
      * </p>
      */
     public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_TERMS =
@@ -210,10 +213,11 @@ public final class SRUServerConfig {
     /**
      * Parameter constant for configuring, if the SRU server will allow the
      * client to override the pretty-printing setting of the server. This
-     * parameter is solely intended for debugging and enabling it is
-     * <em>strongly</em> discouraged for production setups.
+     * parameter is solely intended for debugging and setting it to
+     * <code>true</code> it is <em>strongly</em> discouraged for production
+     * setups.
      * <p>
-     * Valid values: <code>true</code> or <code>false</code>
+     * Valid values: <code>true</code> or <code>false</code> (default)
      * </p>
      */
     public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
