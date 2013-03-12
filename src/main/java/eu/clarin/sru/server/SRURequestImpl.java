@@ -54,6 +54,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final String PARAM_EXTENSION_PREFIX  = "x-";
     private static final String X_UNLIMITED_RESULTSET   = "x-unlimited-resultset";
     private static final String X_INDENT_RESPONSE       = "x-indent-response";
+    private static final int DEFAULT_START_RECORD       = 1;
+    private static final int DEFAULT_RESPONSE_POSITION  = 1;
     private final SRUServerConfig config;
     private final HttpServletRequest request;
     private List<SRUDiagnostic> diagnostics;
@@ -62,17 +64,17 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private SRURecordPacking recordPacking;
     private CQLNode query;
     private String rawQuery;
-    private int startRecord    = -1;
+    private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
     private String recordSchemaName;
     private String recordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
-    private int resultSetTTL   = -1;
+    private int resultSetTTL = -1;
     private String sortKeys;
     private CQLNode scanClause;
     private String rawScanClause;
-    private int responsePosition = -1;
+    private int responsePosition = DEFAULT_RESPONSE_POSITION;
     private int maximumTerms = -1;
 
     private static enum Parameter {
