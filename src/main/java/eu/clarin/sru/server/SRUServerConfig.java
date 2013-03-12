@@ -126,8 +126,8 @@ public final class SRUServerConfig {
             "eu.clarin.sru.server.database";
     /**
      * Parameter constant for configuring the <em>default</em> number of records
-     * the SRU server will provide in the response to a request if the client
-     * does not specify a limit.
+     * the SRU server will provide in the response to a <em>searchRetrieve</em>
+     * request if the client does not provide this value.
      * <p>
      * Valid values: a integer greater than 0 (default value is 100)
      * </p>
@@ -136,14 +136,36 @@ public final class SRUServerConfig {
             "eu.clarin.sru.server.numberOfRecords";
     /**
      * Parameter constant for configuring the <em>maximum</em> number of records
-     * the SRU server will support in one request. If a client requests more
-     * records, the number will be limited to this value.
+     * the SRU server will support in the response to a <em>searchRetrieve</em>
+     * request. If a client requests more records, the number will be limited to
+     * this value.
      * <p>
      * Valid values: a integer greater than 0 (default value is 250)
      * </p>
      */
     public static final String SRU_MAXIMUM_RECORDS =
             "eu.clarin.sru.server.maximumRecords";
+    /**
+     * Parameter constant for configuring the <em>default</em> number of terms
+     * the SRU server will provide in the response to a <em>scan</em> request if
+     * the client does not provide this value.
+     * <p>
+     * Valid values: a integer greater than 0 (default value is 250)
+     * </p>
+     */
+    public static final String SRU_NUMBER_OF_TERMS =
+            "eu.clarin.sru.server.numberOfTerms";
+    /**
+     * Parameter constant for configuring the <em>maximum</em> number of terms
+     * the SRU server will support in the response to a <em>scan</em> request.
+     * If a client requests more records, the number will be limited to this
+     * value.
+     * <p>
+     * Valid values: a integer greater than 0 (default value is 500)
+     * </p>
+     */
+    public static final String SRU_MAXIMUM_TERMS =
+            "eu.clarin.sru.server.maximumTerms";
     /**
      * Parameter constant for configuring, if the SRU server will echo the
      * request.
@@ -174,6 +196,17 @@ public final class SRUServerConfig {
      */
     public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
             "eu.clarin.sru.server.allowOverrideMaximumRecords";
+    /**
+     * Parameter constant for configuring, if the SRU server will allow the
+     * client to override the maximum number of terms the server supports.
+     * This parameter is solely intended for debugging and enabling it is
+     * <em>strongly</em> discouraged for production setups.
+     * <p>
+     * Valid values: <code>true</code> or <code>false</code>
+     * </p>
+     */
+    public static final String SRU_ALLOW_OVERRIDE_MAXIMUM_TERMS =
+            "eu.clarin.sru.server.allowOverrideMaximumTerms";
     /**
      * Parameter constant for configuring, if the SRU server will allow the
      * client to override the pretty-printing setting of the server. This
@@ -246,7 +279,9 @@ public final class SRUServerConfig {
     private static final String LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "sru.allowOverrideIndentResponse";
     private static final int DEFAULT_NUMBER_OF_RECORDS = 100;
-    private static final int DEFAULT_MAXIMUM_RECORDS = 250;
+    private static final int DEFAULT_MAXIMUM_RECORDS   = 250;
+    private static final int DEFAULT_NUMBER_OF_TERMS   = 250;
+    private static final int DEFAULT_MAXIMUM_TERMS     = 500;
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
     private static final String CONFIG_FILE_SCHEMA_URL =
@@ -582,9 +617,12 @@ public final class SRUServerConfig {
     private final String database;
     private final int numberOfRecords;
     private final int maximumRecords;
+    private final int numberOfTerms;
+    private final int maximumTerms;
     private final boolean echoRequests;
     private final int indentResponse;
     private final boolean allowOverrideMaximumRecords;
+    private final boolean allowOverrideMaximumTerms;
     private final boolean allowOverrideIndentResponse;
     private final String baseUrl;
     private final DatabaseInfo databaseInfo;
@@ -594,20 +632,23 @@ public final class SRUServerConfig {
 
     private SRUServerConfig(String transport, String host, int port,
             String database, int numberOfRecords, int maximumRecords,
-            boolean echoRequests, int indentResponse,
-            boolean allowOverrideMaximumRecords,
-            boolean allowOverrideIndentResponse,
-            DatabaseInfo databaseinfo, IndexInfo indexInfo,
-            List<SchemaInfo> schemaInfo) {
+            int numberOfTerms, int maximumTerms, boolean echoRequests,
+            int indentResponse, boolean allowOverrideMaximumRecords,
+            boolean allowOverrideMaximumTerms,
+            boolean allowOverrideIndentResponse, DatabaseInfo databaseinfo,
+            IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
         this.transport                   = transport;
         this.host                        = host;
         this.port                        = port;
         this.database                    = database;
         this.numberOfRecords             = numberOfRecords;
         this.maximumRecords              = maximumRecords;
+        this.numberOfTerms               = numberOfTerms;
+        this.maximumTerms                = maximumTerms;
         this.echoRequests                = echoRequests;
         this.indentResponse              = indentResponse;
         this.allowOverrideMaximumRecords = allowOverrideMaximumRecords;
+        this.allowOverrideMaximumTerms   = allowOverrideMaximumTerms;
         this.allowOverrideIndentResponse = allowOverrideIndentResponse;
         this.databaseInfo                = databaseinfo;
         this.indexInfo                   = indexInfo;
@@ -678,6 +719,16 @@ public final class SRUServerConfig {
     }
 
 
+    public int getNumberOfTerms() {
+        return numberOfTerms;
+    }
+
+
+    public int getMaximumTerms() {
+        return maximumTerms;
+    }
+
+
     public int getIndentResponse() {
         return indentResponse;
     }
@@ -685,6 +736,11 @@ public final class SRUServerConfig {
 
     public boolean allowOverrideMaximumRecords() {
         return allowOverrideMaximumRecords;
+    }
+
+
+    public boolean allowOverrideMaximumTerms() {
+        return allowOverrideMaximumTerms;
     }
 
 
@@ -906,6 +962,12 @@ public final class SRUServerConfig {
             int maximumRecords = parseNumber(params, SRU_MAXIMUM_RECORDS,
                     false, DEFAULT_MAXIMUM_RECORDS, numberOfRecords, -1);
 
+            int numberOfTerms = parseNumber(params, SRU_NUMBER_OF_TERMS,
+                    false, DEFAULT_NUMBER_OF_TERMS, 0, -1);
+
+            int maximumTerms = parseNumber(params, SRU_MAXIMUM_TERMS, false,
+                        DEFAULT_MAXIMUM_TERMS, numberOfTerms, -1);
+
             boolean echoRequests = parseBoolean(params, SRU_ECHO_REQUESTS,
                     false, true);
 
@@ -915,12 +977,16 @@ public final class SRUServerConfig {
             boolean allowOverrideMaximumRecords = parseBoolean(params,
                     SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS, false, false);
 
+            boolean allowOverrideMaximumTerms = parseBoolean(params,
+                    SRU_ALLOW_OVERRIDE_MAXIMUM_TERMS, false, false);
+
             boolean allowOverrideIndentResponse = parseBoolean(params,
                     SRU_ALLOW_OVERRIDE_INDENT_RESPONSE, false, false);
 
             return new SRUServerConfig(transport, host, port, database,
-                    numberOfRecords, maximumRecords, echoRequests,
-                    indentResponse, allowOverrideMaximumRecords,
+                    numberOfRecords, maximumRecords, numberOfTerms,
+                    maximumTerms, echoRequests, indentResponse,
+                    allowOverrideMaximumRecords, allowOverrideMaximumTerms,
                     allowOverrideIndentResponse, databaseInfo, indexInfo,
                     schemaInfo);
         } catch (IOException e) {

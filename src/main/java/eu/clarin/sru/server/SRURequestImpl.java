@@ -53,6 +53,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final String RECORD_PACKING_STRING   = "string";
     private static final String PARAM_EXTENSION_PREFIX  = "x-";
     private static final String X_UNLIMITED_RESULTSET   = "x-unlimited-resultset";
+    private static final String X_UNLIMITED_TERMLIST    = "x-unlimited-termlist";
     private static final String X_INDENT_RESPONSE       = "x-indent-response";
     private static final int DEFAULT_START_RECORD       = 1;
     private static final int DEFAULT_RESPONSE_POSITION  = 1;
@@ -557,7 +558,19 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getMaximumTerms() {
-        return maximumTerms;
+        if (config.allowOverrideMaximumTerms() &&
+                (getExtraRequestData(X_UNLIMITED_TERMLIST) != null)) {
+            return -1;
+        }
+        if (maximumTerms == -1) {
+            return config.getNumberOfTerms();
+        } else {
+            if (maximumTerms > config.getMaximumTerms()) {
+                return config.getMaximumTerms();
+            } else {
+                return maximumTerms;
+            }
+        }
     }
 
 
