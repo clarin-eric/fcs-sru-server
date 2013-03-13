@@ -65,7 +65,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private SRURecordPacking recordPacking;
     private CQLNode query;
     private String rawQuery;
-    private int startRecord = -1;
+    private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
     private String recordSchemaName;
     private String recordSchemaIdentifier;
@@ -75,7 +75,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private String sortKeys;
     private CQLNode scanClause;
     private String rawScanClause;
-    private int responsePosition = -1;
+    private int responsePosition = DEFAULT_RESPONSE_POSITION;
     private int maximumTerms = -1;
 
     private static enum Parameter {
@@ -410,11 +410,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    int getRawStartRecord() {
-        return startRecord;
-    }
-
-
     int getRawMaximumRecords() {
         return maximumRecords;
     }
@@ -422,11 +417,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     String getRawScanClause() {
         return rawScanClause;
-    }
-
-
-    int getRawResponsePosition() {
-        return responsePosition;
     }
 
 
@@ -502,7 +492,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getStartRecord() {
-        return (startRecord > 0) ? startRecord : DEFAULT_START_RECORD;
+        return startRecord;
     }
 
 
@@ -562,8 +552,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getResponsePosition() {
-        return (responsePosition >= 0)
-                ? responsePosition : DEFAULT_RESPONSE_POSITION;
+        return responsePosition;
     }
 
 
