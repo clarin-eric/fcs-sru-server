@@ -352,9 +352,10 @@ public final class SRUServer {
 
         // check, of startRecord position is greater than total record set
         if ((result.getTotalRecordCount() >= 0) &&
-            (request.getStartRecord() > 0) &&
-            (request.getStartRecord() > result.getTotalRecordCount())) {
-            throw new SRUException(SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE);
+            (request.getRawStartRecord() > 0) &&
+            (request.getRawStartRecord() > result.getTotalRecordCount())) {
+            throw new SRUException(
+                    SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE);
         }
 
         try {
