@@ -122,8 +122,10 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
      *
      * @return <code>true</code> if the new current record is valid;
      *         <code>false</code> if there are no more records
+     * @throws SRUException
+     *             if an error occurred while fetching the next record
      */
-    public abstract boolean nextRecord();
+    public abstract boolean nextRecord() throws SRUException;
 
 
     /**

@@ -93,8 +93,10 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
      *
      * @return <code>true</code> if the new current term is valid;
      *         <code>false</code> if there are no more terms
+     * @throws SRUException
+     *             if an error occurred while fetching the next term
      */
-    public abstract boolean nextTerm();
+    public abstract boolean nextTerm() throws SRUException;
 
 
     /**
