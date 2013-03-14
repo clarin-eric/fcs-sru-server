@@ -223,9 +223,9 @@ public final class SRUServerConfig {
     public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "eu.clarin.sru.server.allowOverrideIndentResponse";
     /**
-     * Parameter constant for configuring the size of response buffer size. The
+     * Parameter constant for configuring the size of response buffer. The
      * servlet will buffer up to this amount of data before sending a response
-     * to the client. The value if the response buffer in bytes.
+     * to the client. This value specifies the size of the buffer in bytes.
      * <p>
      * Valid values: any positive integer (default 65536)
      * </p>
