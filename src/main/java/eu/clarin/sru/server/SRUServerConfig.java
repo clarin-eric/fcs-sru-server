@@ -223,6 +223,16 @@ public final class SRUServerConfig {
     public static final String SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "eu.clarin.sru.server.allowOverrideIndentResponse";
     /**
+     * Parameter constant for configuring the size of response buffer size. The
+     * servlet will buffer up to this amount of data before sending a response
+     * to the client. The value if the response buffer in bytes.
+     * <p>
+     * Valid values: any positive integer (default 65536)
+     * </p>
+     */
+    public static final String SRU_RESPONSE_BUFFER_SIZE =
+            "eu.clarin.sru.server.responseBufferSize";
+    /**
      * @deprecated use {@link #SRU_TRANSPORT}
      */
     @Deprecated
@@ -282,10 +292,11 @@ public final class SRUServerConfig {
     @Deprecated
     private static final String LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "sru.allowOverrideIndentResponse";
-    private static final int DEFAULT_NUMBER_OF_RECORDS = 100;
-    private static final int DEFAULT_MAXIMUM_RECORDS   = 250;
-    private static final int DEFAULT_NUMBER_OF_TERMS   = 250;
-    private static final int DEFAULT_MAXIMUM_TERMS     = 500;
+    private static final int DEFAULT_NUMBER_OF_RECORDS    = 100;
+    private static final int DEFAULT_MAXIMUM_RECORDS      = 250;
+    private static final int DEFAULT_NUMBER_OF_TERMS      = 250;
+    private static final int DEFAULT_MAXIMUM_TERMS        = 500;
+    private static final int DEFAULT_RESPONSE_BUFFER_SIZE = 64 * 1024;
     private static final String CONFIG_FILE_NAMESPACE_URI =
             "http://www.clarin.eu/sru-server/1.0/";
     private static final String CONFIG_FILE_SCHEMA_URL =
@@ -625,6 +636,7 @@ public final class SRUServerConfig {
     private final int maximumTerms;
     private final boolean echoRequests;
     private final int indentResponse;
+    private final int responseBufferSize;
     private final boolean allowOverrideMaximumRecords;
     private final boolean allowOverrideMaximumTerms;
     private final boolean allowOverrideIndentResponse;
@@ -637,7 +649,8 @@ public final class SRUServerConfig {
     private SRUServerConfig(String transport, String host, int port,
             String database, int numberOfRecords, int maximumRecords,
             int numberOfTerms, int maximumTerms, boolean echoRequests,
-            int indentResponse, boolean allowOverrideMaximumRecords,
+            int indentResponse, int responseBufferSize,
+            boolean allowOverrideMaximumRecords,
             boolean allowOverrideMaximumTerms,
             boolean allowOverrideIndentResponse, DatabaseInfo databaseinfo,
             IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
@@ -651,6 +664,7 @@ public final class SRUServerConfig {
         this.maximumTerms                = maximumTerms;
         this.echoRequests                = echoRequests;
         this.indentResponse              = indentResponse;
+        this.responseBufferSize          = responseBufferSize;
         this.allowOverrideMaximumRecords = allowOverrideMaximumRecords;
         this.allowOverrideMaximumTerms   = allowOverrideMaximumTerms;
         this.allowOverrideIndentResponse = allowOverrideIndentResponse;
@@ -750,6 +764,11 @@ public final class SRUServerConfig {
 
     public boolean allowOverrideIndentResponse() {
         return allowOverrideIndentResponse;
+    }
+
+
+    public int getResponseBufferSize() {
+        return responseBufferSize;
     }
 
 
@@ -987,12 +1006,16 @@ public final class SRUServerConfig {
             boolean allowOverrideIndentResponse = parseBoolean(params,
                     SRU_ALLOW_OVERRIDE_INDENT_RESPONSE, false, false);
 
+            int responseBufferSize = parseNumber(params,
+                    SRU_RESPONSE_BUFFER_SIZE, false,
+                    DEFAULT_RESPONSE_BUFFER_SIZE, 0, -1);
+
             return new SRUServerConfig(transport, host, port, database,
                     numberOfRecords, maximumRecords, numberOfTerms,
                     maximumTerms, echoRequests, indentResponse,
-                    allowOverrideMaximumRecords, allowOverrideMaximumTerms,
-                    allowOverrideIndentResponse, databaseInfo, indexInfo,
-                    schemaInfo);
+                    responseBufferSize, allowOverrideMaximumRecords,
+                    allowOverrideMaximumTerms, allowOverrideIndentResponse,
+                    databaseInfo, indexInfo, schemaInfo);
         } catch (IOException e) {
             throw new SRUConfigException("error reading configuration file", e);
         } catch (XPathException e) {

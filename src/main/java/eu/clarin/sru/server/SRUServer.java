@@ -16,6 +16,7 @@
  */
 package eu.clarin.sru.server;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -64,7 +65,6 @@ public final class SRUServer {
             "http://www.loc.gov/zing/cql/xcql/";
     static final String RESPONSE_ENCODING = "utf-8";
     private static final String RESPONSE_CONTENT_TYPE = "application/xml";
-    private static final int RESPONSE_BUFFER_SIZE = 64 * 1024;
     private static final Logger logger =
             LoggerFactory.getLogger(SRUServer.class);
     private final SRUServerConfig config;
@@ -115,8 +115,7 @@ public final class SRUServer {
             response.setCharacterEncoding(RESPONSE_ENCODING);
             response.setStatus(HttpServletResponse.SC_OK);
             // make sure we can reset the stream later in case of error ...
-            response.setBufferSize(RESPONSE_BUFFER_SIZE);
-
+            response.setBufferSize(config.getResponseBufferSize());
             try {
                 if (req.checkParameters()) {
                     switch (req.getOperation()) {
@@ -134,7 +133,8 @@ public final class SRUServer {
                     // (some) parameters are malformed, send error
                     SRUXMLStreamWriter out =
                         createXMLStreamWriter(response.getOutputStream(),
-                                SRURecordPacking.XML, req.getIndentResponse());
+                                SRURecordPacking.XML, false,
+                                req.getIndentResponse());
                     writeFatalError(out, req, req.getDiagnostics());
                 }
             } catch (XMLStreamException e) {
@@ -149,6 +149,24 @@ public final class SRUServer {
             }
         } catch (SRUException e) {
             if (!response.isCommitted()) {
+                if (logger.isInfoEnabled()) {
+                    final String message = e.getDiagnostic().getMessage();
+                    if (message != null) {
+                        logger.info("Sending fatal diagnostic '{}{}' with " +
+                                "message '{}'",
+                                new Object[] {
+                                        SRUConstants.SRU_DIAGNOSTIC_URI_PREFIX,
+                                        e.getDiagnostic().getCode(),
+                                        message
+                                });
+                    } else {
+                        logger.info("Sending fatal diagnostic '{}{}'",
+                                SRUConstants.SRU_DIAGNOSTIC_URI_PREFIX,
+                                e.getDiagnostic().getCode());
+                    }
+                    logger.debug("Fatal diagnostic was caused by " +
+                            "this exception", e);
+                }
                 response.resetBuffer();
                 try {
                     List<SRUDiagnostic> diagnostics = req.getDiagnostics();
@@ -159,7 +177,7 @@ public final class SRUServer {
                     }
                     SRUXMLStreamWriter out =
                             createXMLStreamWriter(response.getOutputStream(),
-                                    SRURecordPacking.XML,
+                                    SRURecordPacking.XML, false,
                                     req.getIndentResponse());
                     writeFatalError(out, req, diagnostics);
                 } catch (Exception ex) {
@@ -167,8 +185,15 @@ public final class SRUServer {
                             ex);
                 }
             } else {
+                /*
+                 * The servlet already flushed the output buffer, so cannot
+                 * degrade gracefully anymore and, unfortunately, will produce
+                 * ill-formed XML output.
+                 * Increase the response buffer size, if you want to avoid
+                 * this (at the cost of memory).
+                 */
                 logger.error("A fatal error occurred, but the response was "
-                        + "already committed", e);
+                        + "already committed. Unable to recover gracefully.", e);
             }
         }
     }
@@ -187,6 +212,7 @@ public final class SRUServer {
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
                                           request.getRecordPacking(),
+                                          true,
                                           request.getIndentResponse());
 
             beginResponse(out, request);
@@ -237,6 +263,7 @@ public final class SRUServer {
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
                                           request.getRecordPacking(),
+                                          true,
                                           request.getIndentResponse());
 
             beginResponse(out, request);
@@ -363,6 +390,7 @@ public final class SRUServer {
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
                                           request.getRecordPacking(),
+                                          true,
                                           request.getIndentResponse());
 
             beginResponse(out, request);
@@ -1043,10 +1071,35 @@ public final class SRUServer {
 
 
     private SRUXMLStreamWriter createXMLStreamWriter(OutputStream out,
-            SRURecordPacking recordPacking, int indent) throws SRUException {
+            SRURecordPacking recordPacking, boolean skipFlush, int indent)
+            throws SRUException {
         try {
-            return new SRUXMLStreamWriter(out, writerFactory, recordPacking,
-                    indent);
+            if (skipFlush) {
+                /*
+                 * Add a FilterOutputStream to delay flush() as long as
+                 * possible. Doing so, enabled us to send an appropriate SRU
+                 * diagnostic in case an error occurs during the serialization
+                 * of the response.
+                 * Of course, if an error occurs when the Servlet response
+                 * buffer already had been flushed, because it was to large,
+                 * we cannot fail gracefully and we will produce ill-formed
+                 * XML output.
+                 */
+                out = new FilterOutputStream(out) {
+                    @Override
+                    public void flush() throws IOException {
+                    }
+
+
+                    @Override
+                    public void close() throws IOException {
+                        super.flush();
+                        super.close();
+                    }
+                };
+            }
+            return new SRUXMLStreamWriter(out, writerFactory,
+                    recordPacking, indent);
         } catch (Exception e) {
             throw new SRUException(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     "Error creating output stream.", e);
