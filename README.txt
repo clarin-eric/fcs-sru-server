@@ -11,7 +11,7 @@ application development (Servlets in particular) to use this library.
 
 More Information about SRU/CQL:
   http://www.loc.gov/standards/sru/
-Forthcoming standardization of SRU/CQL 2.0 (including description of 1.2)
+Forthcoming standardization of SRU/CQL 2.0 (includes description of 1.2)
   http://www.loc.gov/standards/sru/oasis/  
 
 
@@ -42,17 +42,15 @@ it should give you a basic idea how to use the library.
 
 HOW TO BUILD:
 -------------
-Since the Java CQL parse is not available from a official Maven repository,
-you'll need to install it to your local repository using the following commands:
-$ cd <place/where/extracted/the/source>/
-$ mvn install:install-file  -DgroupId=org.z3950.zing -DartifactId=cql-java \
-      -Dversion=1.7 -Dpackaging=jar -Dfile=lib/cql-java.jar -DgeneratePom=true
-      
-Then you can build the library with the following command:
+1. Build the library with the following command:
 $ mvn package
 
-And install the artifact in your own repository with the following command:
+2a. Either install the artifact in your own repository with the following
+    command, if you use Maven for you project:
 $ mvn install
 
-Create Java API documentation for this package with the following command:
-$ mvn javadoc:javadoc
+2b. Or use the "sru-server-$VERSION.jar" file created within the
+    "target/" directory, if you do not use Maven for your project.
+
+The Java API documentation is created within the "target/apidocs" directory
+and is also zipped up into the "sru-server-$VERSION-javadoc.jar" archive.

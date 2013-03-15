@@ -26,8 +26,6 @@
             <version>${slf4j.version}</version>
         </dependency>
 
-        <!-- Did you read the "README.txt" file and manually install the
-             artifact in your Maven repository? -->
         <dependency>
             <groupId>org.z3950.zing</groupId>
             <artifactId>cql-java</artifactId>
@@ -42,6 +40,14 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>clarin</id>
+            <url>http://catalog.clarin.eu/ds/nexus/content/repositories/Clarin/</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
