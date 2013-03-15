@@ -43,9 +43,10 @@ it should give you a basic idea how to use the library.
 HOW TO BUILD:
 -------------
 Since the Java CQL parse is not available from a official Maven repository,
-you'll need to install it to your local repository using the following command:
+you'll need to install it to your local repository using the following commands:
+$ cd <place/where/extracted/the/source>/
 $ mvn install:install-file  -DgroupId=org.z3950.zing -DartifactId=cql-java \
-      -Dversion=1.7 -Dpackaging=jar -Dfile=cql-java.jar -DgeneratePom=true
+      -Dversion=1.7 -Dpackaging=jar -Dfile=lib/cql-java.jar -DgeneratePom=true
       
 Then you can build the library with the following command:
 $ mvn package
