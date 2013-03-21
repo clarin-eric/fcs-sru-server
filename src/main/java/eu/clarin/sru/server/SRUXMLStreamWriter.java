@@ -420,7 +420,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         try {
             SAXParser parser = factory.newSAXParser();
             InputSource input =
-                    new InputSource(new StringReader(query.toXCQL(0)));
+                    new InputSource(new StringReader(query.toXCQL()));
             parser.parse(input, new DefaultHandler() {
                 @Override
                 public void startElement(String uri, String localName,
