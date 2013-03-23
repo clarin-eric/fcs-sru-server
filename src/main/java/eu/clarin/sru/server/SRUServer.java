@@ -186,7 +186,7 @@ public final class SRUServer {
                 }
             } else {
                 /*
-                 * The servlet already flushed the output buffer, so cannot
+                 * The Servlet already flushed the output buffer, so cannot
                  * degrade gracefully anymore and, unfortunately, will produce
                  * ill-formed XML output.
                  * Increase the response buffer size, if you want to avoid

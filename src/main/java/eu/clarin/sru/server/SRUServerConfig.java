@@ -67,7 +67,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *     throw new ServletException("not found, url == null");
  * }
  *
- * // other runtime configuration, usually obtained from servlet context
+ * // other runtime configuration, usually obtained from Servlet context
  * HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
  * params.put(SRUServerConfig.SRU_TRANSPORT, "http");
  * params.put(SRUServerConfig.SRU_HOST, "127.0.0.1");
@@ -224,7 +224,7 @@ public final class SRUServerConfig {
             "eu.clarin.sru.server.allowOverrideIndentResponse";
     /**
      * Parameter constant for configuring the size of response buffer. The
-     * servlet will buffer up to this amount of data before sending a response
+     * Servlet will buffer up to this amount of data before sending a response
      * to the client. This value specifies the size of the buffer in bytes.
      * <p>
      * Valid values: any positive integer (default 65536)
@@ -1341,7 +1341,7 @@ public final class SRUServerConfig {
             params.put(name, value);
             params.remove(legacyName);
             logger.warn("parameter '{}' is deprecated, please use "
-                    + "paramter '{}' instead!", legacyName, name);
+                    + "parameter '{}' instead!", legacyName, name);
         }
     }
 
