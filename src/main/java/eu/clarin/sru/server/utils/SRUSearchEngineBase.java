@@ -42,8 +42,8 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
 
 
     /**
-     * Handle a <em>scan</em> operation. The default implementation is a no-op.
-     * Override this method, if you want to provide a custom behavior.
+     * Handle a <em>explain</em> operation. The default implementation is a
+     * no-op. Override this method, if you want to provide a custom behavior.
      *
      * @see SRUSearchEngine#explain(SRUServerConfig, SRURequest,
      *      SRUDiagnosticList)
