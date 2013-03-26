@@ -95,25 +95,6 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      */
     public void init(ServletContext context, SRUServerConfig config,
             Map<String, String> params) throws SRUConfigException {
-        init(config, params);
-    }
-
-
-    /**
-     * Initialize the search engine.
-     *
-     * @param config
-     *            the {@link SRUServerConfig} object for this search engine
-     * @param params
-     *            additional parameters gathered from the Servlet configuration
-     *            and Servlet context.
-     * @throws SRUConfigException
-     *             an error occurred during initialization of the search engine
-     * @deprecated Replaced by {@link #init(ServletContext, SRUServerConfig, Map)}
-     */
-    @Deprecated
-    public void init(SRUServerConfig config, Map<String, String> params)
-            throws SRUConfigException {
     }
 
 
