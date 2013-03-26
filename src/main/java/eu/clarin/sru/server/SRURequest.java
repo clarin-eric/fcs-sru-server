@@ -248,9 +248,9 @@ public interface SRURequest {
 
 
     /**
-     * Get the raw client request information from the servlet container.
+     * Get the raw client request information from the Servlet container.
      *
-     * @return the servlet request
+     * @return the Servlet request
      */
     public HttpServletRequest getServletRequest();
 
