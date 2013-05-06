@@ -64,17 +64,14 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private SRUVersion version;
     private SRURecordPacking recordPacking;
     private CQLNode query;
-    private String rawQuery;
     private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
     private String recordSchemaIdentifier;
-    private String rawRecordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
     private int resultSetTTL = -1;
     private String sortKeys;
     private CQLNode scanClause;
-    private String rawScanClause;
     private int responsePosition = DEFAULT_RESPONSE_POSITION;
     private int maximumTerms = -1;
 
@@ -293,9 +290,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         break;
                     case QUERY:
                         query = parseCQLParameter(parameter.getName(), value);
-                        if (query != null) {
-                            rawQuery = value;
-                        }
                         break;
                     case START_RECORD:
                         startRecord = parseNumberedParameter(
@@ -329,9 +323,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                                         value, "Record schema \"" + value +
                                         "\" is not supported  for retrieval.");
                             }
-
-                            // always save submitted parameter
-                            rawRecordSchemaIdentifier = value;
                         }
                         break;
                     case RECORD_XPATH:
@@ -347,9 +338,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     case SCAN_CLAUSE:
                         scanClause = parseCQLParameter(
                                 parameter.getName(), value);
-                        if (scanClause != null) {
-                            rawScanClause = value;
-                        }
                         break;
                     case RESPONSE_POSITION:
                         responsePosition = parseNumberedParameter(
@@ -411,12 +399,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     String getRawRecordSchemaIdentifier() {
-        return rawRecordSchemaIdentifier;
+        return getRawParameter(PARAM_RECORD_SCHEMA);
     }
 
 
     String getRawQuery() {
-        return rawQuery;
+        return getRawParameter(PARAM_QUERY);
     }
 
 
@@ -426,7 +414,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     String getRawScanClause() {
-        return rawScanClause;
+        return getRawParameter(PARAM_SCAN_CLAUSE);
     }
 
 
@@ -667,6 +655,18 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
                         name, "An empty parameter \"" + PARAM_OPERATION +
                                 "\" is not supported.");
+                s = null;
+            }
+        }
+        return s;
+    }
+
+
+    private String getRawParameter(String name) {
+        String s = request.getParameter(name);
+        if (s != null) {
+            s = s.trim();
+            if (s.isEmpty()) {
                 s = null;
             }
         }
