@@ -125,19 +125,20 @@ public interface SRURequest {
      *
      * @return the record schema name or <code>null</code> if no value was
      *         supplied for this request
-     * @see #getRecordSchemaIdentifier()
+     * @deprecated use {@link #getRecordSchemaIdentifier()}
      */
+    @Deprecated
     public String getRecordSchemaName();
 
 
     /**
      * Get the record schema identifier derived from the <em>recordSchema</em>
      * parameter of this request. Only available for <em>searchRetrieve</em>
-     * requests.
+     * requests. If the request was send with the short record schema name,
+     * it will automatically expanded to the record schema identifier.
      *
      * @return the record schema identifier or <code>null</code> if no
      *         <em>recordSchema</em> parameter was supplied for this request
-     * @see #getRecordSchemaName()
      */
     public String getRecordSchemaIdentifier();
 

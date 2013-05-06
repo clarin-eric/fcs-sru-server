@@ -966,9 +966,9 @@ public final class SRUServer {
         }
 
         // echoedSearchRetrieveRequest/recordSchema
-        if (request.getRecordSchemaName() != null) {
+        if (request.getRawRecordSchemaIdentifier() != null) {
             out.writeStartElement(SRU_NS, "recordSchema");
-            out.writeCharacters(request.getRecordSchemaName());
+            out.writeCharacters(request.getRawRecordSchemaIdentifier());
             out.writeEndElement(); // "recordSchema" element
         }
 

@@ -67,8 +67,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private String rawQuery;
     private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
-    private String recordSchemaName;
     private String recordSchemaIdentifier;
+    private String rawRecordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
     private int resultSetTTL = -1;
@@ -308,25 +308,30 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     case RECORD_SCHEMA:
                         if (value != null) {
                             /*
-                             * If the recordSchema is supplied, check if it is
-                             * supported by this endpoint. If not, raise
-                             * an error. recoedSchema may contain either
-                             * schema identifier or the short name.
+                             * The parameter recordSchema may contain either
+                             * schema identifier or the short name. If
+                             * available, set to appropriate schema identifier
+                             * in the request object.
                              */
                             SRUServerConfig.SchemaInfo schemaInfo =
                                     config.findSchemaInfo(value);
                             if (schemaInfo != null) {
                                 recordSchemaIdentifier =
                                         schemaInfo.getIdentifier();
-                                recordSchemaName =
-                                        schemaInfo.getName();
                             } else {
+                                /*
+                                 * SRU servers are supposed to raise a
+                                 * non-surrogate (fatal) diagnostic in case the
+                                 * record schema is not known to the server.
+                                 */
                                 addDiagnostic(
                                         SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL,
-                                        value,
-                                        "Record schema \"" + value +
-                                        "\" is not supported for retrieval.");
+                                        value, "Record schema \"" + value +
+                                        "\" is not supported  for retrieval.");
                             }
+
+                            // always save submitted parameter
+                            rawRecordSchemaIdentifier = value;
                         }
                         break;
                     case RECORD_XPATH:
@@ -385,7 +390,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        // diagnostics != null -> consider as sucesss
+        // diagnostics != null -> consider as success
         return (diagnostics == null);
     }
 
@@ -402,6 +407,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     SRURecordPacking getRawRecordPacking() {
         return recordPacking;
+    }
+
+
+    String getRawRecordSchemaIdentifier() {
+        return rawRecordSchemaIdentifier;
     }
 
 
@@ -515,8 +525,9 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
+    @Deprecated
     public String getRecordSchemaName() {
-        return recordSchemaName;
+        return getRawRecordSchemaIdentifier();
     }
 
 
