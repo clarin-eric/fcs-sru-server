@@ -196,7 +196,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     boolean checkParameters() {
         // parse mandatory operation parameter
-        final String op = getParameter(PARAM_OPERATION, false);
+        final String op = getParameter(PARAM_OPERATION, false, false);
         if (op != null) {
             if (!op.isEmpty()) {
                 if (op.equals(OP_EXPLAIN)) {
@@ -256,7 +256,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
             // check parameters ...
             for (ParameterInfo parameter : parameters) {
-                String value = getParameter(parameter.getName(), true);
+                String value = getParameter(parameter.getName(), true, true);
                 if (value != null) {
                     // remove supported parameter from list
                     parameterNames.remove(parameter.getName());
@@ -399,12 +399,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     String getRawRecordSchemaIdentifier() {
-        return getRawParameter(PARAM_RECORD_SCHEMA);
+        return getParameter(PARAM_RECORD_SCHEMA, true, false);
     }
 
 
     String getRawQuery() {
-        return getRawParameter(PARAM_QUERY);
+        return getParameter(PARAM_QUERY, true, false);
     }
 
 
@@ -414,7 +414,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     String getRawScanClause() {
-        return getRawParameter(PARAM_SCAN_CLAUSE);
+        return getParameter(PARAM_SCAN_CLAUSE, true, false);
     }
 
 
@@ -647,27 +647,18 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    private String getParameter(String name, boolean nullify) {
+    private String getParameter(String name, boolean nullify,
+            boolean diagnosticIfEmpty) {
         String s = request.getParameter(name);
         if (s != null) {
             s = s.trim();
             if (nullify && s.isEmpty()) {
-                addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
-                        name, "An empty parameter \"" + PARAM_OPERATION +
-                                "\" is not supported.");
                 s = null;
-            }
-        }
-        return s;
-    }
-
-
-    private String getRawParameter(String name) {
-        String s = request.getParameter(name);
-        if (s != null) {
-            s = s.trim();
-            if (s.isEmpty()) {
-                s = null;
+                if (diagnosticIfEmpty) {
+                    addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
+                            name, "An empty parameter \"" + PARAM_OPERATION +
+                            "\" is not supported.");
+                }
             }
         }
         return s;
@@ -675,7 +666,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     private void parseAndCheckVersionParameter() {
-        final String v = getParameter(PARAM_VERSION, true);
+        final String v = getParameter(PARAM_VERSION, true, true);
         if (v != null) {
             if (v.equals(VERSION_1_1)) {
                 this.version = SRUVersion.VERSION_1_1;
