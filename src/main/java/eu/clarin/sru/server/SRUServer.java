@@ -352,9 +352,7 @@ public final class SRUServer {
 
             endResponse(out);
         } finally {
-            if (result != null) {
-                result.close();
-            }
+            result.close();
         }
     }
 
