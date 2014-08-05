@@ -112,7 +112,8 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
      * the index in the request's <em>scanClause</em> was searched with the term
      * in the <em>value</em> field.
      *
-     * @return a non-negative number of records
+     * @return a non-negative number of records or
+     *         <code>-1</code>, if the number is unknown.
      */
     public abstract int getNumberOfRecords();
 
