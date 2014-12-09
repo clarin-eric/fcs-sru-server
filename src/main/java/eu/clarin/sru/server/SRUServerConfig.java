@@ -692,7 +692,7 @@ public final class SRUServerConfig {
     }
 
 
-    public SRURecordPacking getDeaultRecordPacking() {
+    public SRURecordPacking getDefaultRecordPacking() {
         return SRURecordPacking.XML;
     }
 

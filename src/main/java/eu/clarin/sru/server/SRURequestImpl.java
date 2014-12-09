@@ -474,7 +474,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     public SRURecordPacking getRecordPacking() {
         return (recordPacking != null)
                 ? recordPacking
-                : config.getDeaultRecordPacking();
+                : config.getDefaultRecordPacking();
     }
 
 
