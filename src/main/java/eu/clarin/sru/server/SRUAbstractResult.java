@@ -39,8 +39,8 @@ abstract class SRUAbstractResult {
     /**
      * Add a non surrogate diagnostic to the response.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
@@ -48,33 +48,33 @@ abstract class SRUAbstractResult {
      *            human readable message to display to the end user or
      *            <code>null</code>
      */
-    protected final void addDiagnostic(int code, String details, String message) {
-        diagnostics.addDiagnostic(code, details, message);
+    protected final void addDiagnostic(String uri, String details, String message) {
+        diagnostics.addDiagnostic(uri, details, message);
     }
 
 
     /**
      * Add a non surrogate diagnostic to the response.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
      */
-    protected final void addDiagnostic(int code, String details) {
-        addDiagnostic(code, details, null);
+    protected final void addDiagnostic(String uri, String details) {
+        addDiagnostic(uri, details, null);
     }
 
 
     /**
      * Add a non surrogate diagnostic to the response.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      */
-    protected final void addDiagnostic(int code) {
-        addDiagnostic(code, null, null);
+    protected final void addDiagnostic(String uri) {
+        addDiagnostic(uri, null, null);
     }
 
 

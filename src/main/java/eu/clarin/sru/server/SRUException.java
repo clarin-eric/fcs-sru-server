@@ -24,15 +24,15 @@ package eu.clarin.sru.server;
  */
 @SuppressWarnings("serial")
 public class SRUException extends Exception {
-    private final int code;
+    private final String uri;
     private final String details;
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            diagnostic details or <code>null</code>
      * @param message
@@ -40,10 +40,17 @@ public class SRUException extends Exception {
      * @param cause
      *            the cause of the error or <code>null</code>
      */
-    public SRUException(int code, String details, String message,
+    public SRUException(String uri, String details, String message,
             Throwable cause) {
         super(message, cause);
-        this.code    = code;
+        if (uri == null) {
+            throw new NullPointerException("uri == null");
+        }
+        uri = uri.trim();
+        if (uri.isEmpty()) {
+            throw new IllegalArgumentException("uri is empty");
+        }
+        this.uri     = uri;
         this.details = details;
     }
 
@@ -51,67 +58,67 @@ public class SRUException extends Exception {
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            diagnostic details or <code>null</code>
      * @param message
      *            diagnostic message or <code>null</code>
      */
-    public SRUException(int code, String details, String message) {
-        this(code, details, message, null);
+    public SRUException(String uri, String details, String message) {
+        this(uri, details, message, null);
     }
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param message
      *            diagnostic message or <code>null</code>
      * @param cause
      *            the cause of the error or <code>null</code>
      */
-    public SRUException(int code, String message, Throwable cause) {
-        this(code, null, message, cause);
+    public SRUException(String uri, String message, Throwable cause) {
+        this(uri, null, message, cause);
     }
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param message
      *            diagnostic message or <code>null</code>
      */
-    public SRUException(int code, String message) {
-        this(code, null, message, null);
+    public SRUException(String uri, String message) {
+        this(uri, null, message, null);
     }
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param cause
      *            the cause of the error or <code>null</code>
      */
-    public SRUException(int code, Throwable cause) {
-        this(code, null, null, cause);
+    public SRUException(String uri, Throwable cause) {
+        this(uri, null, null, cause);
     }
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            the diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      */
-    public SRUException(int code) {
-        this(code, null, null, null);
+    public SRUException(String uri) {
+        this(uri, null, null, null);
     }
 
 
@@ -121,7 +128,7 @@ public class SRUException extends Exception {
      * @return a {@link SRUDiagnostic} instance
      */
     public SRUDiagnostic getDiagnostic() {
-        return new SRUDiagnostic(code, details, this.getMessage());
+        return new SRUDiagnostic(uri, details, this.getMessage());
     }
 
 } // class SRUException

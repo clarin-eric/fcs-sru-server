@@ -27,7 +27,7 @@ package eu.clarin.sru.server;
  *      Diagnostics List</a>
  */
 public final class SRUDiagnostic {
-    private final int code;
+    private final String uri;
     private final String details;
     private final String message;
 
@@ -35,18 +35,41 @@ public final class SRUDiagnostic {
     /**
      * Constructor.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
      * @param message
      *            human readable message to display to the end user or
      *            <code>null</code>
+     * @throws NullPointerException
+     *             if uri is <code>null</code>
+     * @throws IllegalArgumentException
+     *             if uri is empty string
      */
-    public SRUDiagnostic(int code, String details, String message) {
-        this.code    = code;
+    public SRUDiagnostic(String uri, String details, String message) {
+        if (uri == null) {
+            throw new NullPointerException("uri == null");
+        }
+        uri = uri.trim();
+        if (uri.isEmpty()) {
+            throw new IllegalArgumentException("uri is empty");
+        }
+        this.uri     = uri;
+        if (details != null) {
+            details = details.trim();
+            if (details.isEmpty()) {
+                details = null;
+            }
+        }
         this.details = details;
+        if (message != null) {
+            message = message.trim();
+            if (message.isEmpty()) {
+                message = null;
+            }
+        }
         this.message = message;
     }
 
@@ -54,25 +77,25 @@ public final class SRUDiagnostic {
     /**
      * Constructor.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
      */
-    public SRUDiagnostic(int code, String details) {
-        this(code, details, null);
+    public SRUDiagnostic(String uri, String details) {
+        this(uri, details, null);
     }
 
 
     /**
      * Constructor.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      */
-    public SRUDiagnostic(int code) {
-        this(code, null, null);
+    public SRUDiagnostic(String uri) {
+        this(uri, null, null);
     }
 
 
@@ -82,8 +105,8 @@ public final class SRUDiagnostic {
      * @return diagnostic code
      * @see SRUConstants
      */
-    public int getCode() {
-        return code;
+    public String getURI() {
+        return uri;
     }
 
 
@@ -104,181 +127,184 @@ public final class SRUDiagnostic {
      * @return human readable message
      */
     public String getMessage() {
-        return message != null ? message : getDefaultErrorMessage(code);
+        return message != null ? message : getDefaultErrorMessage(uri);
     }
 
 
-    private static String getDefaultErrorMessage(int code) {
-        switch (code) {
-        case SRUConstants.SRU_GENERAL_SYSTEM_ERROR:
+    private static String getDefaultErrorMessage(final String uri) {
+        /*
+         * Ugly, but can't do better unless we drop JDK 1.6 compatibility.
+         * (JDK 1.7+ has switch on String)
+         */
+        if (uri.equals(SRUConstants.SRU_GENERAL_SYSTEM_ERROR)) {
             return "General system error";
-        case SRUConstants.SRU_SYSTEM_TEMPORARILY_UNAVAILABLE:
+        } else if (uri.equals(SRUConstants.SRU_SYSTEM_TEMPORARILY_UNAVAILABLE)) {
             return "System temporarily unavailable";
-        case SRUConstants.SRU_AUTHENTICATION_ERROR:
+        } else if (uri.equals(SRUConstants.SRU_AUTHENTICATION_ERROR)) {
             return "Authentication error";
-        case SRUConstants.SRU_UNSUPPORTED_OPERATION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_OPERATION)) {
             return "Unsupported operation";
-        case SRUConstants.SRU_UNSUPPORTED_VERSION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_VERSION)) {
             return "Unsupported version";
-        case SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE)) {
             return "Unsupported parameter value";
-        case SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED:
+        } else if (uri.equals(SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED)) {
             return "Mandatory parameter not supplied";
-        case SRUConstants.SRU_UNSUPPORTED_PARAMETER:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PARAMETER)) {
             return "Unsupported Parameter";
-        case SRUConstants.SRU_QUERY_SYNTAX_ERROR:
+        } else if (uri.equals(SRUConstants.SRU_QUERY_SYNTAX_ERROR)) {
             return "Query syntax error";
-        case SRUConstants.SRU_TOO_MANY_CHARACTERS_IN_QUERY:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_CHARACTERS_IN_QUERY)) {
             return "Too many characters in query";
-        case SRUConstants.SRU_INVALID_OR_UNSUPPORTED_USE_OF_PARENTHESES:
+        } else if (uri.equals(SRUConstants.SRU_INVALID_OR_UNSUPPORTED_USE_OF_PARENTHESES)) {
             return "Invalid or unsupported use of parentheses";
-        case SRUConstants.SRU_INVALID_OR_UNSUPPORTED_USE_OF_QUOTES:
+        } else if (uri.equals(SRUConstants.SRU_INVALID_OR_UNSUPPORTED_USE_OF_QUOTES)) {
             return "Invalid or unsupported use of quotes";
-        case SRUConstants.SRU_UNSUPPORTED_CONTEXT_SET:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_CONTEXT_SET)) {
             return "Unsupported context set";
-        case SRUConstants.SRU_UNSUPPORTED_INDEX:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_INDEX)) {
             return "Unsupported index";
-        case SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_INDEXES:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_INDEXES)) {
             return "Unsupported combination of indexes";
-        case SRUConstants.SRU_UNSUPPORTED_RELATION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_RELATION)) {
             return "Unsupported relation";
-        case SRUConstants.SRU_UNSUPPORTED_RELATION_MODIFIER:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_RELATION_MODIFIER)) {
             return "Unsupported relation modifier";
-        case SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_MODIFERS:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_MODIFERS)) {
             return "Unsupported combination of relation modifers";
-        case SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_AND_INDEX:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_AND_INDEX)) {
             return "Unsupported combination of relation and index";
-        case SRUConstants.SRU_TOO_MANY_CHARACTERS_IN_TERM:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_CHARACTERS_IN_TERM)) {
             return "Too many characters in term";
-        case SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_AND_TERM:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_RELATION_AND_TERM)) {
             return "Unsupported combination of relation and term";
-        case SRUConstants.SRU_NON_SPECIAL_CHARACTER_ESCAPED_IN_TERM:
+        } else if (uri.equals(SRUConstants.SRU_NON_SPECIAL_CHARACTER_ESCAPED_IN_TERM)) {
             return "Non special character escaped in term";
-        case SRUConstants.SRU_EMPTY_TERM_UNSUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_EMPTY_TERM_UNSUPPORTED)) {
             return "Empty term unsupported";
-        case SRUConstants.SRU_MASKING_CHARACTER_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_MASKING_CHARACTER_NOT_SUPPORTED)) {
             return "Masking character not supported";
-        case SRUConstants.SRU_MASKED_WORDS_TOO_SHORT:
+        } else if (uri.equals(SRUConstants.SRU_MASKED_WORDS_TOO_SHORT)) {
             return "Masked words too short";
-        case SRUConstants.SRU_TOO_MANY_MASKING_CHARACTERS_IN_TERM:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_MASKING_CHARACTERS_IN_TERM)) {
             return "Too many masking characters in term";
-        case SRUConstants.SRU_ANCHORING_CHARACTER_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_ANCHORING_CHARACTER_NOT_SUPPORTED)) {
             return "Anchoring character not supported";
-        case SRUConstants.SRU_ANCHORING_CHARACTER_IN_UNSUPPORTED_POSITION:
+        } else if (uri.equals(SRUConstants.SRU_ANCHORING_CHARACTER_IN_UNSUPPORTED_POSITION)) {
             return "Anchoring character in unsupported position";
-        case SRUConstants.SRU_COMBINATION_OF_PROXIMITY_ADJACENCY_AND_MASKING_CHARACTERS_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_COMBINATION_OF_PROXIMITY_ADJACENCY_AND_MASKING_CHARACTERS_NOT_SUPPORTED)) {
             return "Combination of proximity adjacency and masking characters not supported";
-        case SRUConstants.SRU_COMBINATION_OF_PROXIMITY_ADJACENCY_AND_ANCHORING_CHARACTERS_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_COMBINATION_OF_PROXIMITY_ADJACENCY_AND_ANCHORING_CHARACTERS_NOT_SUPPORTED)) {
             return "Combination of proximity adjacency and anchoring characters not supported";
-        case SRUConstants.SRU_TERM_CONTAINS_ONLY_STOPWORDS:
+        } else if (uri.equals(SRUConstants.SRU_TERM_CONTAINS_ONLY_STOPWORDS)) {
             return "Term contains only stopwords";
-        case SRUConstants.SRU_TERM_IN_INVALID_FORMAT_FOR_INDEX_OR_RELATION:
+        } else if (uri.equals(SRUConstants.SRU_TERM_IN_INVALID_FORMAT_FOR_INDEX_OR_RELATION)) {
             return "Term in invalid format for index or relation";
-        case SRUConstants.SRU_UNSUPPORTED_BOOLEAN_OPERATOR:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_BOOLEAN_OPERATOR)) {
             return "Unsupported boolean operator";
-        case SRUConstants.SRU_TOO_MANY_BOOLEAN_OPERATORS_IN_QUERY:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_BOOLEAN_OPERATORS_IN_QUERY)) {
             return "Too many boolean operators in query";
-        case SRUConstants.SRU_PROXIMITY_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_PROXIMITY_NOT_SUPPORTED)) {
             return "Proximity not supported";
-        case SRUConstants.SRU_UNSUPPORTED_PROXIMITY_RELATION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PROXIMITY_RELATION)) {
             return "Unsupported proximity relation";
-        case SRUConstants.SRU_UNSUPPORTED_PROXIMITY_DISTANCE:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PROXIMITY_DISTANCE)) {
             return "Unsupported proximity distance";
-        case SRUConstants.SRU_UNSUPPORTED_PROXIMITY_UNIT:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PROXIMITY_UNIT)) {
             return "Unsupported proximity unit";
-        case SRUConstants.SRU_UNSUPPORTED_PROXIMITY_ORDERING:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PROXIMITY_ORDERING)) {
             return "Unsupported proximity ordering";
-        case SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_PROXIMITY_MODIFIERS:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_COMBINATION_OF_PROXIMITY_MODIFIERS)) {
             return "Unsupported combination of proximity modifiers";
-        case SRUConstants.SRU_UNSUPPORTED_BOOLEAN_MODIFIER:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_BOOLEAN_MODIFIER)) {
             return "Unsupported boolean modifier";
-        case SRUConstants.SRU_CANNOT_PROCESS_QUERY_REASON_UNKNOWN:
+        } else if (uri.equals(SRUConstants.SRU_CANNOT_PROCESS_QUERY_REASON_UNKNOWN)) {
             return "Cannot process query; reason unknown";
-        case SRUConstants.SRU_QUERY_FEATURE_UNSUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_QUERY_FEATURE_UNSUPPORTED)) {
             return "Query feature unsupported";
-        case SRUConstants.SRU_MASKING_CHARACTER_IN_UNSUPPORTED_POSITION:
+        } else if (uri.equals(SRUConstants.SRU_MASKING_CHARACTER_IN_UNSUPPORTED_POSITION)) {
             return "Masking character in unsupported position";
-        case SRUConstants.SRU_RESULT_SETS_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SETS_NOT_SUPPORTED)) {
             return "Result sets not supported";
-        case SRUConstants.SRU_RESULT_SET_DOES_NOT_EXIST:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SET_DOES_NOT_EXIST)) {
             return "Result set does not exist";
-        case SRUConstants.SRU_RESULT_SET_TEMPORARILY_UNAVAILABLE:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SET_TEMPORARILY_UNAVAILABLE)) {
             return "Result set temporarily unavailable";
-        case SRUConstants.SRU_RESULT_SETS_ONLY_SUPPORTED_FOR_RETRIEVAL:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SETS_ONLY_SUPPORTED_FOR_RETRIEVAL)) {
             return "Result sets only supported for retrieval";
-        case SRUConstants.SRU_COMBINATION_OF_RESULT_SETS_WITH_SEARCH_TERMS_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_COMBINATION_OF_RESULT_SETS_WITH_SEARCH_TERMS_NOT_SUPPORTED)) {
             return "Combination of result sets with search terms not supported";
-        case SRUConstants.SRU_RESULT_SET_CREATED_WITH_UNPREDICTABLE_PARTIAL_RESULTS_AVAILABLE:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SET_CREATED_WITH_UNPREDICTABLE_PARTIAL_RESULTS_AVAILABLE)) {
             return "Result set created with unpredictable partial results available";
-        case SRUConstants.SRU_RESULT_SET_CREATED_WITH_VALID_PARTIAL_RESULTS_AVAILABLE:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SET_CREATED_WITH_VALID_PARTIAL_RESULTS_AVAILABLE)) {
             return "Result set created with valid partial results available";
-        case SRUConstants.SRU_RESULT_SET_NOT_CREATED_TOO_MANY_MATCHING_RECORDS:
-            return "Result set not created: too many matching records";
-        case SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE:
+        } else if (uri.equals(SRUConstants.SRU_RESULT_SET_NOT_CREATED_TOO_MANY_MATCHING_RECORDS)) {
+            return "Result set not created)) { too many matching records";
+        } else if (uri.equals(SRUConstants.SRU_FIRST_RECORD_POSITION_OUT_OF_RANGE)) {
             return "First record position out of range";
-        case SRUConstants.SRU_RECORD_TEMPORARILY_UNAVAILABLE:
+        } else if (uri.equals(SRUConstants.SRU_RECORD_TEMPORARILY_UNAVAILABLE)) {
             return "Record temporarily unavailable";
-        case SRUConstants.SRU_RECORD_DOES_NOT_EXIST:
+        } else if (uri.equals(SRUConstants.SRU_RECORD_DOES_NOT_EXIST)) {
             return "Record does not exist";
-        case SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL:
+        } else if (uri.equals(SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL)) {
             return "Unknown schema for retrieval";
-        case SRUConstants.SRU_RECORD_NOT_AVAILABLE_IN_THIS_SCHEMA:
+        } else if (uri.equals(SRUConstants.SRU_RECORD_NOT_AVAILABLE_IN_THIS_SCHEMA)) {
             return "Record not available in this schema";
-        case SRUConstants.SRU_NOT_AUTHORISED_TO_SEND_RECORD:
+        } else if (uri.equals(SRUConstants.SRU_NOT_AUTHORISED_TO_SEND_RECORD)) {
             return "Not authorised to send record";
-        case SRUConstants.SRU_NOT_AUTHORISED_TO_SEND_RECORD_IN_THIS_SCHEMA:
+        } else if (uri.equals(SRUConstants.SRU_NOT_AUTHORISED_TO_SEND_RECORD_IN_THIS_SCHEMA)) {
             return "Not authorised to send record in this schema";
-        case SRUConstants.SRU_RECORD_TOO_LARGE_TO_SEND:
+        } else if (uri.equals(SRUConstants.SRU_RECORD_TOO_LARGE_TO_SEND)) {
             return "Record too large to send";
-        case SRUConstants.SRU_UNSUPPORTED_RECORD_PACKING:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_RECORD_PACKING)) {
             return "Unsupported record packing";
-        case SRUConstants.SRU_XPATH_RETRIEVAL_UNSUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_XPATH_RETRIEVAL_UNSUPPORTED)) {
             return "XPath retrieval unsupported";
-        case SRUConstants.SRU_XPATH_EXPRESSION_CONTAINS_UNSUPPORTED_FEATURE:
+        } else if (uri.equals(SRUConstants.SRU_XPATH_EXPRESSION_CONTAINS_UNSUPPORTED_FEATURE)) {
             return "XPath expression contains unsupported feature";
-        case SRUConstants.SRU_UNABLE_TO_EVALUATE_XPATH_EXPRESSION:
+        } else if (uri.equals(SRUConstants.SRU_UNABLE_TO_EVALUATE_XPATH_EXPRESSION)) {
             return "Unable to evaluate XPath expression";
-        case SRUConstants.SRU_SORT_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_SORT_NOT_SUPPORTED)) {
             return "Sort not supported";
-        case SRUConstants.SRU_UNSUPPORTED_SORT_SEQUENCE:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_SORT_SEQUENCE)) {
             return "Unsupported sort sequence";
-        case SRUConstants.SRU_TOO_MANY_RECORDS_TO_SORT:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_RECORDS_TO_SORT)) {
             return "Too many records to sort";
-        case SRUConstants.SRU_TOO_MANY_SORT_KEYS_TO_SORT:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_SORT_KEYS_TO_SORT)) {
             return "Too many sort keys to sort";
-        case SRUConstants.SRU_CANNOT_SORT_INCOMPATIBLE_RECORD_FORMATS:
+        } else if (uri.equals(SRUConstants.SRU_CANNOT_SORT_INCOMPATIBLE_RECORD_FORMATS)) {
             return "Cannot sort incompatible record formats";
-        case SRUConstants.SRU_UNSUPPORTED_SCHEMA_FOR_SORT:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_SCHEMA_FOR_SORT)) {
             return "Unsupported schema for sort";
-        case SRUConstants.SRU_UNSUPPORTED_PATH_FOR_SORT:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_PATH_FOR_SORT)) {
             return "Unsupported path for sort";
-        case SRUConstants.SRU_PATH_UNSUPPORTED_FOR_SCHEMA:
+        } else if (uri.equals(SRUConstants.SRU_PATH_UNSUPPORTED_FOR_SCHEMA)) {
             return "Path unsupported for schema";
-        case SRUConstants.SRU_UNSUPPORTED_DIRECTION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_DIRECTION)) {
             return "Unsupported direction";
-        case SRUConstants.SRU_UNSUPPORTED_CASE:
-            return "Unsupported case";
-        case SRUConstants.SRU_UNSUPPORTED_MISSING_VALUE_ACTION:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_CASE)) {
+            return "Unsupported } else if (uri.equals(";
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_MISSING_VALUE_ACTION)) {
             return "Unsupported missing value action";
-        case SRUConstants.SRU_SORT_ENDED_DUE_TO_MISSING_VALUE:
+        } else if (uri.equals(SRUConstants.SRU_SORT_ENDED_DUE_TO_MISSING_VALUE)) {
             return "Sort ended due to missing value";
-        case SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_QUERY_PREVAILS:
+        } else if (uri.equals(SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_QUERY_PREVAILS)) {
             return "Sort spec included both in query and protocol query prevails";
-        case SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_PROTOCOL_PREVAILS:
+        } else if (uri.equals(SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_PROTOCOL_PREVAILS)) {
             return "Sort spec included both in query and protocol protocol prevails";
-        case SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_ERROR:
+        } else if (uri.equals(SRUConstants.SRU_SORT_SPEC_INCLUDED_BOTH_IN_QUERY_AND_PROTOCOL_ERROR)) {
             return "Sort spec included both in query and protocol error";
-        case SRUConstants.SRU_STYLESHEETS_NOT_SUPPORTED:
+        } else if (uri.equals(SRUConstants.SRU_STYLESHEETS_NOT_SUPPORTED)) {
             return "Stylesheets not supported";
-        case SRUConstants.SRU_UNSUPPORTED_STYLESHEET:
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_STYLESHEET)) {
             return "Unsupported stylesheet";
-        case SRUConstants.SRU_RESPONSE_POSITION_OUT_OF_RANGE:
+        } else if (uri.equals(SRUConstants.SRU_RESPONSE_POSITION_OUT_OF_RANGE)) {
             return "Response position out of range";
-        case SRUConstants.SRU_TOO_MANY_TERMS_REQUESTED:
+        } else if (uri.equals(SRUConstants.SRU_TOO_MANY_TERMS_REQUESTED)) {
             return "Too many terms requested";
-        default:
+        } else {
             return null;
-        } // switch
+        }
     }
 
 } // class SRUDiagnostic

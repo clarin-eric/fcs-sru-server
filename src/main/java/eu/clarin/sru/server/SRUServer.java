@@ -152,17 +152,13 @@ public final class SRUServer {
                 if (logger.isInfoEnabled()) {
                     final String message = e.getDiagnostic().getMessage();
                     if (message != null) {
-                        logger.info("Sending fatal diagnostic '{}{}' with " +
+                        logger.info("Sending fatal diagnostic '{}' with " +
                                 "message '{}'",
-                                new Object[] {
-                                        SRUConstants.SRU_DIAGNOSTIC_URI_PREFIX,
-                                        e.getDiagnostic().getCode(),
-                                        message
-                                });
+                                e.getDiagnostic().getURI(),
+                                message);
                     } else {
-                        logger.info("Sending fatal diagnostic '{}{}'",
-                                SRUConstants.SRU_DIAGNOSTIC_URI_PREFIX,
-                                e.getDiagnostic().getCode());
+                        logger.info("Sending fatal diagnostic '{}'",
+                                e.getDiagnostic().getURI());
                     }
                     logger.debug("Fatal diagnostic was caused by " +
                             "this exception", e);
@@ -817,8 +813,7 @@ public final class SRUServer {
             out.writeNamespace(SRU_DIAGNOSTIC_PREFIX, SRU_DIAGNOSIC_NS);
         }
         out.writeStartElement(SRU_DIAGNOSIC_NS, "uri");
-        out.writeCharacters(SRUConstants.SRU_DIAGNOSTIC_URI_PREFIX);
-        out.writeCharacters(Integer.toString(diagnostic.getCode()));
+        out.writeCharacters(diagnostic.getURI());
         out.writeEndElement(); // "uri" element
         if (diagnostic.getDetails() != null) {
             out.writeStartElement(SRU_DIAGNOSIC_NS, "details");

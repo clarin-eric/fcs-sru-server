@@ -622,11 +622,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
-    public void addDiagnostic(int code, String details, String message) {
+    public void addDiagnostic(String uri, String details, String message) {
+        final SRUDiagnostic diagnostic =
+                new SRUDiagnostic(uri, details, message);
         if (diagnostics == null) {
             diagnostics = new ArrayList<SRUDiagnostic>();
         }
-        diagnostics.add(new SRUDiagnostic(code, details, message));
+        diagnostics.add(diagnostic);
     }
 
 

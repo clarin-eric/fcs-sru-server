@@ -32,8 +32,8 @@ public interface SRUDiagnosticList {
     /**
      * Add a non surrogate diagnostic to the response.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
@@ -41,6 +41,6 @@ public interface SRUDiagnosticList {
      *            human readable message to display to the end user or
      *            <code>null</code>
      */
-    public void addDiagnostic(int code, String details, String message);
+    public void addDiagnostic(String uri, String details, String message);
 
 } // interface DiagnosticList
