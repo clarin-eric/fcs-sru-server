@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -19,11 +19,11 @@ package eu.clarin.sru.server;
 /**
  * Container for non surrogate diagnostics for the request. The will be put in
  * the <em>diagnostics</em> part of the response.
- * 
+ *
  * @see SRUConstants
  * @see SRUDiagnostic
- * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html">
- *      SRU Diagnostics</a>
+ * @see <a href="http://www.loc.gov/standards/sru/specs/diagnostics.html"> SRU
+ *      Diagnostics</a>
  * @see <a href="http://www.loc.gov/standards/sru/resources/diagnostics-list.html">
  *      SRU Diagnostics List</a>
  */
@@ -32,8 +32,8 @@ public interface SRUDiagnosticList {
     /**
      * Add a non surrogate diagnostic to the response.
      *
-     * @param code
-     *            numerical diagnostic code
+     * @param uri
+     *            the diagnostic's identifying URI
      * @param details
      *            supplementary information available, often in a format
      *            specified by the diagnostic or <code>null</code>
@@ -41,6 +41,6 @@ public interface SRUDiagnosticList {
      *            human readable message to display to the end user or
      *            <code>null</code>
      */
-    public void addDiagnostic(int code, String details, String message);
+    public void addDiagnostic(String uri, String details, String message);
 
 } // interface DiagnosticList

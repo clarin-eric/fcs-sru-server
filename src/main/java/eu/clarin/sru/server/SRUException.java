@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -16,46 +16,119 @@
  */
 package eu.clarin.sru.server;
 
+/**
+ * An exception raised, if something went wrong processing the request. For
+ * diagnostic codes, see constants in {@link SRUConstants}.
+ *
+ * @see SRUConstants
+ */
 @SuppressWarnings("serial")
 public class SRUException extends Exception {
-    private final int code;
+    private final String uri;
     private final String details;
 
 
-    public SRUException(int code, String details, String message, Throwable t) {
-        super(message, t);
-        this.code    = code;
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     * @param details
+     *            diagnostic details or <code>null</code>
+     * @param message
+     *            diagnostic message or <code>null</code>
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(String uri, String details, String message,
+            Throwable cause) {
+        super(message, cause);
+        if (uri == null) {
+            throw new NullPointerException("uri == null");
+        }
+        uri = uri.trim();
+        if (uri.isEmpty()) {
+            throw new IllegalArgumentException("uri is empty");
+        }
+        this.uri     = uri;
         this.details = details;
     }
 
 
-    public SRUException(int code, String details, String message) {
-        this(code, details, message, null);
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     * @param details
+     *            diagnostic details or <code>null</code>
+     * @param message
+     *            diagnostic message or <code>null</code>
+     */
+    public SRUException(String uri, String details, String message) {
+        this(uri, details, message, null);
     }
 
 
-    public SRUException(int code, String message, Throwable t) {
-        this(code, null, message, t);
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     * @param message
+     *            diagnostic message or <code>null</code>
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(String uri, String message, Throwable cause) {
+        this(uri, null, message, cause);
     }
 
 
-    public SRUException(int code, String message) {
-        this(code, null, message, null);
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     * @param message
+     *            diagnostic message or <code>null</code>
+     */
+    public SRUException(String uri, String message) {
+        this(uri, null, message, null);
     }
 
 
-    public SRUException(int code, Throwable t) {
-        this(code, null, null, t);
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     * @param cause
+     *            the cause of the error or <code>null</code>
+     */
+    public SRUException(String uri, Throwable cause) {
+        this(uri, null, null, cause);
     }
 
 
-    public SRUException(int code) {
-        this(code, null, null, null);
+    /**
+     * Constructor.
+     *
+     * @param uri
+     *            the diagnostic's identifying URI
+     */
+    public SRUException(String uri) {
+        this(uri, null, null, null);
     }
 
 
+    /**
+     * Create a SRU diagnostic from this exception.
+     *
+     * @return a {@link SRUDiagnostic} instance
+     */
     public SRUDiagnostic getDiagnostic() {
-        return new SRUDiagnostic(code, details, this.getMessage());
+        return new SRUDiagnostic(uri, details, this.getMessage());
     }
 
 } // class SRUException

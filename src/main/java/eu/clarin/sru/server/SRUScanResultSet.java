@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -23,13 +23,23 @@ import javax.xml.stream.XMLStreamWriter;
 
 
 /**
- * A result set of a <em>scan</em> operation. It allows to iterate over the term
- * set and provides a method to serialize the terms. <br />
- * 
- * <p>This class needs to be implemented for the target data source.</p>
- * 
- * @see <a href="http://www.loc.gov/standards/sru/specs/scan.html">
- *      SRU Scan Operation</a>
+ * A result set of a <em>scan</em> operation. It is used to iterate over the
+ * term set and provides a method to serialize the terms.
+ *
+ * <p>
+ * A <code>SRUScanResultSet</code> object maintains a cursor pointing to its
+ * current term. Initially the cursor is positioned before the first term. The
+ * <code>next</code> method moves the cursor to the next term, and because it
+ * returns <code>false</code> when there are no more terms in the
+ * <code>SRUScanResultSet</code> object, it can be used in a <code>while</code>
+ * loop to iterate through the term set.
+ * </p>
+ * <p>
+ * This class needs to be implemented for the target search engine.
+ * </p>
+ *
+ * @see <a href="http://www.loc.gov/standards/sru/specs/scan.html"> SRU Scan
+ *      Operation</a>
  */
 public abstract class SRUScanResultSet extends SRUAbstractResult {
     /**
@@ -55,8 +65,8 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
         /**
          * Any other term (<em>inner</em>)
          */
-        INNER;
-    };
+        INNER
+    }
 
 
     /**
@@ -72,23 +82,21 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
 
 
     /**
-     * Returns true if the term set has more terms. (In other words, returns
-     * <code>true</code> if <code>nextTerm()</code> would move the internal
-     * result pointer to a new term instead of throwing an exception.)
+     * Moves the cursor forward one term from its current position. A result set
+     * cursor is initially positioned before the first record; the first call to
+     * the method <code>next</code> makes the first term the current term; the
+     * second call makes the second term the current term, and so on.
+     * <p>
+     * When a call to the <code>next</code> method returns <code>false</code>,
+     * the cursor is positioned after the last term.
+     * </p>
      *
-     * @return <code>true</code> if the term set has more terms,
-     *         <code>false</code> otherwise
+     * @return <code>true</code> if the new current term is valid;
+     *         <code>false</code> if there are no more terms
+     * @throws SRUException
+     *             if an error occurred while fetching the next term
      */
-    public abstract boolean hasMoreTerms();
-
-
-    /**
-     * Move to the next term.
-     *
-     * @throws NoSuchElementException
-     *             term set has no more terms
-     */
-    public abstract void nextTerm();
+    public abstract boolean nextTerm() throws SRUException;
 
 
     /**
@@ -104,7 +112,8 @@ public abstract class SRUScanResultSet extends SRUAbstractResult {
      * the index in the request's <em>scanClause</em> was searched with the term
      * in the <em>value</em> field.
      *
-     * @return a non-negative number of records
+     * @return a non-negative number of records or
+     *         <code>-1</code>, if the number is unknown.
      */
     public abstract int getNumberOfRecords();
 

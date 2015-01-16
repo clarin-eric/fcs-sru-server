@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -52,24 +52,27 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final String RECORD_PACKING_XML      = "xml";
     private static final String RECORD_PACKING_STRING   = "string";
     private static final String PARAM_EXTENSION_PREFIX  = "x-";
+    private static final String X_UNLIMITED_RESULTSET   = "x-unlimited-resultset";
+    private static final String X_UNLIMITED_TERMLIST    = "x-unlimited-termlist";
+    private static final String X_INDENT_RESPONSE       = "x-indent-response";
+    private static final int DEFAULT_START_RECORD       = 1;
+    private static final int DEFAULT_RESPONSE_POSITION  = 1;
+    private final SRUServerConfig config;
     private final HttpServletRequest request;
     private List<SRUDiagnostic> diagnostics;
     private SRUOperation operation;
     private SRUVersion version;
     private SRURecordPacking recordPacking;
     private CQLNode query;
-    private String rawQuery;
-    private int startRecord    = -1;
+    private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
-    private String recordSchemaName;
-    private String recordSchemaidentifier;
+    private String recordSchemaIdentifier;
     private String stylesheet;
     private String recordXPath;
-    private int resultSetTTL   = -1;
+    private int resultSetTTL = -1;
     private String sortKeys;
     private CQLNode scanClause;
-    private String rawScanClause;
-    private int responsePosition = -1;
+    private int responsePosition = DEFAULT_RESPONSE_POSITION;
     private int maximumTerms = -1;
 
     private static enum Parameter {
@@ -185,17 +188,15 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     };
 
 
-    SRURequestImpl(HttpServletRequest request, SRUVersion defaultVersion,
-            SRURecordPacking defaultRecordPacking) {
+    SRURequestImpl(SRUServerConfig config, HttpServletRequest request) {
+        this.config        = config;
         this.request       = request;
-        this.version       = defaultVersion;
-        this.recordPacking = defaultRecordPacking;
     }
 
 
-    boolean checkParameters(SRUServerConfig config) {
+    boolean checkParameters() {
         // parse mandatory operation parameter
-        final String op = getParameter(PARAM_OPERATION, false);
+        final String op = getParameter(PARAM_OPERATION, false, false);
         if (op != null) {
             if (!op.isEmpty()) {
                 if (op.equals(OP_EXPLAIN)) {
@@ -228,7 +229,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
         if (diagnostics == null) {
             // check mandatory/optional parameters for operation
-            ParameterInfo[] parameters = null;
+            ParameterInfo[] parameters;
             switch (operation) {
             case EXPLAIN:
                 parameters = PARAMS_EXPLAIN;
@@ -255,7 +256,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
             // check parameters ...
             for (ParameterInfo parameter : parameters) {
-                String value = getParameter(parameter.getName(), true);
+                String value = getParameter(parameter.getName(), true, true);
                 if (value != null) {
                     // remove supported parameter from list
                     parameterNames.remove(parameter.getName());
@@ -289,9 +290,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         break;
                     case QUERY:
                         query = parseCQLParameter(parameter.getName(), value);
-                        if (query != null) {
-                            rawQuery = value;
-                        }
                         break;
                     case START_RECORD:
                         startRecord = parseNumberedParameter(
@@ -302,22 +300,25 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                                 parameter.getName(), value, 0);
                         break;
                     case RECORD_SCHEMA:
-                        if (value != null) {
+                        /*
+                         * The parameter recordSchema may contain either schema
+                         * identifier or the short name. If available, set to
+                         * appropriate schema identifier in the request object.
+                         */
+                        SRUServerConfig.SchemaInfo schemaInfo =
+                            config.findSchemaInfo(value);
+                        if (schemaInfo != null) {
+                            recordSchemaIdentifier = schemaInfo.getIdentifier();
+                        } else {
                             /*
-                             * If the recordSchema is supplied, check if it is
-                             * supported by this endpoint.
-                             * If not, raise an error.
+                             * SRU servers are supposed to raise a non-surrogate
+                             * (fatal) diagnostic in case the record schema is
+                             * not known to the server.
                              */
-                            recordSchemaidentifier =
-                                config.getRecordSchemaIdentifier(value);
-                            if (recordSchemaidentifier == null) {
-                                addDiagnostic(
-                                        SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL,
-                                        value,
-                                        "Record schema \"" + value +
-                                        "\" is not supported for retrieval.");
-                            }
-                            recordSchemaName = value;
+                            addDiagnostic(
+                                    SRUConstants.SRU_UNKNOWN_SCHEMA_FOR_RETRIEVAL,
+                                    value, "Record schema \"" + value +
+                                    "\" is not supported  for retrieval.");
                         }
                         break;
                     case RECORD_XPATH:
@@ -333,9 +334,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     case SCAN_CLAUSE:
                         scanClause = parseCQLParameter(
                                 parameter.getName(), value);
-                        if (scanClause != null) {
-                            rawScanClause = value;
-                        }
                         break;
                     case RESPONSE_POSITION:
                         responsePosition = parseNumberedParameter(
@@ -376,12 +374,61 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        return (diagnostics == null) ? true : false;
+        // diagnostics != null -> consider as success
+        return (diagnostics == null);
     }
 
 
     List<SRUDiagnostic> getDiagnostics() {
         return diagnostics;
+    }
+
+
+    SRUVersion getRawVersion() {
+        return version;
+    }
+
+
+    SRURecordPacking getRawRecordPacking() {
+        return recordPacking;
+    }
+
+
+    String getRawRecordSchemaIdentifier() {
+        return getParameter(PARAM_RECORD_SCHEMA, true, false);
+    }
+
+
+    String getRawQuery() {
+        return getParameter(PARAM_QUERY, true, false);
+    }
+
+
+    int getRawMaximumRecords() {
+        return maximumRecords;
+    }
+
+
+    String getRawScanClause() {
+        return getParameter(PARAM_SCAN_CLAUSE, true, false);
+    }
+
+
+    int getIndentResponse() {
+        if (config.allowOverrideIndentResponse()) {
+            String s = getExtraRequestData(X_INDENT_RESPONSE);
+            if (s != null) {
+                try {
+                    int x = Integer.parseInt(s);
+                    if ((x > -2) && (x < 9)) {
+                        return x;
+                    }
+                } catch (NumberFormatException e) {
+                    /* IGNORE */
+                }
+            }
+        }
+        return config.getIndentResponse();
     }
 
 
@@ -393,7 +440,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public SRUVersion getVersion() {
-        return version;
+        return (version != null) ? version : config.getDefaultVersion();
     }
 
 
@@ -402,7 +449,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (version == null) {
             throw new NullPointerException("version == null");
         }
-        return this.version.equals(version);
+        return getVersion().equals(version);
     }
 
 
@@ -417,26 +464,23 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (min.getVersionNumber() > max.getVersionNumber()) {
             throw new IllegalArgumentException("min > max");
         }
-        return (min.getVersionNumber() >= version.getVersionNumber()) &&
-                (version.getVersionNumber() <= max.getVersionNumber());
+        final SRUVersion v = getVersion();
+        return (min.getVersionNumber() >= v.getVersionNumber()) &&
+                (v.getVersionNumber() <= max.getVersionNumber());
     }
 
 
     @Override
     public SRURecordPacking getRecordPacking() {
-        return recordPacking;
+        return (recordPacking != null)
+                ? recordPacking
+                : config.getDefaultRecordPacking();
     }
 
 
     @Override
     public CQLNode getQuery() {
         return query;
-    }
-
-
-    @Override
-    public String getRawQuery() {
-        return rawQuery;
     }
 
 
@@ -448,19 +492,32 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getMaximumRecords() {
-        return maximumRecords;
+        if (config.allowOverrideMaximumRecords() &&
+                (getExtraRequestData(X_UNLIMITED_RESULTSET) != null)) {
+            return -1;
+        }
+        if (maximumRecords == -1) {
+            return config.getNumberOfRecords();
+        } else {
+            if (maximumRecords > config.getMaximumRecords()) {
+                return config.getMaximumRecords();
+            } else {
+                return maximumRecords;
+            }
+        }
     }
 
 
     @Override
+    @Deprecated
     public String getRecordSchemaName() {
-        return recordSchemaName;
+        return getRawRecordSchemaIdentifier();
     }
 
 
     @Override
     public String getRecordSchemaIdentifier() {
-        return recordSchemaidentifier;
+        return recordSchemaIdentifier;
     }
 
 
@@ -489,11 +546,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
-    public String getRawScanClause() {
-        return rawScanClause;
-    }
-
-    @Override
     public int getResponsePosition() {
         return responsePosition;
     }
@@ -501,7 +553,19 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public int getMaximumTerms() {
-        return maximumTerms;
+        if (config.allowOverrideMaximumTerms() &&
+                (getExtraRequestData(X_UNLIMITED_TERMLIST) != null)) {
+            return -1;
+        }
+        if (maximumTerms == -1) {
+            return config.getNumberOfTerms();
+        } else {
+            if (maximumTerms > config.getMaximumTerms()) {
+                return config.getMaximumTerms();
+            } else {
+                return maximumTerms;
+            }
+        }
     }
 
 
@@ -543,7 +607,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         if (name == null) {
             throw new NullPointerException("name == null");
         }
-        if (name.startsWith(PARAM_EXTENSION_PREFIX)) {
+        if (!name.startsWith(PARAM_EXTENSION_PREFIX)) {
             throw new IllegalArgumentException(
                     "name must start with \"" + PARAM_EXTENSION_PREFIX + "\"");
         }
@@ -558,11 +622,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
-    public void addDiagnostic(int code, String details, String message) {
+    public void addDiagnostic(String uri, String details, String message) {
+        final SRUDiagnostic diagnostic =
+                new SRUDiagnostic(uri, details, message);
         if (diagnostics == null) {
             diagnostics = new ArrayList<SRUDiagnostic>();
         }
-        diagnostics.add(new SRUDiagnostic(code, details, message));
+        diagnostics.add(diagnostic);
     }
 
 
@@ -579,15 +645,18 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    private String getParameter(String name, boolean nullify) {
+    private String getParameter(String name, boolean nullify,
+            boolean diagnosticIfEmpty) {
         String s = request.getParameter(name);
         if (s != null) {
             s = s.trim();
             if (nullify && s.isEmpty()) {
-                addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
-                        name, "An empty parameter \"" + PARAM_OPERATION +
-                                "\" is not supported.");
                 s = null;
+                if (diagnosticIfEmpty) {
+                    addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
+                            name, "An empty parameter \"" + PARAM_OPERATION +
+                            "\" is not supported.");
+                }
             }
         }
         return s;
@@ -595,7 +664,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     private void parseAndCheckVersionParameter() {
-        final String v = getParameter(PARAM_VERSION, true);
+        final String v = getParameter(PARAM_VERSION, true, true);
         if (v != null) {
             if (v.equals(VERSION_1_1)) {
                 this.version = SRUVersion.VERSION_1_1;
@@ -617,6 +686,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         PARAM_VERSION, "Mandatory parameter \"" +
                                 PARAM_VERSION + "\" was not supplied.");
             }
+
+            /*
+             * this is an explain operation, assume default version
+             */
+            this.version = config.getDefaultVersion();
         }
     }
 

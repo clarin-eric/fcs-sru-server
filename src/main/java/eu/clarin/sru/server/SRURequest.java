@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011 by
+ * This software is copyright (c) 2011-2013 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -62,8 +62,8 @@ public interface SRURequest {
 
 
     /**
-     * Check if version of this request is at least <em>min</em> and at
-     * most <em>max</em>.
+     * Check if version of this request is at least <em>min</em> and at most
+     * <em>max</em>.
      *
      * @param min
      *            the minimum version
@@ -100,31 +100,21 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>query</em> parameter for the request in raw string format.
-     * Only available for <em>searchRetrieve</em> requests.
-     *
-     * @return the raw query or <code>null</code> if not a
-     *         <em>searchRetrieve</em> request
-     */
-    public String getRawQuery();
-
-
-    /**
      * Get the <em>startRecord</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
+     * for <em>searchRetrieve</em> requests. If the client did not provide
+     * a value for the request, it is set to <code>1</code>.
      *
-     * @return the number of the start record or <code>-1</code> if no value was
-     *         supplied for this request
+     * @return the number of the start record
      */
     public int getStartRecord();
 
 
     /**
      * Get the <em>maximumRecords</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
+     * for <em>searchRetrieve</em> requests. If no value was supplied with the
+     * request, the server will automatically set a default value.
      *
-     * @return the maximum number of records or <code>-1</code> if no value was
-     *         supplied for this request
+     * @return the maximum number of records
      */
     public int getMaximumRecords();
 
@@ -135,18 +125,20 @@ public interface SRURequest {
      *
      * @return the record schema name or <code>null</code> if no value was
      *         supplied for this request
-     *         @see #getRecordSchemaIdentifier()
+     * @deprecated use {@link #getRecordSchemaIdentifier()}
      */
+    @Deprecated
     public String getRecordSchemaName();
+
 
     /**
      * Get the record schema identifier derived from the <em>recordSchema</em>
      * parameter of this request. Only available for <em>searchRetrieve</em>
-     * requests.
+     * requests. If the request was send with the short record schema name,
+     * it will automatically expanded to the record schema identifier.
      *
      * @return the record schema identifier or <code>null</code> if no
      *         <em>recordSchema</em> parameter was supplied for this request
-     * @see #getRecordSchemaName()
      */
     public String getRecordSchemaIdentifier();
 
@@ -172,8 +164,8 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>sortKeys</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests and version 1.1 requests.
+     * Get the <em>sortKeys</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests and version 1.1 requests.
      *
      * @return the record XPath or <code>null</code> of no value was supplied
      *         for this request
@@ -192,21 +184,11 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>scanClause</em> parameter of this request in raw string
-     * format. Only available for <em>scan</em> requests.
-     *
-     * @return the raw scan clause or <code>null</code> if not a <em>scan</em>
-     *         request
-     */
-    public String getRawScanClause();
-
-
-    /**
      * Get the <em>responsePosition</em> parameter of this request. Only
-     * available for <em>scan</em> requests.
+     * available for <em>scan</em> requests. If the client did not provide
+     * a value for the request, it is set to <code>1</code>.
      *
-     * @return the response position or <code>-1</code> if no value was supplied
-     *         for this request
+     * @return the response position
      */
     public int getResponsePosition();
 
@@ -267,9 +249,9 @@ public interface SRURequest {
 
 
     /**
-     * Get the raw client request information from the servlet container.
+     * Get the raw client request information from the Servlet container.
      *
-     * @return the servlet request
+     * @return the Servlet request
      */
     public HttpServletRequest getServletRequest();
 
