@@ -88,7 +88,7 @@ public final class SRUServerConfig {
      * Parameter constant for configuring the transports for this SRU server.
      * <p>
      * Valid values: "<code>http</code>", "<code>https</code>" or "
-     * <code>http https</code>" (without quotation marks) <br />
+     * <code>http https</code>" (without quotation marks) <br>
      * <p>
      * Used as part of the <em>Explain</em> response.
      * </p>
@@ -99,7 +99,7 @@ public final class SRUServerConfig {
      * Parameter constant for configuring the host of this SRU server.
      * <p>
      * Valid values: any fully qualified hostname, e.g.
-     * <code>sru.example.org</code> <br />
+     * <code>sru.example.org</code> <br>
      * Used as part of the <em>Explain</em> response.
      * </p>
      */
@@ -108,7 +108,7 @@ public final class SRUServerConfig {
     /**
      * Parameter constant for configuring the port number of this SRU server.
      * <p>
-     * Valid values: number between 1 and 65535 (typically 80 or 8080) <br />
+     * Valid values: number between 1 and 65535 (typically 80 or 8080) <br>
      * Used as part of the <em>Explain</em> response.
      * </p>
      */
@@ -118,7 +118,7 @@ public final class SRUServerConfig {
      * Parameter constant for configuring the database of this SRU server. This
      * is usually the path component of the SRU servers URI.
      * <p>
-     * Valid values: typically the path component if the SRU server URI. <br />
+     * Valid values: typically the path component if the SRU server URI. <br>
      * Used as part of the <em>Explain</em> response.
      * </p>
      */
