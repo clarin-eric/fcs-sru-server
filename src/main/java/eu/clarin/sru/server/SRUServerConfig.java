@@ -42,8 +42,6 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -265,66 +263,6 @@ public final class SRUServerConfig {
      */
     public static final String SRU_RESPONSE_BUFFER_SIZE =
             "eu.clarin.sru.server.responseBufferSize";
-    /**
-     * @deprecated use {@link #SRU_TRANSPORT}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_TRANSPORT =
-            "sru.transport";
-    /**
-     * @deprecated use {@link #SRU_HOST}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_HOST =
-            "sru.host";
-    /**
-     * @deprecated use {@link #SRU_PORT}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_PORT =
-            "sru.port";
-    /**
-     * @deprecated use {@link #SRU_DATABASE}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_DATABASE =
-            "sru.database";
-    /**
-     * @deprecated use {@link #SRU_NUMBER_OF_RECORDS}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_NUMBER_OF_RECORDS =
-            "sru.numberOfRecords";
-    /**
-     * @deprecated use {@link #SRU_MAXIMUM_RECORDS}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_MAXIMUM_RECORDS =
-            "sru.maximumRecords";
-    /**
-     * @deprecated use {@link #SRU_ECHO_REQUESTS}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_ECHO_REQUESTS =
-            "sru.echoRequests";
-    /**
-     * @deprecated use {@link #SRU_INDENT_RESPONSE}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_INDENT_RESPONSE =
-            "sru.indentResponse";
-    /**
-     * @deprecated use {@link #SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS =
-            "sru.allowOverrideMaximumRecords";
-    /**
-     * @deprecated use {@link #SRU_ALLOW_OVERRIDE_INDENT_RESPONSE}
-     */
-    @Deprecated
-    private static final String LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
-            "sru.allowOverrideIndentResponse";
     private static final SRUVersion DEFAULT_SRU_VERSION_MIN =
             SRUVersion.VERSION_1_1;
     private static final SRUVersion DEFAULT_SRU_VERSION_MAX =
@@ -661,8 +599,6 @@ public final class SRUServerConfig {
         }
     } // IndexInfo
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(SRUServerConfig.class);
     private final SRUVersion minVersion;
     private final SRUVersion maxVersion;
     private final SRUVersion defaultVersion;
@@ -983,11 +919,6 @@ public final class SRUServerConfig {
             IndexInfo indexInfo = buildIndexInfo(xpath, doc);
 
             List<SchemaInfo> schemaInfo = buildSchemaInfo(xpath, doc);
-
-            /*
-             * convert legacy parameters
-             */
-            convertLegacyParameter(params);
 
             /*
              * fetch parameters more parameters (usually passed from Servlet
@@ -1406,54 +1337,6 @@ public final class SRUServerConfig {
             result = Boolean.valueOf(attr.getValue());
         }
         return result;
-    }
-
-
-    public static void convertLegacyParameter(Map<String, String> params) {
-        if ((params != null) && !params.isEmpty()) {
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_TRANSPORT,
-                    SRU_TRANSPORT);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_HOST,
-                    SRU_HOST);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_PORT,
-                    SRU_PORT);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_DATABASE,
-                    SRU_DATABASE);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_NUMBER_OF_RECORDS,
-                    SRU_NUMBER_OF_RECORDS);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_MAXIMUM_RECORDS,
-                    SRU_MAXIMUM_RECORDS);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_ECHO_REQUESTS,
-                    SRU_ECHO_REQUESTS);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_INDENT_RESPONSE,
-                    SRU_INDENT_RESPONSE);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS,
-                    SRU_ALLOW_OVERRIDE_MAXIMUM_RECORDS);
-            convertLegacyParameter1(params,
-                    LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE,
-                    SRU_ALLOW_OVERRIDE_INDENT_RESPONSE);
-        }
-    }
-
-
-    private static void convertLegacyParameter1(Map<String, String> params,
-            String legacyName, String name) {
-        final String value = params.get(legacyName);
-        if (value != null) {
-            params.put(name, value);
-            params.remove(legacyName);
-            logger.warn("parameter '{}' is deprecated, please use "
-                    + "parameter '{}' instead!", legacyName, name);
-        }
     }
 
 } // class SRUEndpointConfig

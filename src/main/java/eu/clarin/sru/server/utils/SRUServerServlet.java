@@ -219,9 +219,6 @@ public final class SRUServerServlet extends HttpServlet {
             }
         }
 
-        /* convert legacy parameters */
-        SRUServerConfig.convertLegacyParameter(params);
-
         /*
          * Set some defaults (aka "plug and play" for development deployment)
          * Override those for a production deployment through your Servlet
