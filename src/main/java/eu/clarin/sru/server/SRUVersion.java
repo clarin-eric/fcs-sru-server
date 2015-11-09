@@ -50,6 +50,22 @@ public enum SRUVersion {
         String getVersionString() {
             return "1.2";
         }
+    },
+
+    /**
+     * SRU/CQL version 2.0
+     */
+    VERSION_2_0 {
+        @Override
+        int getVersionNumber() {
+            return ((2 << 16) | 0);
+        }
+
+
+        @Override
+        String getVersionString() {
+            return "2.0";
+        }
     };
 
     abstract int getVersionNumber();

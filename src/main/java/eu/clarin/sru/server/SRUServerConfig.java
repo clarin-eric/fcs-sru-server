@@ -85,6 +85,39 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public final class SRUServerConfig {
     /**
+     * Parameter constant for setting the minimum supported SRU version for this
+     * SRU server. Must be smaller or equal to {@link #SRU_SUPPORTED_VERSION_MAX}.
+     * <p>
+     * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
+     * <code>2.0</code>" (without quotation marks)
+     * <p>
+     */
+    public static final String SRU_SUPPORTED_VERSION_MIN =
+            "eu.clarin.sru.server.sruSupportedVersionMin";
+    /**
+     * Parameter constant for setting the maximum supported SRU version for this
+     * SRU server. Must be larger or equal to {@link #SRU_SUPPORTED_VERSION_MIN}.
+     * <p>
+     * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
+     * <code>2.0</code>" (without quotation marks)
+     * <p>
+     */
+    public static final String SRU_SUPPORTED_VERSION_MAX =
+            "eu.clarin.sru.server.sruSupportedVersionMax";
+    /**
+     * Parameter constant for setting the default SRU version for this SRU
+     * server, e.g. for an <em>Explain</em> request without explicit version.
+     * Must not me less than {@link #SRU_SUPPORTED_VERSION_MIN} or larger than
+     * {@link #SRU_SUPPORTED_VERSION_MAX}. Defaults to
+     * {@link #SRU_SUPPORTED_VERSION_MAX}.
+     * <p>
+     * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
+     * <code>2.0</code>" (without quotation marks)
+     * <p>
+     */
+    public static final String SRU_SUPPORTED_VERSION_DEFAULT =
+            "eu.clarin.sru.server.sruSupportedVersionDefault";
+    /**
      * Parameter constant for configuring the transports for this SRU server.
      * <p>
      * Valid values: "<code>http</code>", "<code>https</code>" or "
@@ -292,6 +325,10 @@ public final class SRUServerConfig {
     @Deprecated
     private static final String LEGACY_SRU_ALLOW_OVERRIDE_INDENT_RESPONSE =
             "sru.allowOverrideIndentResponse";
+    private static final SRUVersion DEFAULT_SRU_VERSION_MIN =
+            SRUVersion.VERSION_1_1;
+    private static final SRUVersion DEFAULT_SRU_VERSION_MAX =
+            SRUVersion.VERSION_1_2;
     private static final int DEFAULT_NUMBER_OF_RECORDS    = 100;
     private static final int DEFAULT_MAXIMUM_RECORDS      = 250;
     private static final int DEFAULT_NUMBER_OF_TERMS      = 250;
@@ -626,6 +663,9 @@ public final class SRUServerConfig {
 
     private static final Logger logger =
             LoggerFactory.getLogger(SRUServerConfig.class);
+    private final SRUVersion minVersion;
+    private final SRUVersion maxVersion;
+    private final SRUVersion defaultVersion;
     private final String transport;
     private final String host;
     private final int port;
@@ -646,7 +686,8 @@ public final class SRUServerConfig {
     private final List<SchemaInfo> schemaInfo;
 
 
-    private SRUServerConfig(String transport, String host, int port,
+    private SRUServerConfig(SRUVersion minVersion, SRUVersion maxVersion,
+            SRUVersion defaultVersion, String transport, String host, int port,
             String database, int numberOfRecords, int maximumRecords,
             int numberOfTerms, int maximumTerms, boolean echoRequests,
             int indentResponse, int responseBufferSize,
@@ -654,6 +695,9 @@ public final class SRUServerConfig {
             boolean allowOverrideMaximumTerms,
             boolean allowOverrideIndentResponse, DatabaseInfo databaseinfo,
             IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
+        this.minVersion                  = minVersion;
+        this.maxVersion                  = maxVersion;
+        this.defaultVersion              = defaultVersion;
         this.transport                   = transport;
         this.host                        = host;
         this.port                        = port;
@@ -687,8 +731,18 @@ public final class SRUServerConfig {
     }
 
 
+    public SRUVersion getMinVersion() {
+        return minVersion;
+    }
+
+
+    public SRUVersion getMaxVersion() {
+        return maxVersion;
+    }
+
+
     public SRUVersion getDefaultVersion() {
-        return SRUVersion.VERSION_1_2;
+        return defaultVersion;
     }
 
 
@@ -936,8 +990,38 @@ public final class SRUServerConfig {
             convertLegacyParameter(params);
 
             /*
-             * fetch parameters more parameters
+             * fetch parameters more parameters (usually passed from Servlet
+             * context)
              */
+
+            SRUVersion minVersion = parseVersionNumber(params,
+                    SRU_SUPPORTED_VERSION_MIN, false, DEFAULT_SRU_VERSION_MIN);
+
+            SRUVersion maxVersion = parseVersionNumber(params,
+                    SRU_SUPPORTED_VERSION_MAX, false, DEFAULT_SRU_VERSION_MAX);
+            if (maxVersion.compareTo(minVersion) < 0) {
+                throw new SRUConfigException(
+                        "parameter value \"" + SRU_SUPPORTED_VERSION_MAX +
+                                "\" (" + maxVersion.getVersionString() +
+                                ") must be equal or larger than value of parameter \"" +
+                                SRU_SUPPORTED_VERSION_MIN + "\" (" +
+                                minVersion.getVersionString() + ")");
+            }
+
+            SRUVersion defaultVersion = parseVersionNumber(params,
+                    SRU_SUPPORTED_VERSION_DEFAULT, false, maxVersion);
+            if ((defaultVersion.compareTo(minVersion) < 0) ||
+                    (defaultVersion.compareTo(maxVersion) > 0)) {
+                throw new SRUConfigException(
+                        "parameter value \"" + SRU_SUPPORTED_VERSION_DEFAULT +
+                                "\" (" + defaultVersion.getVersionString() +
+                                ") must be between value of parameter \"" +
+                                SRU_SUPPORTED_VERSION_MIN + "\" (" +
+                                minVersion.getVersionString() + ") and \"" +
+                                SRU_SUPPORTED_VERSION_MAX + "\" (" +
+                                maxVersion.getVersionString() + ")");
+            }
+
             String transport = params.get(SRU_TRANSPORT);
             if ((transport == null) || transport.isEmpty()) {
                 throw new SRUConfigException("parameter \"" + SRU_TRANSPORT +
@@ -1010,12 +1094,13 @@ public final class SRUServerConfig {
                     SRU_RESPONSE_BUFFER_SIZE, false,
                     DEFAULT_RESPONSE_BUFFER_SIZE, 0, -1);
 
-            return new SRUServerConfig(transport, host, port, database,
-                    numberOfRecords, maximumRecords, numberOfTerms,
-                    maximumTerms, echoRequests, indentResponse,
-                    responseBufferSize, allowOverrideMaximumRecords,
-                    allowOverrideMaximumTerms, allowOverrideIndentResponse,
-                    databaseInfo, indexInfo, schemaInfo);
+            return new SRUServerConfig(minVersion, maxVersion, defaultVersion,
+                    transport, host, port, database, numberOfRecords,
+                    maximumRecords, numberOfTerms, maximumTerms, echoRequests,
+                    indentResponse, responseBufferSize,
+                    allowOverrideMaximumRecords, allowOverrideMaximumTerms,
+                    allowOverrideIndentResponse, databaseInfo, indexInfo,
+                    schemaInfo);
         } catch (IOException e) {
             throw new SRUConfigException("error reading configuration file", e);
         } catch (XPathException e) {
@@ -1024,6 +1109,32 @@ public final class SRUServerConfig {
             throw new SRUConfigException("error parsing configuration file", e);
         } catch (SAXException e) {
             throw new SRUConfigException("error parsing configuration file", e);
+        }
+    }
+
+
+    private static SRUVersion parseVersionNumber(Map<String, String> params,
+            String name, boolean mandatory, SRUVersion defaultValue)
+                    throws SRUConfigException {
+        String value = params.get(name);
+        if ((value == null) || value.isEmpty()) {
+            if (mandatory) {
+                throw new SRUConfigException(
+                        "parameter \"" + name + "\" is mandatory");
+            } else {
+                return defaultValue;
+            }
+        } else {
+            if ("1.1".equals(value)) {
+                return SRUVersion.VERSION_1_1;
+            } else if ("1.2".equals(value)) {
+                return SRUVersion.VERSION_1_2;
+            } else if ("2.0".equals(value)) {
+                return SRUVersion.VERSION_2_0;
+            } else {
+                throw new SRUConfigException("invalid value for parameter \"" +
+                        name + "\": " + value);
+            }
         }
     }
 
