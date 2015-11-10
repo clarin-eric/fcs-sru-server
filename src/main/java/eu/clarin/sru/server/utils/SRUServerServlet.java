@@ -216,7 +216,7 @@ public final class SRUServerServlet extends HttpServlet {
          * create an instance of the search engine ...
          */
         try {
-            logger.debug("creating new serach engine from class {}",
+            logger.debug("creating new search engine from class {}",
                     sruServerSearchEngineClass);
             @SuppressWarnings("unchecked")
             Class<SRUSearchEngineBase> clazz = (Class<SRUSearchEngineBase>)
