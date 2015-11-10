@@ -1140,7 +1140,15 @@ public final class SRUServer {
         case VERSION_1_1:
             /* FALL-THROUGH */
         case VERSION_1_2:
-            return NAMESPACES_LEGACY;
+            switch (config.getLegacyNamespaceMode()) {
+            case LOC:
+                return NAMESPACES_LEGACY_LOC;
+            case OASIS:
+                return NAMESPACES_1_2_OASIS;
+            default:
+                // FIXME: better exception?
+                throw new IllegalAccessError("invalid legacy mode: " + version);
+            } // switch
         case VERSION_2_0:
             return NAMESPACES_2_0;
         default:
@@ -1152,7 +1160,7 @@ public final class SRUServer {
 
 
 
-    private static final SRUNamespaces NAMESPACES_LEGACY = new SRUNamespaces() {
+    private static final SRUNamespaces NAMESPACES_LEGACY_LOC = new SRUNamespaces() {
         private static final String SRU_NS =
                 "http://www.loc.gov/zing/srw/";
         private static final String SRU_PREFIX =
@@ -1190,6 +1198,82 @@ public final class SRUServer {
         @Override
         public String getScanPrefix() {
             return SRU_PREFIX;
+        }
+
+
+        @Override
+        public String getDiagnosticNS() {
+            return SRU_DIAGNOSIC_NS;
+        }
+
+
+        @Override
+        public String getDiagnosticPrefix() {
+            return SRU_DIAGNOSTIC_PREFIX;
+        }
+
+
+        @Override
+        public String getExplainNS() {
+            return SRU_EXPLAIN_NS;
+        }
+
+
+        @Override
+        public String getExplainPrefix() {
+            return SRU_EXPLAIN_PREFIX;
+        }
+
+
+        @Override
+        public String getXcqlNS() {
+            return SRU_XCQL_NS;
+        }
+    };
+
+
+    private static final SRUNamespaces NAMESPACES_1_2_OASIS = new SRUNamespaces() {
+        private static final String SRU_RESPONSE_NS =
+                "http://docs.oasis-open.org/ns/search-ws/sruResponse";
+        private static final String SRU_RESPONSE_PREFIX =
+                "sruResponse";
+        private static final String SRU_SCAN_NS =
+                "http://docs.oasis-open.org/ns/search-ws/scan";
+        private static final String SRU_SCAN_PREFIX =
+                "scan";
+        private static final String SRU_DIAGNOSIC_NS =
+                "http://docs.oasis-open.org/ns/search-ws/diagnostic";
+        private static final String SRU_DIAGNOSTIC_PREFIX =
+                "diag";
+        private static final String SRU_EXPLAIN_NS =
+                "http://explain.z3950.org/dtd/2.0/";
+        private static final String SRU_EXPLAIN_PREFIX =
+                "zr";
+        private static final String SRU_XCQL_NS =
+                "http://docs.oasis-open.org/ns/search-ws/xcql";
+
+
+        @Override
+        public String getResponseNS() {
+            return SRU_RESPONSE_NS;
+        }
+
+
+        @Override
+        public String getResponsePrefix() {
+            return SRU_RESPONSE_PREFIX;
+        }
+
+
+        @Override
+        public String getScanNS() {
+            return SRU_SCAN_NS;
+        }
+
+
+        @Override
+        public String getScanPrefix() {
+            return SRU_SCAN_PREFIX;
         }
 
 

@@ -205,12 +205,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
      *         went wrong
      */
     boolean checkParameters() {
-        /*
-         * FIXME: those parameters must be inject from "outside" (probably
-         *        by the appropriate Servlet instance)
-         */
         final SRUVersion minVersion = config.getMinVersion();
         final SRUVersion maxVersion = config.getMaxVersion();
+
+        /*
+         * generally assume, we will also allow processing of SRU 1.1 or 1.2
+         */
+        boolean processSruOld = true;
 
         /*
          * Heuristic to detect SRU version and operation ...
@@ -219,6 +220,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         SRUVersion version = null;
         if (maxVersion.compareTo(SRUVersion.VERSION_2_0) >= 0) {
             if (getParameter(PARAM_VERSION, false, false) == null) {
+                /*
+                 * Ok, we're committed to SRU 2.0 now, so don't allow processing
+                 * of SRU 1.1 and 1.2 ...
+                 */
+                processSruOld = false;
+
                 logger.debug("handling request as SRU 2.0, because no '{}' " +
                         "parameter was found in the request", PARAM_VERSION);
                 if (getParameter(PARAM_QUERY, false, false) != null) {
@@ -245,70 +252,91 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 final String op = getParameter(PARAM_OPERATION, false, false);
                 if (op != null) {
                     /*
-                     * XXX: if operation is searchRetrive an operation parameter,
-                     * is also searchRetrieve, the server may ignore it
+                     * XXX: if operation is searchRetrive and the 'operation'
+                     * parameter is also searchRetrieve, should the server just
+                     * ignore it?
                      */
                     if (!(operation == SRUOperation.SEARCH_RETRIEVE) &&
                             op.equals(OP_SEARCH_RETRIEVE)) {
                         addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER,
-                                PARAM_OPERATION, "Parameter '" +
+                                PARAM_OPERATION, "Parameter \"" +
                                         PARAM_OPERATION +
-                                        "' is not valid for SRU version 2.0");
+                                        "\" is not valid for SRU version 2.0");
                     }
                 }
             } else {
                 logger.debug("handling request as legacy SRU, because found " +
                         "parameter '{}' in request", PARAM_VERSION);
-
-                // parse mandatory operation parameter
-                final String op = getParameter(PARAM_OPERATION, false, false);
-                if (op != null) {
-                    if (!op.isEmpty()) {
-                        if (op.equals(OP_EXPLAIN)) {
-                            this.operation = SRUOperation.EXPLAIN;
-                        } else if (op.equals(OP_SCAN)) {
-                            this.operation = SRUOperation.SCAN;
-                        } else if (op.equals(OP_SEARCH_RETRIEVE)) {
-                            this.operation = SRUOperation.SEARCH_RETRIEVE;
-                        } else {
-                            addDiagnostic(SRUConstants.SRU_UNSUPPORTED_OPERATION,
-                                    null, "Operation \"" + op + "\" is not supported.");
-                        }
-                    } else {
-                        addDiagnostic(SRUConstants.SRU_UNSUPPORTED_OPERATION,
-                                null, "An empty parameter \"" +
-                                        PARAM_OPERATION +
-                                      "\" is not supported.");
-                    }
-
-                    // parse and check version
-                    version = parseAndCheckVersionParameter(operation);
-                } else {
-                    /*
-                     * absent parameter should be interpreted as "explain"
-                     */
-                    operation = SRUOperation.EXPLAIN;
-
-                    // parse and check version
-                    version = parseAndCheckVersionParameter(operation);
-                }
             }
         }
 
-        if ((version == null) || (operation == null)) {
-            logger.error("internal error!!!!1elf");
+        if (processSruOld) {
+            // parse mandatory operation parameter
+            final String op = getParameter(PARAM_OPERATION, false, false);
+            if (op != null) {
+                if (!op.isEmpty()) {
+                    if (op.equals(OP_EXPLAIN)) {
+                        operation = SRUOperation.EXPLAIN;
+                    } else if (op.equals(OP_SCAN)) {
+                        operation = SRUOperation.SCAN;
+                    } else if (op.equals(OP_SEARCH_RETRIEVE)) {
+                        operation = SRUOperation.SEARCH_RETRIEVE;
+                    } else {
+                        addDiagnostic(SRUConstants.SRU_UNSUPPORTED_OPERATION,
+                                null, "Operation \"" + op + "\" is not supported.");
+                    }
+                } else {
+                    addDiagnostic(SRUConstants.SRU_UNSUPPORTED_OPERATION,
+                            null, "An empty parameter \"" +
+                                    PARAM_OPERATION +
+                                  "\" is not supported.");
+                }
+
+                // parse and check version
+                version = parseAndCheckVersionParameter(operation);
+            } else {
+                /*
+                 * absent parameter should be interpreted as "explain"
+                 */
+                operation = SRUOperation.EXPLAIN;
+
+                // parse and check version
+                version = parseAndCheckVersionParameter(operation);
+            }
         }
 
-        if (minVersion.compareTo(version) < 0) {
-            addDiagnostic(SRUConstants.SRU_UNSUPPORTED_VERSION,
-                    version.getVersionString(), "Version '{}' is not supported by this endpoint");
+
+        /*
+         * sanity check
+         */
+        if ((version != null) && (operation != null)) {
+            logger.debug("min = {}, min? = {}, max = {}, max? = {}, version = {}",
+                    minVersion,
+                    version.compareTo(minVersion),
+                    maxVersion,
+                    version.compareTo(maxVersion),
+                    version);
+            if ((version.compareTo(minVersion) >= 0) &&
+                    (version.compareTo(maxVersion) <= 0)) {
+                /*
+                 * FIXME: re-factor to make this nicer ...
+                 */
+                this.version   = version;
+                this.operation = operation;
+                return checkParameters2();
+            } else {
+                addDiagnostic(SRUConstants.SRU_UNSUPPORTED_VERSION,
+                        maxVersion.getVersionString(),
+                        "Version \"" + version.getVersionString() +
+                        "\" is not supported by this endpoint.");
+            }
         }
-        return checkParameters2();
+        logger.debug("bailed");
+        return false;
     }
 
 
-    boolean checkParameters2() {
-
+    private boolean checkParameters2() {
         if (diagnostics == null) {
             // check mandatory/optional parameters for operation
             ParameterInfo[] parameters;
@@ -456,7 +484,10 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
 
-        // diagnostics != null -> consider as success
+        /*
+         *  diagnostics == null -> consider as success
+         *  FIXME: this should ne done nicer!
+         */
         return (diagnostics == null);
     }
 

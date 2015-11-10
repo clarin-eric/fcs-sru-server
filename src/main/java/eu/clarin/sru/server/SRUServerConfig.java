@@ -88,7 +88,7 @@ public final class SRUServerConfig {
      * <p>
      * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
      * <code>2.0</code>" (without quotation marks)
-     * <p>
+     * </p>
      */
     public static final String SRU_SUPPORTED_VERSION_MIN =
             "eu.clarin.sru.server.sruSupportedVersionMin";
@@ -98,7 +98,7 @@ public final class SRUServerConfig {
      * <p>
      * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
      * <code>2.0</code>" (without quotation marks)
-     * <p>
+     * </p>
      */
     public static final String SRU_SUPPORTED_VERSION_MAX =
             "eu.clarin.sru.server.sruSupportedVersionMax";
@@ -111,10 +111,20 @@ public final class SRUServerConfig {
      * <p>
      * Valid values: "<code>1.1</code>", "<code>1.2</code>" or "
      * <code>2.0</code>" (without quotation marks)
-     * <p>
+     * </p>
      */
     public static final String SRU_SUPPORTED_VERSION_DEFAULT =
             "eu.clarin.sru.server.sruSupportedVersionDefault";
+    /**
+     * Parameter constant for setting the namespace URIs for SRU 1.1 and SRU
+     * 1.2.
+     * <p>
+     * Valid values: "<code>loc"</code> for Library Of Congress URI or "
+     * <code>oasis</code> for OASIS URIs (without quotation marks).
+     * </p>
+     */
+    public static final String SRU_LEGACY_NAMESPACE_MODE =
+            "eu.clarin.sru.server.legacyNamespaceMode";
     /**
      * Parameter constant for configuring the transports for this SRU server.
      * <p>
@@ -267,6 +277,8 @@ public final class SRUServerConfig {
             SRUVersion.VERSION_1_1;
     private static final SRUVersion DEFAULT_SRU_VERSION_MAX =
             SRUVersion.VERSION_1_2;
+    private static final LegacyNamespaceMode DEFAULT_LEGACY_NAMESPACE_MODE =
+            LegacyNamespaceMode.LOC;
     private static final int DEFAULT_NUMBER_OF_RECORDS    = 100;
     private static final int DEFAULT_MAXIMUM_RECORDS      = 250;
     private static final int DEFAULT_NUMBER_OF_TERMS      = 250;
@@ -276,6 +288,9 @@ public final class SRUServerConfig {
             "http://www.clarin.eu/sru-server/1.0/";
     private static final String CONFIG_FILE_SCHEMA_URL =
             "META-INF/sru-server-config.xsd";
+    public static enum LegacyNamespaceMode {
+        LOC, OASIS
+    } // enum LegacyNamespaceMode
 
     public static final class LocalizedString {
         private final boolean primary;
@@ -602,6 +617,7 @@ public final class SRUServerConfig {
     private final SRUVersion minVersion;
     private final SRUVersion maxVersion;
     private final SRUVersion defaultVersion;
+    private final LegacyNamespaceMode legacyNamespaceMode;
     private final String transport;
     private final String host;
     private final int port;
@@ -622,18 +638,31 @@ public final class SRUServerConfig {
     private final List<SchemaInfo> schemaInfo;
 
 
-    private SRUServerConfig(SRUVersion minVersion, SRUVersion maxVersion,
-            SRUVersion defaultVersion, String transport, String host, int port,
-            String database, int numberOfRecords, int maximumRecords,
-            int numberOfTerms, int maximumTerms, boolean echoRequests,
-            int indentResponse, int responseBufferSize,
+    private SRUServerConfig(SRUVersion minVersion,
+            SRUVersion maxVersion,
+            SRUVersion defaultVersion,
+            LegacyNamespaceMode legacyNamespaceMode,
+            String transport,
+            String host,
+            int port,
+            String database,
+            int numberOfRecords,
+            int maximumRecords,
+            int numberOfTerms,
+            int maximumTerms,
+            boolean echoRequests,
+            int indentResponse,
+            int responseBufferSize,
             boolean allowOverrideMaximumRecords,
             boolean allowOverrideMaximumTerms,
-            boolean allowOverrideIndentResponse, DatabaseInfo databaseinfo,
-            IndexInfo indexInfo, List<SchemaInfo> schemaInfo) {
+            boolean allowOverrideIndentResponse,
+            DatabaseInfo databaseinfo,
+            IndexInfo indexInfo,
+            List<SchemaInfo> schemaInfo) {
         this.minVersion                  = minVersion;
         this.maxVersion                  = maxVersion;
         this.defaultVersion              = defaultVersion;
+        this.legacyNamespaceMode         = legacyNamespaceMode;
         this.transport                   = transport;
         this.host                        = host;
         this.port                        = port;
@@ -679,6 +708,11 @@ public final class SRUServerConfig {
 
     public SRUVersion getDefaultVersion() {
         return defaultVersion;
+    }
+
+
+    public LegacyNamespaceMode getLegacyNamespaceMode() {
+        return legacyNamespaceMode;
     }
 
 
@@ -953,6 +987,21 @@ public final class SRUServerConfig {
                                 maxVersion.getVersionString() + ")");
             }
 
+            LegacyNamespaceMode legacyNamespaceMode =
+                    DEFAULT_LEGACY_NAMESPACE_MODE;
+            String mode = params.get(SRU_LEGACY_NAMESPACE_MODE);
+            if ((mode != null) && !mode.isEmpty()) {
+                if ("loc".equals(mode)) {
+                    legacyNamespaceMode = LegacyNamespaceMode.LOC;
+                } else if ("oasis".equals(mode)) {
+                    legacyNamespaceMode = LegacyNamespaceMode.OASIS;
+                } else {
+                    throw new SRUConfigException(
+                            "invalid value for parameter \"" +
+                                    SRU_LEGACY_NAMESPACE_MODE + "\": " + mode);
+                }
+            }
+
             String transport = params.get(SRU_TRANSPORT);
             if ((transport == null) || transport.isEmpty()) {
                 throw new SRUConfigException("parameter \"" + SRU_TRANSPORT +
@@ -1025,12 +1074,26 @@ public final class SRUServerConfig {
                     SRU_RESPONSE_BUFFER_SIZE, false,
                     DEFAULT_RESPONSE_BUFFER_SIZE, 0, -1);
 
-            return new SRUServerConfig(minVersion, maxVersion, defaultVersion,
-                    transport, host, port, database, numberOfRecords,
-                    maximumRecords, numberOfTerms, maximumTerms, echoRequests,
-                    indentResponse, responseBufferSize,
-                    allowOverrideMaximumRecords, allowOverrideMaximumTerms,
-                    allowOverrideIndentResponse, databaseInfo, indexInfo,
+            return new SRUServerConfig(minVersion,
+                    maxVersion,
+                    defaultVersion,
+                    legacyNamespaceMode,
+                    transport,
+                    host,
+                    port,
+                    database,
+                    numberOfRecords,
+                    maximumRecords,
+                    numberOfTerms,
+                    maximumTerms,
+                    echoRequests,
+                    indentResponse,
+                    responseBufferSize,
+                    allowOverrideMaximumRecords,
+                    allowOverrideMaximumTerms,
+                    allowOverrideIndentResponse,
+                    databaseInfo,
+                    indexInfo,
                     schemaInfo);
         } catch (IOException e) {
             throw new SRUConfigException("error reading configuration file", e);
