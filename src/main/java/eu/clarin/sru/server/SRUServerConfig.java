@@ -716,8 +716,13 @@ public final class SRUServerConfig {
     }
 
 
+    public SRURecordXmlEscaping getDefaultRecordXmlEscaping() {
+        return SRURecordXmlEscaping.XML;
+    }
+
+
     public SRURecordPacking getDefaultRecordPacking() {
-        return SRURecordPacking.XML;
+        return SRURecordPacking.PACKED;
     }
 
 

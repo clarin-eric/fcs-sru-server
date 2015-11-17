@@ -256,7 +256,7 @@ public final class SRUDiagnostic {
             return "Not authorised to send record in this schema";
         } else if (uri.equals(SRUConstants.SRU_RECORD_TOO_LARGE_TO_SEND)) {
             return "Record too large to send";
-        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_RECORD_PACKING)) {
+        } else if (uri.equals(SRUConstants.SRU_UNSUPPORTED_XML_ESCAPING_VALUE)) {
             return "Unsupported record packing";
         } else if (uri.equals(SRUConstants.SRU_XPATH_RETRIEVAL_UNSUPPORTED)) {
             return "XPath retrieval unsupported";

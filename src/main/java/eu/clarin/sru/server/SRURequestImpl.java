@@ -34,44 +34,63 @@ import org.z3950.zing.cql.CQLParser;
 final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final Logger logger =
             LoggerFactory.getLogger(SRURequest.class);
-    private static final String PARAM_OPERATION         = "operation";
-    private static final String PARAM_VERSION           = "version";
-    private static final String PARAM_RECORD_PACKING    = "recordPacking";
-    private static final String PARAM_STYLESHEET        = "stylesheet";
-    private static final String PARAM_QUERY             = "query";
-    private static final String PARAM_START_RECORD      = "startRecord";
-    private static final String PARAM_MAXIMUM_RECORDS   = "maximumRecords";
-    private static final String PARAM_RECORD_SCHEMA     = "recordSchema";
-    private static final String PARAM_RECORD_X_PATH     = "recordXPath";
-    private static final String PARAM_RESULT_SET_TTL    = "resultSetTTL";
-    private static final String PARAM_SORT_KEYS         = "sortKeys";
-    private static final String PARAM_SCAN_CLAUSE       = "scanClause";
-    private static final String PARAM_RESPONSE_POSITION = "responsePosition";
-    private static final String PARAM_MAXIMUM_TERMS     = "maximumTerms";
-    private static final String OP_EXPLAIN              = "explain";
-    private static final String OP_SCAN                 = "scan";
-    private static final String OP_SEARCH_RETRIEVE      = "searchRetrieve";
-    private static final String VERSION_1_1             = "1.1";
-    private static final String VERSION_1_2             = "1.2";
-    private static final String RECORD_PACKING_XML      = "xml";
-    private static final String RECORD_PACKING_STRING   = "string";
-    private static final String PARAM_EXTENSION_PREFIX  = "x-";
-    private static final String X_UNLIMITED_RESULTSET   = "x-unlimited-resultset";
-    private static final String X_UNLIMITED_TERMLIST    = "x-unlimited-termlist";
-    private static final String X_INDENT_RESPONSE       = "x-indent-response";
-    private static final int DEFAULT_START_RECORD       = 1;
-    private static final int DEFAULT_RESPONSE_POSITION  = 1;
+    /* general / explain related parameter names */
+    private static final String PARAM_OPERATION            = "operation";
+    private static final String PARAM_VERSION              = "version";
+    private static final String PARAM_STYLESHEET           = "stylesheet";
+    private static final String PARAM_RENDER_BY            = "renderedBy";
+    private static final String PARAM_HTTP_ACCEPT          = "httpAccept";
+    private static final String PARAM_RESPONSE_TYPE        = "responseType";
+    /* searchRetrieve related parameter names */
+    private static final String PARAM_QUERY                = "query";
+    private static final String PARAM_QUERY_TYPE           = "queryType";
+    private static final String PARAM_START_RECORD         = "startRecord";
+    private static final String PARAM_MAXIMUM_RECORDS      = "maximumRecords";
+    private static final String PARAM_RECORD_XML_ESCAPING  = "recordXMLEscaping";
+    private static final String PARAM_RECORD_PACKING       = "recordPacking";
+    private static final String PARAM_RECORD_SCHEMA        = "recordSchema";
+    private static final String PARAM_RECORD_X_PATH        = "recordXPath";
+    private static final String PARAM_RESULT_SET_TTL       = "resultSetTTL";
+    private static final String PARAM_SORT_KEYS            = "sortKeys";
+    /* scan related parameter names */
+    private static final String PARAM_SCAN_CLAUSE          = "scanClause";
+    private static final String PARAM_RESPONSE_POSITION    = "responsePosition";
+    private static final String PARAM_MAXIMUM_TERMS        = "maximumTerms";
+    /* operations */
+    private static final String OP_EXPLAIN                 = "explain";
+    private static final String OP_SCAN                    = "scan";
+    private static final String OP_SEARCH_RETRIEVE         = "searchRetrieve";
+    private static final String VERSION_1_1                = "1.1";
+    private static final String VERSION_1_2                = "1.2";
+    /* various parameter values */
+    private static final String RECORD_XML_ESCAPING_XML    = "xml";
+    private static final String RECORD_XML_ESCPAING_STRING = "string";
+    private static final String RECORD_PACKING_PACKED      = "packed";
+    private static final String RECORD_PACKING_UNPACKED    = "unpacked";
+    private static final String RENDER_BY_CLIENT           = "client";
+    private static final String RENDER_BY_SERVER           = "server";
+    private static final String PARAM_EXTENSION_PREFIX     = "x-";
+    private static final String X_UNLIMITED_RESULTSET      = "x-unlimited-resultset";
+    private static final String X_UNLIMITED_TERMLIST       = "x-unlimited-termlist";
+    private static final String X_INDENT_RESPONSE          = "x-indent-response";
+    private static final int DEFAULT_START_RECORD          = 1;
+    private static final int DEFAULT_RESPONSE_POSITION     = 1;
     private final SRUServerConfig config;
     private final HttpServletRequest request;
     private List<SRUDiagnostic> diagnostics;
     private SRUOperation operation;
     private SRUVersion version;
+    private SRURecordXmlEscaping recordXmlEscaping;
     private SRURecordPacking recordPacking;
     private CQLNode query;
+    private String queryType;
     private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
     private String recordSchemaIdentifier;
     private String stylesheet;
+    private SRURenderBy renderBy;
+    private String responseType;
+    private String httpAccept;
     private String recordXPath;
     private int resultSetTTL = -1;
     private String sortKeys;
@@ -80,10 +99,16 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private int maximumTerms = -1;
 
     private static enum Parameter {
-        RECORD_PACKING,
+        STYLESHEET,
+        RENDER_BY,
+        HTTP_ACCEPT,
+        RESPONSE_TYPE,
         QUERY,
+        QUERY_TYPE,
         START_RECORD,
         MAXIMUM_RECORDS,
+        RECORD_XML_ESCAPING,
+        RECORD_PACKING,
         RECORD_SCHEMA,
         RECORD_XPATH,
         RESULT_SET_TTL,
@@ -91,7 +116,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         SCAN_CLAUSE,
         RESPONSE_POSITION,
         MAXIMUM_TERMS,
-        STYLESHEET
     }
 
     private static final class ParameterInfo {
@@ -112,16 +136,44 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             return parameter;
         }
 
-        public String getName() {
+        public String getName(SRUVersion version) {
             switch (parameter) {
-            case RECORD_PACKING:
-                return PARAM_RECORD_PACKING;
+            case STYLESHEET:
+                return PARAM_STYLESHEET;
+            case RENDER_BY:
+                return PARAM_RENDER_BY;
+            case HTTP_ACCEPT:
+                return PARAM_HTTP_ACCEPT;
+            case RESPONSE_TYPE:
+                return PARAM_RESPONSE_TYPE;
             case QUERY:
                 return PARAM_QUERY;
+            case QUERY_TYPE:
+                return PARAM_QUERY_TYPE;
             case START_RECORD:
                 return PARAM_START_RECORD;
             case MAXIMUM_RECORDS:
                 return PARAM_MAXIMUM_RECORDS;
+            case RECORD_XML_ESCAPING:
+                /*
+                 * 'recordPacking' was renamed to 'recordXMLEscaping' in SRU
+                 * 2.0. For library API treat 'recordPacking' parameter as
+                 * 'recordPacking' for SRU 1.1 and SRU 1.2.
+                 */
+                if (version == SRUVersion.VERSION_2_0) {
+                    return PARAM_RECORD_XML_ESCAPING;
+                } else {
+                    return PARAM_RECORD_PACKING;
+                }
+            case RECORD_PACKING:
+                /*
+                 * FIXME: make this better
+                 */
+                if (version == SRUVersion.VERSION_2_0) {
+                    return PARAM_RECORD_PACKING;
+                } else {
+                    throw new InternalError("should not happen");
+                }
             case RECORD_SCHEMA:
                 return PARAM_RECORD_SCHEMA;
             case RECORD_XPATH:
@@ -136,8 +188,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 return PARAM_RESPONSE_POSITION;
             case MAXIMUM_TERMS:
                 return PARAM_MAXIMUM_TERMS;
-            case STYLESHEET:
-                return PARAM_STYLESHEET;
             default:
                 throw new InternalError();
             } // switch
@@ -153,42 +203,53 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         }
     } // class ParameterInfo
 
-    private static final ParameterInfo[] PARAMS_EXPLAIN = {
-        new ParameterInfo(Parameter.RECORD_PACKING, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
-        new ParameterInfo(Parameter.STYLESHEET, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2)
+    private static final ParameterInfo[] PARAMETER_SET_EXPLAIN = {
+            new ParameterInfo(Parameter.STYLESHEET, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+            new ParameterInfo(Parameter.RECORD_XML_ESCAPING, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2)
     };
-    private static final ParameterInfo[] PARAMS_SCAN = {
-        new ParameterInfo(Parameter.SCAN_CLAUSE, true,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
-        new ParameterInfo(Parameter.RESPONSE_POSITION, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
-        new ParameterInfo(Parameter.MAXIMUM_TERMS, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
-        new ParameterInfo(Parameter.STYLESHEET, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2)
-
+    private static final ParameterInfo[] PARAMETER_SET_SCAN = {
+            new ParameterInfo(Parameter.STYLESHEET, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+            new ParameterInfo(Parameter.HTTP_ACCEPT, false,
+                    SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
+            new ParameterInfo(Parameter.SCAN_CLAUSE, true,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+            new ParameterInfo(Parameter.RESPONSE_POSITION, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+            new ParameterInfo(Parameter.MAXIMUM_TERMS, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0)
     };
-    private static final ParameterInfo[] PARAMS_SEARCH_RETRIEVE = {
+    private static final ParameterInfo[] PARAMETER_SET_SEARCH_RETRIEVE = {
+        new ParameterInfo(Parameter.STYLESHEET, false,
+                    SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+        new ParameterInfo(Parameter.HTTP_ACCEPT, false,
+                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
+        new ParameterInfo(Parameter.RENDER_BY, false,
+                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
+        new ParameterInfo(Parameter.RESPONSE_TYPE, false,
+                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.QUERY, true,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+        new ParameterInfo(Parameter.QUERY_TYPE, true,
+                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.START_RECORD, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.MAXIMUM_RECORDS, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+        new ParameterInfo(Parameter.RECORD_XML_ESCAPING, false,
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.RECORD_PACKING, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
+                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.RECORD_SCHEMA, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
-        new ParameterInfo(Parameter.RECORD_XPATH, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_1),
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.RESULT_SET_TTL, false,
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+        new ParameterInfo(Parameter.RECORD_XPATH, false,
                 SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2),
         new ParameterInfo(Parameter.SORT_KEYS, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_1),
-        new ParameterInfo(Parameter.STYLESHEET, false,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_1_2)
+                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
     };
 
 
@@ -339,16 +400,16 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private boolean checkParameters2() {
         if (diagnostics == null) {
             // check mandatory/optional parameters for operation
-            ParameterInfo[] parameters;
+            ParameterInfo[] parameter_set;
             switch (operation) {
             case EXPLAIN:
-                parameters = PARAMS_EXPLAIN;
+                parameter_set = PARAMETER_SET_EXPLAIN;
                 break;
             case SCAN:
-                parameters = PARAMS_SCAN;
+                parameter_set = PARAMETER_SET_SCAN;
                 break;
             case SEARCH_RETRIEVE:
-                parameters = PARAMS_SEARCH_RETRIEVE;
+                parameter_set = PARAMETER_SET_SEARCH_RETRIEVE;
                 break;
             default:
                 /* actually cannot happen */
@@ -365,11 +426,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             List<String> parameterNames = getParameterNames();
 
             // check parameters ...
-            for (ParameterInfo parameter : parameters) {
-                String value = getParameter(parameter.getName(), true, true);
+            for (ParameterInfo parameter : parameter_set) {
+                final String name = parameter.getName(version);
+                final String value = getParameter(name, true, true);
                 if (value != null) {
                     // remove supported parameter from list
-                    parameterNames.remove(parameter.getName());
+                    parameterNames.remove(name);
 
                     /*
                      * if parameter is not supported in this version, skip
@@ -377,37 +439,50 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                      */
                     if (!parameter.isForVersion(version)) {
                         addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER,
-                                parameter.getName(),
+                                name,
                                 "Version " + version.getVersionString() +
                                         " does not support parameter \"" +
-                                        parameter.getName() + "\".");
+                                        name + "\".");
                         continue;
                     }
 
                     // validate and parse parameters ...
                     switch (parameter.getParameter()) {
-                    case RECORD_PACKING:
-                        if (value.endsWith(RECORD_PACKING_XML)) {
-                            recordPacking = SRURecordPacking.XML;
-                        } else if (value.equals(RECORD_PACKING_STRING)) {
-                            recordPacking = SRURecordPacking.STRING;
+                    case RECORD_XML_ESCAPING:
+                        if (value.equals(RECORD_XML_ESCAPING_XML)) {
+                            recordXmlEscaping = SRURecordXmlEscaping.XML;
+                        } else if (value.equals(RECORD_XML_ESCPAING_STRING)) {
+                            recordXmlEscaping = SRURecordXmlEscaping.STRING;
                         } else {
                             addDiagnostic(
-                                    SRUConstants.SRU_UNSUPPORTED_RECORD_PACKING,
+                                    SRUConstants.SRU_UNSUPPORTED_XML_ESCAPING_VALUE,
+                                    null, "Record XML escaping \"" + value +
+                                            "\" is not supported.");
+                        }
+                        break;
+                    case RECORD_PACKING:
+                        if (value.equals(RECORD_PACKING_PACKED)) {
+                            recordPacking = SRURecordPacking.PACKED;
+                        } else if (value.equals(RECORD_PACKING_UNPACKED)) {
+                            recordPacking = SRURecordPacking.UNPACKED;
+                        } else {
+                            addDiagnostic(
+                                    SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
                                     null, "Record packing \"" + value +
                                             "\" is not supported.");
                         }
                         break;
                     case QUERY:
-                        query = parseCQLParameter(parameter.getName(), value);
+                        query = parseCQLParameter(name, value);
+                        break;
+                    case QUERY_TYPE:
+                        queryType = parseQueryTypeParameter(name, value);
                         break;
                     case START_RECORD:
-                        startRecord = parseNumberedParameter(
-                                parameter.getName(), value, 1);
+                        startRecord = parseNumberedParameter(name, value, 1);
                         break;
                     case MAXIMUM_RECORDS:
-                        maximumRecords = parseNumberedParameter(
-                                parameter.getName(), value, 0);
+                        maximumRecords = parseNumberedParameter(name, value, 0);
                         break;
                     case RECORD_SCHEMA:
                         /*
@@ -435,34 +510,55 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         recordXPath = value;
                         break;
                     case RESULT_SET_TTL:
-                        resultSetTTL = parseNumberedParameter(
-                                parameter.getName(), value, 0);
+                        resultSetTTL = parseNumberedParameter(name, value, 0);
                         break;
                     case SORT_KEYS:
                         sortKeys = value;
                         break;
                     case SCAN_CLAUSE:
-                        scanClause = parseCQLParameter(
-                                parameter.getName(), value);
+                        scanClause = parseCQLParameter(name, value);
                         break;
                     case RESPONSE_POSITION:
                         responsePosition = parseNumberedParameter(
-                                parameter.getName(), value, 0);
+                                name, value, 0);
                         break;
                     case MAXIMUM_TERMS:
-                        maximumTerms = parseNumberedParameter(
-                                parameter.getName(), value, 0);
+                        maximumTerms = parseNumberedParameter(name, value, 0);
                         break;
                     case STYLESHEET:
                         stylesheet = value;
+                        break;
+                    case RENDER_BY:
+                        if (value.equals(RENDER_BY_CLIENT)) {
+                            renderBy = SRURenderBy.CLIENT;
+                        } else if (value.equals(RENDER_BY_SERVER)) {
+                            renderBy = SRURenderBy.SERVER;
+                        } else {
+                            addDiagnostic(
+                                    SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
+                                    null,
+                                    "Value \"" + value + "\" for parameter '" +
+                                            name + "' is not supported.");
+                        }
+                        break;
+                    case RESPONSE_TYPE:
+                        /*
+                         * FIXME: check parameter validity?!
+                         */
+                        responseType = value;
+                        break;
+                    case HTTP_ACCEPT:
+                        /*
+                         * FIXME: check parameter validity?!
+                         */
+                        httpAccept = value;
                         break;
                     } // switch
                 } else {
                     if (parameter.getMandatory()) {
                         addDiagnostic(
                                 SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED,
-                                parameter.getName(), "Mandatory parameter \"" +
-                                        parameter.getName() +
+                                name, "Mandatory parameter \"" + name +
                                         "\" was not supplied.");
                     }
                 }
@@ -502,8 +598,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    SRURecordPacking getRawRecordPacking() {
-        return recordPacking;
+    SRURecordXmlEscaping getRawRecordPacking() {
+        return recordXmlEscaping;
     }
 
 
@@ -584,6 +680,14 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
+    public SRURecordXmlEscaping getRecordXmlEscaping() {
+        return (recordXmlEscaping != null)
+                ? recordXmlEscaping
+                : config.getDefaultRecordXmlEscaping();
+    }
+
+
+    @Override
     public SRURecordPacking getRecordPacking() {
         return (recordPacking != null)
                 ? recordPacking
@@ -618,13 +722,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 return maximumRecords;
             }
         }
-    }
-
-
-    @Override
-    @Deprecated
-    public String getRecordSchemaName() {
-        return getRawRecordSchemaIdentifier();
     }
 
 
@@ -685,6 +782,28 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     @Override
     public String getStylesheet() {
         return stylesheet;
+    }
+
+
+    @Override
+    public SRURenderBy getRenderBy() {
+        return renderBy;
+    }
+
+
+    @Override
+    public String getResponeType() {
+        return responseType;
+    }
+
+
+    @Override
+    public String getHttpAccept() {
+        if (httpAccept != null) {
+            return httpAccept;
+        } else {
+            return request.getHeader("ACCEPT");
+        }
     }
 
 
@@ -807,6 +926,23 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
              */
             return config.getDefaultVersion();
         }
+    }
+
+
+    private String parseQueryTypeParameter(String param, String value) {
+        if (value != null) {
+            for (int i = 0; i < value.length(); i++) {
+                final char ch = value.charAt(i);
+                if (!((ch >= 'a' && ch <= 'z') ||
+                        (ch >= 'A' && ch <= 'Z') ||
+                        (ch >= '0' && ch <= '9') ||
+                        ((i > 0) && ((ch == '-') || ch == '_')))) {
+                    addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
+                            param, "Value contains illegal characters.");
+                }
+            }
+        }
+        return value;
     }
 
 

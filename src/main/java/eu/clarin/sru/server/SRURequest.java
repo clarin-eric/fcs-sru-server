@@ -80,14 +80,24 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>recordPacking</em> parameter of this request. Only available
-     * for <em>explain</em> and <em>searchRetrieve</em> requests.
+     * Get the <em>recordXmlEscpaing</em> (SRU 2.0) or <em>recordPacking</em>
+     * (SRU 1.1 and SRU 1.2) parameter of this request. Only available for
+     * <em>explain</em> and <em>searchRetrieve</em> requests.
+     *
+     * @return the record XML escaping method
+     * @see SRURecordXmlEscaping
+     */
+    public SRURecordXmlEscaping getRecordXmlEscaping();
+
+
+    /**
+     * Get the <em>recordPacking</em> (SRU 2.0) parameter of this request. Only
+     * available for <em>searchRetrieve</em> requests.
      *
      * @return the record packing method
      * @see SRURecordPacking
      */
     public SRURecordPacking getRecordPacking();
-
 
     /**
      * Get the <em>query</em> parameter of this request. Only available for
@@ -117,18 +127,6 @@ public interface SRURequest {
      * @return the maximum number of records
      */
     public int getMaximumRecords();
-
-
-    /**
-     * Get the <em>recordSchema</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
-     *
-     * @return the record schema name or <code>null</code> if no value was
-     *         supplied for this request
-     * @deprecated use {@link #getRecordSchemaIdentifier()}
-     */
-    @Deprecated
-    public String getRecordSchemaName();
 
 
     /**
@@ -211,6 +209,37 @@ public interface SRURequest {
      *         this request
      */
     public String getStylesheet();
+
+
+    /**
+     * Get the <em>renderBy</em> parameter of this request.
+     *
+     * @return the renderBy parameter or <code>null</code> if no value was
+     *         supplied for this request
+     */
+    public SRURenderBy getRenderBy();
+
+
+    /**
+     * (SRU 2.0) The request parameter <em>responseType</em>, paired with the
+     * Internet media type specified for the response (via either the httpAccept
+     * parameter or http accept header) determines the schema for the response.
+     *
+     * @return the value of the responeType request parameter or
+     *         <code>null</code> if no value was supplied for this request
+     */
+    public String getResponeType();
+
+
+    /**
+     * (SRU 2.0) The request parameter <em>httpAccept</em> may be supplied to
+     * indicate the preferred format of the response. The value is an Internet
+     * media type.
+     *
+     * @return the value of the httpAccept request parameter or
+     *         <code>null</code> if no value was supplied for
+     */
+    public String getHttpAccept();
 
 
     /**

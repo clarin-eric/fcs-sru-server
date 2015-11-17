@@ -17,18 +17,20 @@
 package eu.clarin.sru.server;
 
 /**
- * SRU 2.0 record packing.
+ * SRU Record XML escaping.
  */
-public enum SRURecordPacking {
+public enum SRURenderBy {
     /**
-     * The client requests that the server should supply records strictly
-     * according to the requested schema.
+     * The client requests that the server simply return this URL in the
+     * response, in the href attribute of the xml-stylesheet processing
+     * instruction before the response xml
      */
-    PACKED,
+    CLIENT,
 
     /**
-     * The server is free to allow the location of application data to vary
-     * within the record.
+     * The client requests that the server format the response according to the
+     * specified stylesheet, assuming the default SRU response schema as input
+     * to the stylesheet.
      */
-    UNPACKED
-} // enum SRURecordPacking
+    SERVER
+} // enum SRURenderBy

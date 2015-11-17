@@ -17,18 +17,16 @@
 package eu.clarin.sru.server;
 
 /**
- * SRU 2.0 record packing.
+ * SRU Record XML escaping.
  */
-public enum SRURecordPacking {
+public enum SRURecordXmlEscaping {
     /**
-     * The client requests that the server should supply records strictly
-     * according to the requested schema.
+     * XML record packing
      */
-    PACKED,
+    XML,
 
     /**
-     * The server is free to allow the location of application data to vary
-     * within the record.
+     * String record packing
      */
-    UNPACKED
-} // enum SRURecordPacking
+    STRING
+} // enum SRURecordXmlEscaping

@@ -154,7 +154,7 @@ public final class SRUConstants {
             SRU_DIAGNOSTIC_URI_PREFIX + 69;
     public static final String SRU_RECORD_TOO_LARGE_TO_SEND =
             SRU_DIAGNOSTIC_URI_PREFIX + 70;
-    public static final String SRU_UNSUPPORTED_RECORD_PACKING =
+    public static final String SRU_UNSUPPORTED_XML_ESCAPING_VALUE =
             SRU_DIAGNOSTIC_URI_PREFIX + 71;
     public static final String SRU_XPATH_RETRIEVAL_UNSUPPORTED =
             SRU_DIAGNOSTIC_URI_PREFIX + 72;
