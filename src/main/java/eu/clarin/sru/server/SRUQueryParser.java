@@ -55,6 +55,12 @@ public interface SRUQueryParser<T> {
      *
      * @param version
      *            the SRU version the request was made
+     * @param parameters
+     *            the request parameters containing the query (@see
+     *            {@link SRUQueryParser#getQueryParameterNames()}
+     * @param diagnostics
+     *            a {@link SRUDiagnosticList} for storing fatal and non-fatal
+     *            diagnostics
      * @return the parsed query or <code>null</code> if the query could not be
      *         parsed
      */
