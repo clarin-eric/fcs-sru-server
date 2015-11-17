@@ -205,6 +205,14 @@ public final class SRUConstants {
             SRU_DIAGNOSTIC_URI_PREFIX + 121;
 
 
+    // other constants
+
+    /**
+     * shortqueryType identifier for cql
+     */
+    public static final String SRU_QUERY_TYPE_CQL = "cql";
+
+
     /* hide constructor */
     private SRUConstants() {
     }

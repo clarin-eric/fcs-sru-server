@@ -978,7 +978,7 @@ public final class SRUServer {
 
 
     private void writeEchoedSearchRetrieveRequest(SRUXMLStreamWriter out,
-            SRUNamespaces ns, SRURequestImpl request, CQLNode cql)
+            SRUNamespaces ns, SRURequestImpl request, SRUQuery<?> query)
             throws XMLStreamException, SRUException {
         // echoedSearchRetrieveRequest
         out.writeStartElement(ns.getResponseNS(),
@@ -989,17 +989,23 @@ public final class SRUServer {
             writeVersion(out, ns, request.getRawVersion());
         }
 
-        // echoedSearchRetrieveRequest/query
-        out.writeStartElement(ns.getResponseNS(), "query");
-        out.writeCharacters(request.getRawQuery());
-        out.writeEndElement(); // "query"
+        /*
+         * XXX: unclear, if <query> should only be echoed if queryType is CQL!?
+         */
+        if (SRUConstants.SRU_QUERY_TYPE_CQL.equals(query.getQueryType())) {
+            final CQLQueryParser.CQLQuery cql = (CQLQueryParser.CQLQuery) query;
+            // echoedSearchRetrieveRequest/query
+            out.writeStartElement(ns.getResponseNS(), "query");
+            out.writeCharacters(cql.getRawQuery());
+            out.writeEndElement(); // "query"
 
-        // echoedSearchRetrieveRequest/xQuery
-        out.setDefaultNamespace(ns.getXcqlNS());
-        out.writeStartElement(ns.getResponseNS(), "xQuery");
-        out.writeDefaultNamespace(ns.getXcqlNS());
-        out.writeXCQL(cql, true);
-        out.writeEndElement(); // "xQuery" element
+            // echoedSearchRetrieveRequest/xQuery
+            out.setDefaultNamespace(ns.getXcqlNS());
+            out.writeStartElement(ns.getResponseNS(), "xQuery");
+            out.writeDefaultNamespace(ns.getXcqlNS());
+            out.writeXCQL(cql.getParsedQuery(), true);
+            out.writeEndElement(); // "xQuery" element
+        }
 
         // echoedSearchRetrieveRequest/startRecord
         if (request.getStartRecord() > 0) {

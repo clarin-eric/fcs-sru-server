@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -82,8 +84,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private SRUVersion version;
     private SRURecordXmlEscaping recordXmlEscaping;
     private SRURecordPacking recordPacking;
-    private CQLNode query;
-    private String queryType;
+    private SRUQuery<?> query;
     private int startRecord = DEFAULT_START_RECORD;
     private int maximumRecords = -1;
     private String recordSchemaIdentifier;
@@ -103,8 +104,8 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         RENDER_BY,
         HTTP_ACCEPT,
         RESPONSE_TYPE,
-        QUERY,
-        QUERY_TYPE,
+//        QUERY,
+//        QUERY_TYPE,
         START_RECORD,
         MAXIMUM_RECORDS,
         RECORD_XML_ESCAPING,
@@ -146,10 +147,10 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 return PARAM_HTTP_ACCEPT;
             case RESPONSE_TYPE:
                 return PARAM_RESPONSE_TYPE;
-            case QUERY:
-                return PARAM_QUERY;
-            case QUERY_TYPE:
-                return PARAM_QUERY_TYPE;
+//            case QUERY:
+//                return PARAM_QUERY;
+//            case QUERY_TYPE:
+//                return PARAM_QUERY_TYPE;
             case START_RECORD:
                 return PARAM_START_RECORD;
             case MAXIMUM_RECORDS:
@@ -167,12 +168,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 }
             case RECORD_PACKING:
                 /*
-                 * FIXME: make this better
+                 * 'recordPacking' only exists in SRU 2.0; the old variant is
+                 * handled by the case for RECORD_XML_ESCAPING
                  */
                 if (version == SRUVersion.VERSION_2_0) {
                     return PARAM_RECORD_PACKING;
                 } else {
-                    throw new InternalError("should not happen");
+                    return null;
                 }
             case RECORD_SCHEMA:
                 return PARAM_RECORD_SCHEMA;
@@ -230,10 +232,10 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.RESPONSE_TYPE, false,
                 SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
-        new ParameterInfo(Parameter.QUERY, true,
-                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
-        new ParameterInfo(Parameter.QUERY_TYPE, true,
-                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
+//        new ParameterInfo(Parameter.QUERY, true,
+//                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
+//        new ParameterInfo(Parameter.QUERY_TYPE, true,
+//                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.START_RECORD, false,
                 SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.MAXIMUM_RECORDS, false,
@@ -289,10 +291,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
                 logger.debug("handling request as SRU 2.0, because no '{}' " +
                         "parameter was found in the request", PARAM_VERSION);
-                if (getParameter(PARAM_QUERY, false, false) != null) {
-                    logger.debug("found parameter '{}' therefore " +
+                if ((getParameter(PARAM_QUERY, false, false) != null) ||
+                        (getParameter(PARAM_QUERY_TYPE, false, false) != null)) {
+                    logger.debug("found parameter '{}' or '{}' therefore " +
                             "assuming '{}' operation",
-                            PARAM_QUERY, SRUOperation.SEARCH_RETRIEVE);
+                            PARAM_QUERY, PARAM_QUERY_TYPE,
+                            SRUOperation.SEARCH_RETRIEVE);
                     operation = SRUOperation.SEARCH_RETRIEVE;
                 } else if (getParameter(PARAM_SCAN_CLAUSE, false, false) != null) {
                     logger.debug("found parameter '{}' therefore " +
@@ -428,6 +432,13 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             // check parameters ...
             for (ParameterInfo parameter : parameter_set) {
                 final String name = parameter.getName(version);
+                if (name == null) {
+                    /*
+                     * this parameter is not supported in the SRU version that
+                     * was used for the request
+                     */
+                    continue;
+                }
                 final String value = getParameter(name, true, true);
                 if (value != null) {
                     // remove supported parameter from list
@@ -472,12 +483,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                                             "\" is not supported.");
                         }
                         break;
-                    case QUERY:
-                        query = parseCQLParameter(name, value);
-                        break;
-                    case QUERY_TYPE:
-                        queryType = parseQueryTypeParameter(name, value);
-                        break;
                     case START_RECORD:
                         startRecord = parseNumberedParameter(name, value, 1);
                         break;
@@ -516,7 +521,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         sortKeys = value;
                         break;
                     case SCAN_CLAUSE:
-                        scanClause = parseCQLParameter(name, value);
+                        scanClause = parseScanQueryParameter(name, value);
                         break;
                     case RESPONSE_POSITION:
                         responsePosition = parseNumberedParameter(
@@ -563,6 +568,102 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     }
                 }
             } // for
+
+            /*
+             * handle query and queryType
+             */
+            if (operation == SRUOperation.SEARCH_RETRIEVE) {
+                /*
+                 * determine queryType
+                 */
+                String queryType = null;
+                if (version == SRUVersion.VERSION_2_0) {
+                    parameterNames.remove(PARAM_QUERY_TYPE);
+                    String value = getParameter(PARAM_QUERY_TYPE, true, true);
+                    if (value == null) {
+                        queryType = SRUConstants.SRU_QUERY_TYPE_CQL;
+                    } else {
+                        boolean badCharacters = false;
+                        for (int i = 0; i < value.length(); i++) {
+                            final char ch = value.charAt(i);
+                            if (!((ch >= 'a' && ch <= 'z') ||
+                                    (ch >= 'A' && ch <= 'Z') ||
+                                    (ch >= '0' && ch <= '9') ||
+                                    ((i > 0) && ((ch == '-') || ch == '_')))) {
+                                addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
+                                        PARAM_QUERY_TYPE, "Value contains illegal characters.");
+                                badCharacters = true;
+                                break;
+                            }
+                        }
+                        if (!badCharacters) {
+                            queryType = value;
+                        }
+                    }
+                } else {
+                    // SRU 1.1 and SRU 1.2 only support CQL
+                    queryType = SRUConstants.SRU_QUERY_TYPE_CQL;
+                }
+
+
+                if (queryType != null) {
+                    logger.debug("looking for query parser for query type '{}'",
+                            queryType);
+                    final SRUQueryParser<?> queryParser =
+                            config.findQueryParser(queryType);
+                    if (queryParser != null) {
+                        /*
+                         * gather query parameters (as required by QueryParser
+                         * implementation
+                         */
+                        final Map<String, String> queryParameters =
+                                new HashMap<String, String>();
+                        List<String> missingParameter = null;
+                        for (String name : queryParser.getQueryParameterNames()) {
+                            parameterNames.remove(name);
+                            final String value = getParameter(name, true, false);
+                            if (value != null) {
+                                queryParameters.put(name, value);
+                            } else {
+                                if (missingParameter == null) {
+                                    missingParameter = new ArrayList<String>();
+                                }
+                                missingParameter.add(name);
+                            }
+                        }
+
+                        if (missingParameter == null) {
+                            logger.debug("parsing query with parser for " +
+                                    "type '{}' and parameters {}",
+                                    queryParser.getQueryType(),
+                                    queryParameters);
+                            query = queryParser.parseQuery(version,
+                                    queryParameters, this);
+                        } else {
+                            logger.debug("parameters {} missing, cannot parse query",
+                                    missingParameter);
+                            for (String name : missingParameter) {
+                                addDiagnostic(
+                                        SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED,
+                                        name, "Mandatory parameter '" + name +
+                                                "' is missing or empty. " +
+                                                "Required to perform query " +
+                                                "of query type '" +
+                                                queryType + "'.");
+                            }
+                        }
+                    } else {
+                        logger.debug("no parser for query type '{}' found", queryType);
+                        addDiagnostic(SRUConstants.SRU_CANNOT_PROCESS_QUERY_REASON_UNKNOWN, null,
+                                "Cannot find query parser for query type '" + queryType + "'.");
+                    }
+                } else {
+                    logger.debug("cannot determine query type");
+                    addDiagnostic(SRUConstants.SRU_CANNOT_PROCESS_QUERY_REASON_UNKNOWN, null,
+                            "Cannot determine query type.");
+                }
+            }
+
 
             /*
              *  check if any parameters where not consumed and
@@ -701,8 +802,26 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
-    public CQLNode getQuery() {
+    public SRUQuery<?> getQuery() {
         return query;
+    }
+
+
+    @Override
+    public boolean isQueryType(String queryType) {
+        if ((queryType != null) && (query != null)) {
+            return query.getQueryType().equals(queryType);
+        }
+        return false;
+    }
+
+
+    @Override
+    public String getQueryType() {
+        if (query != null) {
+            return query.getQueryType();
+        }
+        return null;
     }
 
 
@@ -891,7 +1010,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 s = null;
                 if (diagnosticIfEmpty) {
                     addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
-                            name, "An empty parameter \"" + PARAM_OPERATION +
+                            name, "An empty parameter \"" + name +
                             "\" is not supported.");
                 }
             }
@@ -934,23 +1053,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    private String parseQueryTypeParameter(String param, String value) {
-        if (value != null) {
-            for (int i = 0; i < value.length(); i++) {
-                final char ch = value.charAt(i);
-                if (!((ch >= 'a' && ch <= 'z') ||
-                        (ch >= 'A' && ch <= 'Z') ||
-                        (ch >= '0' && ch <= '9') ||
-                        ((i > 0) && ((ch == '-') || ch == '_')))) {
-                    addDiagnostic(SRUConstants.SRU_UNSUPPORTED_PARAMETER_VALUE,
-                            param, "Value contains illegal characters.");
-                }
-            }
-        }
-        return value;
-    }
-
-
     private int parseNumberedParameter(String param, String value,
             int minValue) {
         int result = -1;
@@ -971,7 +1073,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
-    private CQLNode parseCQLParameter(String param, String value) {
+    private CQLNode parseScanQueryParameter(String param, String value) {
         CQLNode result = null;
 
         /*

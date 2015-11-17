@@ -99,20 +99,43 @@ public interface SRURequest {
      */
     public SRURecordPacking getRecordPacking();
 
+
     /**
      * Get the <em>query</em> parameter of this request. Only available for
      * <em>searchRetrieve</em> requests.
      *
-     * @return the parsed query or <code>null</code> if not a
+     * @return the parsed query as an AST or <code>null</code> if not a
      *         <em>searchRetrieve</em> request
      */
-    public CQLNode getQuery();
+    public SRUQuery<?> getQuery();
+
+
+    /**
+     * Get the <em>queryType</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests.
+     *
+     * @return the queryType of the parsed query or <code>null</code> if not a
+     *         <em>searchRetrieve</em> request
+     */
+    public String getQueryType();
+
+
+    /**
+     * Check if the request was made with the given queryType. Only available
+     * for <em>searchRetrieve</em> requests.
+     *
+     * @param queryType
+     *            the queryType to compare with
+     * @return <code>true</code> if the queryType matches, <code>false</code>
+     *         otherwise
+     */
+    public boolean isQueryType(String queryType);
 
 
     /**
      * Get the <em>startRecord</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests. If the client did not provide
-     * a value for the request, it is set to <code>1</code>.
+     * for <em>searchRetrieve</em> requests. If the client did not provide a
+     * value for the request, it is set to <code>1</code>.
      *
      * @return the number of the start record
      */
