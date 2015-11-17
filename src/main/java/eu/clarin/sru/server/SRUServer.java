@@ -1061,16 +1061,35 @@ public final class SRUServer {
         }
 
         // echoedSearchRetrieveRequest/renderedBy
-        // FIXME: NOT YET IMPLEMENTED
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getRenderBy() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "renderedBy");
+            switch (request.getRenderBy()) {
+            case SERVER:
+                out.writeCharacters("server");
+                break;
+            case CLIENT:
+                out.writeCharacters("client");
+                break;
+            }
+            out.writeEndElement(); // "renderedBy" element
+        }
 
         // echoedSearchRetrieveRequest/extraRequestParameter
         // FIXME: NOT YET IMPLEMENTED
 
         // echoedSearchRetrieveRequest/httpAccept
-        // FIXME: NOT YET IMPLEMENTED
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getRawHttpAccept() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "renderedBy");
+            out.writeCharacters(request.getRawHttpAccept());
+            out.writeEndElement(); // "renderedBy" element
+        }
 
         // echoedSearchRetrieveRequest/responseType
-        // FIXME: NOT YET IMPLEMENTED
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getResponeType() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "responseType");
+            out.writeCharacters(request.getResponeType());
+            out.writeEndElement(); // "responseType" element
+        }
 
         out.writeEndElement(); // "echoedSearchRetrieveRequest" element
     }

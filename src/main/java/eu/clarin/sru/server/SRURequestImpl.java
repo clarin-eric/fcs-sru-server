@@ -623,6 +623,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     }
 
 
+    String getRawHttpAccept() {
+        return getParameter(PARAM_HTTP_ACCEPT, true, false);
+    }
+
+
     int getIndentResponse() {
         if (config.allowOverrideIndentResponse()) {
             String s = getExtraRequestData(X_INDENT_RESPONSE);
