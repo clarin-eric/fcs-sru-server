@@ -414,7 +414,7 @@ public final class SRUServer {
 
             // resultSetIdleTime (SRU 1.1 and SRU 1.2)
             if (!request.isVersion(SRUVersion.VERSION_2_0) &&
-                    (result.getResultSetTTL() > 0)) {
+                    (result.getResultSetTTL() >= 0)) {
                 out.writeStartElement(ns.getResponseNS(), "resultSetIdleTime");
                 out.writeCharacters(Integer.toString(result
                         .getResultSetTTL()));
@@ -547,14 +547,14 @@ public final class SRUServer {
             // SRU 2.0 stuff ...
             if (request.isVersion(SRUVersion.VERSION_2_0)) {
                 // resultSetTTL
-                if (result.getResultSetTTL() > 0) {
+                if (result.getResultSetTTL() >= 0) {
                     out.writeStartElement(ns.getResponseNS(), "resultSetTTL");
-                    out.writeCharacters(Integer.toString(result
-                            .getResultSetTTL()));
+                    out.writeCharacters(
+                            Integer.toString(result.getResultSetTTL()));
                     out.writeEndElement(); // "resultSetTTL" element
                 }
 
-                // resultCountPrecision (SRU 2.0)
+                // resultCountPrecision
                 final SRUResultCountPrecision precision =
                         result.getResultCountPrecision();
                 if (precision != null) {
