@@ -924,11 +924,6 @@ public final class SRUServer {
             out.writeEndElement(); // "stylesheet" element
         }
 
-        // echoedExplainRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
-        }
-
         out.writeEndElement(); // "echoedExplainRequest" element
     }
 
@@ -976,11 +971,6 @@ public final class SRUServer {
             out.writeStartElement(ns.getResponseNS(), "stylesheet");
             out.writeCharacters(request.getStylesheet());
             out.writeEndElement(); // "stylesheet" element
-        }
-
-        // echoedScanRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
         }
 
         out.writeEndElement(); // "echoedScanRequest" element
@@ -1082,11 +1072,6 @@ public final class SRUServer {
         // echoedSearchRetrieveRequest/responseType
         // FIXME: NOT YET IMPLEMENTED
 
-        // echoedSearchRetrieveRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
-        }
-
         out.writeEndElement(); // "echoedSearchRetrieveRequest" element
     }
 
@@ -1121,15 +1106,6 @@ public final class SRUServer {
             break;
         } // switch
         out.writeEndElement(); // "recordPacking" element
-    }
-
-
-    private void writeBaseUrl(SRUXMLStreamWriter out, SRUNamespaces ns,
-            SRURequest request) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "baseUrl");
-        out.writeCharacters(request.getProtocolScheme());
-        out.writeCharacters(config.getBaseUrl());
-        out.writeEndElement(); // "baseUrl" element
     }
 
 
