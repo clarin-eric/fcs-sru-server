@@ -56,7 +56,7 @@ public final class CQLQueryParser implements SRUQueryParser<CQLNode> {
     public SRUQuery<CQLNode> parseQuery(SRUVersion version,
             Map<String, String> parameters, SRUDiagnosticList diagnostics) {
 
-        final String rawQuery = parameters.get("query");
+        final String rawQuery = parameters.get(PARAM_QUERY);
         if (rawQuery == null) {
             diagnostics.addDiagnostic(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
                     null, "no query passed to query parser");
