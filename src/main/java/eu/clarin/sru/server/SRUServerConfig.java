@@ -636,7 +636,6 @@ public final class SRUServerConfig {
     private final DatabaseInfo databaseInfo;
     private final IndexInfo indexInfo;
     private final List<SchemaInfo> schemaInfo;
-    private final List<SRUQueryParser<?>> queryParsers;
 
 
     private SRUServerConfig(SRUVersion minVersion,
@@ -659,8 +658,7 @@ public final class SRUServerConfig {
             boolean allowOverrideIndentResponse,
             DatabaseInfo databaseinfo,
             IndexInfo indexInfo,
-            List<SchemaInfo> schemaInfo,
-            List<SRUQueryParser<?>> queryParsers) {
+            List<SchemaInfo> schemaInfo) {
         this.minVersion                  = minVersion;
         this.maxVersion                  = maxVersion;
         this.defaultVersion              = defaultVersion;
@@ -686,7 +684,6 @@ public final class SRUServerConfig {
         } else {
             this.schemaInfo = null;
         }
-        this.queryParsers = Collections.unmodifiableList(queryParsers);
 
         // build baseUrl
         StringBuilder sb = new StringBuilder();
@@ -855,18 +852,6 @@ public final class SRUServerConfig {
                             schema.getName().equals(value)) {
                         return schema;
                     }
-                }
-            }
-        }
-        return null;
-    }
-
-
-    public SRUQueryParser<?> findQueryParser(String queryType) {
-        if (queryType != null) {
-            for (SRUQueryParser<?> queryParser : queryParsers) {
-                if (queryParser.getQueryType().equals(queryType)) {
-                    return queryParser;
                 }
             }
         }
@@ -1094,13 +1079,6 @@ public final class SRUServerConfig {
                     SRU_RESPONSE_BUFFER_SIZE, false,
                     DEFAULT_RESPONSE_BUFFER_SIZE, 0, -1);
 
-            /*
-             * FIXME: add interface to register additional query parsers
-             */
-            List<SRUQueryParser<?>> queryParsers =
-                    new ArrayList<SRUQueryParser<?>>();
-            queryParsers.add(new CQLQueryParser());
-
             return new SRUServerConfig(minVersion,
                     maxVersion,
                     defaultVersion,
@@ -1121,8 +1099,7 @@ public final class SRUServerConfig {
                     allowOverrideIndentResponse,
                     databaseInfo,
                     indexInfo,
-                    schemaInfo,
-                    queryParsers);
+                    schemaInfo);
         } catch (IOException e) {
             throw new SRUConfigException("error reading configuration file", e);
         } catch (XPathException e) {

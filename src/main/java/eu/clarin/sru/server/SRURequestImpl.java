@@ -78,6 +78,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final int DEFAULT_START_RECORD          = 1;
     private static final int DEFAULT_RESPONSE_POSITION     = 1;
     private final SRUServerConfig config;
+    private final SRUQueryParserRegistry queryParsers;
     private final HttpServletRequest request;
     private List<SRUDiagnostic> diagnostics;
     private SRUOperation operation;
@@ -104,8 +105,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         RENDER_BY,
         HTTP_ACCEPT,
         RESPONSE_TYPE,
-//        QUERY,
-//        QUERY_TYPE,
         START_RECORD,
         MAXIMUM_RECORDS,
         RECORD_XML_ESCAPING,
@@ -147,10 +146,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 return PARAM_HTTP_ACCEPT;
             case RESPONSE_TYPE:
                 return PARAM_RESPONSE_TYPE;
-//            case QUERY:
-//                return PARAM_QUERY;
-//            case QUERY_TYPE:
-//                return PARAM_QUERY_TYPE;
             case START_RECORD:
                 return PARAM_START_RECORD;
             case MAXIMUM_RECORDS:
@@ -232,10 +227,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.RESPONSE_TYPE, false,
                 SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
-//        new ParameterInfo(Parameter.QUERY, true,
-//                SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
-//        new ParameterInfo(Parameter.QUERY_TYPE, true,
-//                SRUVersion.VERSION_2_0, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.START_RECORD, false,
                 SRUVersion.VERSION_1_1, SRUVersion.VERSION_2_0),
         new ParameterInfo(Parameter.MAXIMUM_RECORDS, false,
@@ -255,9 +246,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     };
 
 
-    SRURequestImpl(SRUServerConfig config, HttpServletRequest request) {
-        this.config        = config;
-        this.request       = request;
+    SRURequestImpl(SRUServerConfig config,
+            SRUQueryParserRegistry queryParsers,
+            HttpServletRequest request) {
+        this.config       = config;
+        this.queryParsers = queryParsers;
+        this.request      = request;
     }
 
 
@@ -610,7 +604,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     logger.debug("looking for query parser for query type '{}'",
                             queryType);
                     final SRUQueryParser<?> queryParser =
-                            config.findQueryParser(queryType);
+                            queryParsers.findQueryParser(queryType);
                     if (queryParser != null) {
                         /*
                          * gather query parameters (as required by QueryParser

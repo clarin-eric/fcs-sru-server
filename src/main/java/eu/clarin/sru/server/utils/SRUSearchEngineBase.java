@@ -24,6 +24,7 @@ import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUDiagnosticList;
 import eu.clarin.sru.server.SRUException;
 import eu.clarin.sru.server.SRUExplainResult;
+import eu.clarin.sru.server.SRUQueryParserRegistry;
 import eu.clarin.sru.server.SRURequest;
 import eu.clarin.sru.server.SRUScanResultSet;
 import eu.clarin.sru.server.SRUSearchEngine;
@@ -87,13 +88,18 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      *            the {@link ServletContext} for the Servlet
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
+     * @param queryParsers
+     *            the {@link SRUQueryParserRegistry} object for this search
+     *            engine. Register additional query parsers with this object.
      * @param params
      *            additional parameters gathered from the Servlet configuration
      *            and Servlet context.
      * @throws SRUConfigException
      *             an error occurred during initialization of the search engine
      */
-    public void init(ServletContext context, SRUServerConfig config,
+    public void init(ServletContext context,
+            SRUServerConfig config,
+            SRUQueryParserRegistry queryParsers,
             Map<String, String> params) throws SRUConfigException {
     }
 

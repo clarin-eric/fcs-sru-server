@@ -57,6 +57,7 @@ public final class SRUServer {
     private static final Logger logger =
             LoggerFactory.getLogger(SRUServer.class);
     private final SRUServerConfig config;
+    private final SRUQueryParserRegistry queryParsers;
     private final SRUSearchEngine searchEngine;
     private final XMLOutputFactory writerFactory;
 
@@ -65,24 +66,35 @@ public final class SRUServer {
      * Constructor.
      *
      * @param config
-     *            a SRUEndpointConfig object
+     *            a {@link SRUServerConfig} object
+     * @param queryParsers
+     *            a {@link SRUQueryParserRegistry} object
      * @param searchEngine
-     *            an object implementing the SRUSearchEngine interface
+     *            an object implementing the {@link SRUSearchEngine} interface
      * @throws NullPointerException
-     *             if config or searchEngine is <code>null</code>
+     *             if config, queryParserRegistry or searchEngine is
+     *             <code>null</code>
      * @throws SRUException
      *             if an error occurred
      */
-    public SRUServer(SRUServerConfig config, SRUSearchEngine searchEngine)
-            throws SRUException {
+    public SRUServer(SRUServerConfig config,
+            SRUQueryParserRegistry queryParsers,
+            SRUSearchEngine searchEngine) throws SRUException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
         this.config = config;
+
+        if (queryParsers == null) {
+            throw new NullPointerException("queryParserRegistry == null");
+        }
+        this.queryParsers = queryParsers;
+
         if (searchEngine == null) {
             throw new NullPointerException("searchEngine == null");
         }
         this.searchEngine = searchEngine;
+
         this.writerFactory = XMLOutputFactory.newInstance();
     }
 
@@ -97,7 +109,8 @@ public final class SRUServer {
      */
     public void handleRequest(HttpServletRequest request,
             HttpServletResponse response) {
-        final SRURequestImpl req = new SRURequestImpl(config, request);
+        final SRURequestImpl req =
+                new SRURequestImpl(config, queryParsers, request);
         try {
             // set response properties
             response.setContentType(RESPONSE_CONTENT_TYPE);
