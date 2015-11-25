@@ -247,8 +247,10 @@ public final class SRUServerServlet extends HttpServlet {
          * finally initialize the SRU server ...
          */
         try {
-            final SRUQueryParserRegistry parsers = new SRUQueryParserRegistry();
-            searchEngine.init(ctx, sruServerConfig, parsers, params);
+            final SRUQueryParserRegistry.Builder builder =
+                    new SRUQueryParserRegistry.Builder();
+            searchEngine.init(ctx, sruServerConfig, builder, params);
+            final SRUQueryParserRegistry parsers = builder.build();
             sruServer = new SRUServer(sruServerConfig, parsers, searchEngine);
         } catch (SRUConfigException e) {
             throw new ServletException("error initializing sru server", e);

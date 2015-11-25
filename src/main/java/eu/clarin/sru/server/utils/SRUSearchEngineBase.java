@@ -29,6 +29,7 @@ import eu.clarin.sru.server.SRURequest;
 import eu.clarin.sru.server.SRUScanResultSet;
 import eu.clarin.sru.server.SRUSearchEngine;
 import eu.clarin.sru.server.SRUSearchResultSet;
+import eu.clarin.sru.server.SRUServer;
 import eu.clarin.sru.server.SRUServerConfig;
 
 
@@ -88,9 +89,10 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      *            the {@link ServletContext} for the Servlet
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
-     * @param queryParsers
-     *            the {@link SRUQueryParserRegistry} object for this search
-     *            engine. Register additional query parsers with this object.
+     * @param parsersRegistryBuilder
+     *            the {@link SRUQueryParserRegistry.Builder} object to be used
+     *            for this search engine. Use to register additional query
+     *            parsers with the {@link SRUServer}.
      * @param params
      *            additional parameters gathered from the Servlet configuration
      *            and Servlet context.
@@ -99,7 +101,7 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      */
     public void init(ServletContext context,
             SRUServerConfig config,
-            SRUQueryParserRegistry queryParsers,
+            SRUQueryParserRegistry.Builder parsersRegistryBuilder,
             Map<String, String> params) throws SRUConfigException {
     }
 
