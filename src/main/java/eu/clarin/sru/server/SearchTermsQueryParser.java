@@ -73,7 +73,6 @@ public class SearchTermsQueryParser implements SRUQueryParser<List<String>> {
 
         private SearchTermsQuery(String rawQuery, List<String> parsedQuery) {
             super(rawQuery, Collections.unmodifiableList(parsedQuery));
-            System.err.println("XXXX " + parsedQuery);
         }
 
 
