@@ -37,6 +37,7 @@ public class SRUQueryParserRegistry {
      */
     public SRUQueryParserRegistry() {
         queryParsers.add(new CQLQueryParser());
+        queryParsers.add(new SearchTermsQueryParser());
     }
 
 

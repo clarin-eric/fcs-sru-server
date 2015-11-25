@@ -606,45 +606,57 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     final SRUQueryParser<?> queryParser =
                             queryParsers.findQueryParser(queryType);
                     if (queryParser != null) {
-                        /*
-                         * gather query parameters (as required by QueryParser
-                         * implementation
-                         */
-                        final Map<String, String> queryParameters =
-                                new HashMap<String, String>();
-                        List<String> missingParameter = null;
-                        for (String name : queryParser.getQueryParameterNames()) {
-                            parameterNames.remove(name);
-                            final String value = getParameter(name, true, false);
-                            if (value != null) {
-                                queryParameters.put(name, value);
-                            } else {
-                                if (missingParameter == null) {
-                                    missingParameter = new ArrayList<String>();
+                        if (queryParser.supportsVersion(version)) {
+                            /*
+                             * gather query parameters (as required by
+                             * QueryParser implementation
+                             */
+                            final Map<String, String> queryParameters =
+                                    new HashMap<String, String>();
+                            List<String> missingParameter = null;
+                            for (String name : queryParser.getQueryParameterNames()) {
+                                parameterNames.remove(name);
+                                final String value =
+                                        getParameter(name, true, false);
+                                if (value != null) {
+                                    queryParameters.put(name, value);
+                                } else {
+                                    if (missingParameter == null) {
+                                        missingParameter = new ArrayList<String>();
+                                    }
+                                    missingParameter.add(name);
                                 }
-                                missingParameter.add(name);
                             }
-                        }
 
-                        if (missingParameter == null) {
-                            logger.debug("parsing query with parser for " +
-                                    "type '{}' and parameters {}",
-                                    queryParser.getQueryType(),
-                                    queryParameters);
-                            query = queryParser.parseQuery(version,
-                                    queryParameters, this);
-                        } else {
-                            logger.debug("parameters {} missing, cannot parse query",
-                                    missingParameter);
-                            for (String name : missingParameter) {
-                                addDiagnostic(
-                                        SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED,
-                                        name, "Mandatory parameter '" + name +
-                                                "' is missing or empty. " +
-                                                "Required to perform query " +
-                                                "of query type '" +
-                                                queryType + "'.");
+                            if (missingParameter == null) {
+                                logger.debug("parsing query with parser for " +
+                                        "type '{}' and parameters {}",
+                                        queryParser.getQueryType(),
+                                        queryParameters);
+                                query = queryParser.parseQuery(version,
+                                        queryParameters, this);
+                            } else {
+                                logger.debug("parameters {} missing, cannot " +
+                                        "parse query", missingParameter);
+                                for (String name : missingParameter) {
+                                    addDiagnostic(SRUConstants.SRU_MANDATORY_PARAMETER_NOT_SUPPLIED,
+                                            name,
+                                            "Mandatory parameter '" + name +
+                                                    "' is missing or empty. " +
+                                                    "Required to perform query " +
+                                                    "of query type '" +
+                                                    queryType + "'.");
+                                }
                             }
+                        } else {
+                            logger.debug("query parser for query type '{}' " +
+                                    "is not supported by SRU version {}",
+                                    queryType, version);
+                            addDiagnostic(SRUConstants.SRU_CANNOT_PROCESS_QUERY_REASON_UNKNOWN, null,
+                                    "Query parser for query type '" +
+                                            queryType + "' is nut supported " +
+                                            "by SRU version '" +
+                                            version.getVersionString() + "'.");
                         }
                     } else {
                         logger.debug("no parser for query type '{}' found", queryType);

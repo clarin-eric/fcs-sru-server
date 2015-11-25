@@ -208,9 +208,10 @@ public final class SRUConstants {
     // other constants
 
     /**
-     * shortqueryType identifier for cql
+     * shorthand queryType identifier for CQL
      */
-    public static final String SRU_QUERY_TYPE_CQL = "cql";
+    public static final String SRU_QUERY_TYPE_CQL          = "cql";
+    public static final String SRU_QUERY_TYPE_SEARCH_TERMS = "searchTerms";
 
 
     /* hide constructor */

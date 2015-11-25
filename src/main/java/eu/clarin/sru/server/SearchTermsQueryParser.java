@@ -16,28 +16,20 @@
  */
 package eu.clarin.sru.server;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.z3950.zing.cql.CQLNode;
-import org.z3950.zing.cql.CQLParseException;
-import org.z3950.zing.cql.CQLParser;
 
-/**
- * Default query parser to parse CQL.
- */
-public final class CQLQueryParser implements SRUQueryParser<CQLNode> {
+public class SearchTermsQueryParser implements SRUQueryParser<List<String>> {
     private static final String PARAM_QUERY = "query";
     private static final List<String> QUERY_PARAMETER_NAMES =
             Collections.unmodifiableList(Arrays.asList(PARAM_QUERY));
 
-
     @Override
     public String getQueryType() {
-        return SRUConstants.SRU_QUERY_TYPE_CQL;
+        return SRUConstants.SRU_QUERY_TYPE_SEARCH_TERMS;
     }
 
 
@@ -46,10 +38,7 @@ public final class CQLQueryParser implements SRUQueryParser<CQLNode> {
         if (version == null) {
             throw new NullPointerException("version == null");
         }
-        /*
-         * CQL is supported by all SRU versions ...
-         */
-        return true;
+        return version.compareTo(SRUVersion.VERSION_2_0) >= 0;
     }
 
 
@@ -66,9 +55,8 @@ public final class CQLQueryParser implements SRUQueryParser<CQLNode> {
 
 
     @Override
-    public SRUQuery<CQLNode> parseQuery(SRUVersion version,
+    public SRUQuery<List<String>> parseQuery(SRUVersion version,
             Map<String, String> parameters, SRUDiagnosticList diagnostics) {
-
         final String rawQuery = parameters.get(PARAM_QUERY);
         if (rawQuery == null) {
             diagnostics.addDiagnostic(SRUConstants.SRU_GENERAL_SYSTEM_ERROR,
@@ -76,44 +64,23 @@ public final class CQLQueryParser implements SRUQueryParser<CQLNode> {
             return null;
         }
 
-        /*
-         * XXX: maybe query length against limit and return
-         * "Too many characters in query" error?
-         */
-        try {
-            int compat = -1;
-            switch (version) {
-            case VERSION_1_1:
-                compat = CQLParser.V1POINT1;
-                break;
-            case VERSION_1_2:
-                /* FALL-THROUGH */
-            case VERSION_2_0:
-                compat = CQLParser.V1POINT2;
-            }
-            return new CQLQuery(rawQuery, new CQLParser(compat).parse(rawQuery));
-        } catch (CQLParseException e) {
-            diagnostics.addDiagnostic(SRUConstants.SRU_QUERY_SYNTAX_ERROR,
-                    null, "error parsing query");
-        } catch (IOException e) {
-            diagnostics.addDiagnostic(SRUConstants.SRU_QUERY_SYNTAX_ERROR,
-                    null, "error parsing query");
-        }
-        return null;
+        String[] terms = rawQuery.split("\\s+");
+        return new SearchTermsQuery(rawQuery, Arrays.asList(terms));
     }
 
 
-    public static final class CQLQuery extends SRUQueryBase<CQLNode> {
+    public static final class SearchTermsQuery extends SRUQueryBase<List<String>> {
 
-        private CQLQuery(String rawQuery, CQLNode parsedQuery) {
-            super(rawQuery, parsedQuery);
+        private SearchTermsQuery(String rawQuery, List<String> parsedQuery) {
+            super(rawQuery, Collections.unmodifiableList(parsedQuery));
+            System.err.println("XXXX " + parsedQuery);
         }
 
 
         @Override
         public String getQueryType() {
-            return SRUConstants.SRU_QUERY_TYPE_CQL;
+            return SRUConstants.SRU_QUERY_TYPE_SEARCH_TERMS;
         }
     }
 
-} // class CQLQueryParser
+} // class SearchTermsQueryParser

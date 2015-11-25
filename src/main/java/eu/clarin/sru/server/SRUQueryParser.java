@@ -35,6 +35,17 @@ public interface SRUQueryParser<T> {
 
 
     /**
+     * Check if query is supported by a specific version of SRU/CQL
+     *
+     * @param version
+     *            the version
+     * @return <code>true</code> if version is supported, <code>false</code>
+     *         otherwise
+     */
+    public boolean supportsVersion(SRUVersion version);
+
+
+    /**
      * The URI for the for the query type’s definition.
      *
      * @return the  URI for the for the query type’s definition.
