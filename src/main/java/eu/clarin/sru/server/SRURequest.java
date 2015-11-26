@@ -104,10 +104,26 @@ public interface SRURequest {
      * Get the <em>query</em> parameter of this request. Only available for
      * <em>searchRetrieve</em> requests.
      *
-     * @return the parsed query as an AST or <code>null</code> if not a
-     *         <em>searchRetrieve</em> request
+     * @return an {@link SRUQuery} instance tailored for the used queryType or
+     *         <code>null</code> if not a <em>searchRetrieve</em> request
      */
     public SRUQuery<?> getQuery();
+
+
+    /**
+     * Get the <em>query</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests. This convenience method tried to cast
+     * the query object to the supplied type.
+     *
+     * @param type
+     *            Class representing the Java data type to convert the query to.
+     * @return an {@link SRUQuery} instance tailored for the used queryType or
+     *         <code>null</code> if not a <em>searchRetrieve</em> request
+     * @throws ClassCastException
+     *             if conversion is not supported, type is <code>null</code> or
+     *             another error occurs
+     */
+    public <T extends SRUQuery<?>> T getQuery(Class<T> type);
 
 
     /**

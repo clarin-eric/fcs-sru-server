@@ -814,6 +814,16 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
 
     @Override
+    public <T extends SRUQuery<?>> T getQuery(Class<T> type) {
+        if (type == null) {
+            throw new ClassCastException("type == null");
+        }
+        // cast() is null-safe
+        return type.cast(query);
+    }
+
+
+    @Override
     public boolean isQueryType(String queryType) {
         if ((queryType != null) && (query != null)) {
             return query.getQueryType().equals(queryType);
