@@ -635,6 +635,11 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                                         queryParameters);
                                 query = queryParser.parseQuery(version,
                                         queryParameters, this);
+                                if (query == null) {
+                                    logger.debug("query parser failed to parse query");
+                                    addDiagnostic(SRUConstants.SRU_QUERY_SYNTAX_ERROR,
+                                            null, "Query could not be parsed.");
+                                }
                             } else {
                                 logger.debug("parameters {} missing, cannot " +
                                         "parse query", missingParameter);
