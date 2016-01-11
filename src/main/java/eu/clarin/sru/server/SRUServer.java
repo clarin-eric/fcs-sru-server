@@ -477,8 +477,21 @@ public final class SRUServer {
                         }
                         out.writeEndElement(); // "recordSchema" element
 
-                        // recordPacking
-                        writeRecordPacking(out, ns, request.getRecordXmlEscaping());
+                        /*
+                         *  recordPacking (SRU 2.0)
+                         *  Only serialize, of it was in request.
+                         */
+                        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                                (request.getRawRecordPacking() != null)) {
+                            writeRecordPacking(out, ns,
+                                    request.getRecordPacking());
+                        }
+
+                        /*
+                         * recordXMLEscaping (SRU 2.0) or
+                         *   recordPacking (SRU 1.1 and 1.2)
+                         */
+                        writeRecordXmlEscaping(out, ns, request);
 
                         /*
                          * Output either record data or surrogate diagnostic ...
@@ -723,8 +736,22 @@ public final class SRUServer {
         out.writeCharacters(ns.getExplainNS());
         out.writeEndElement(); // "recordSchema" element
 
-        // recordPacking
-        writeRecordPacking(out, ns, request.getRecordXmlEscaping());
+        /*
+         *  recordPacking (SRU 2.0)
+         *  Only serialize, of it was in request.
+         *
+         *  XXX: not sure, if this makes sense for explain
+         */
+        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                (request.getRawRecordPacking() != null)) {
+            writeRecordPacking(out, ns, request.getRecordPacking());
+        }
+
+        /*
+         * recordXMLEscaping (SRU 2.0) or
+         *   recordPacking (SRU 1.1 and 1.2)
+         */
+        writeRecordXmlEscaping(out, ns, request);
 
         out.writeStartElement(ns.getResponseNS(), "recordData");
 
@@ -925,9 +952,9 @@ public final class SRUServer {
             writeVersion(out, ns, request.getRawVersion());
         }
 
-        // echoedExplainRequest/recordPacking
+        // echoedExplainRequest/recordXmlEscpaing / recordPacking
         if (request.getRawRecordPacking() != null) {
-            writeRecordPacking(out, ns, request.getRawRecordPacking());
+            writeRecordXmlEscaping(out, ns, request);
         }
 
         // echoedExplainRequest/stylesheet
@@ -1035,9 +1062,24 @@ public final class SRUServer {
             out.writeEndElement(); // "startRecord" element
         }
 
-        // echoedSearchRetrieveRequest/recordPacking
-        if (request.getRawRecordPacking() != null) {
-            writeRecordPacking(out, ns, request.getRawRecordPacking());
+        // (SRU 2.0) echoedSearchRetrieveRequest/recordPacking
+        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                (request.getRawRecordPacking() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "recordPacking");
+            out.writeCharacters(request.getRawRecordPacking());
+            out.writeEndElement(); // "recordPacking" element
+        }
+
+        // echoedSearchRetrieveRequest/recordXmlEscaping / recordPacking
+        if (request.getRawRecordXmlEscaping() != null) {
+            if (request.isVersion(SRUVersion.VERSION_2_0)) {
+                out.writeStartElement(ns.getResponseNS(), "recordXMLEscaping");
+
+            } else {
+                out.writeStartElement(ns.getResponseNS(), "recordPacking");
+            }
+            out.writeCharacters(request.getRawRecordXmlEscaping());
+            out.writeEndElement(); // "recordXmlEscaping"  / "recordPacking" element
         }
 
         // echoedSearchRetrieveRequest/recordSchema
@@ -1132,10 +1174,14 @@ public final class SRUServer {
     }
 
 
-    private void writeRecordPacking(SRUXMLStreamWriter out, SRUNamespaces ns,
-            SRURecordXmlEscaping recordPacking) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "recordPacking");
-        switch (recordPacking) {
+    private void writeRecordXmlEscaping(SRUXMLStreamWriter out,
+            SRUNamespaces ns, SRURequest request) throws XMLStreamException {
+        if (request.isVersion(SRUVersion.VERSION_2_0)) {
+            out.writeStartElement(ns.getResponseNS(), "recordXMLEscaping");
+        } else {
+            out.writeStartElement(ns.getResponseNS(), "recordPacking");
+        }
+        switch (request.getRecordXmlEscaping()) {
         case XML:
             out.writeCharacters("xml");
             break;
@@ -1143,13 +1189,27 @@ public final class SRUServer {
             out.writeCharacters("string");
             break;
         } // switch
-        out.writeEndElement(); // "recordPacking" element
+        out.writeEndElement(); // "recordXMLEscaping" / "recordPacking" element
     }
 
 
-    private void writeLocalizedStrings(XMLStreamWriter writer,
-            SRUNamespaces ns, String name, List<LocalizedString> list)
-            throws XMLStreamException {
+    private void writeRecordPacking(SRUXMLStreamWriter out, SRUNamespaces ns,
+            SRURecordPacking recordPacking) throws XMLStreamException {
+        out.writeStartElement(ns.getResponseNS(), "recordPacking");
+        switch (recordPacking) {
+        case PACKED:
+            out.writeCharacters("packed");
+            break;
+        case UNPACKED:
+            out.writeCharacters("unpacked");
+            break;
+        }
+        out.writeEndElement(); // (SRU 2.0) "recordPacking" element
+    }
+
+
+    private void writeLocalizedStrings(XMLStreamWriter writer, SRUNamespaces ns,
+            String name, List<LocalizedString> list) throws XMLStreamException {
         if ((list != null) && !list.isEmpty()) {
             for (LocalizedString item : list) {
                 writer.writeStartElement(ns.getExplainNS(), name);
