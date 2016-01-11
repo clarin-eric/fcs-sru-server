@@ -466,7 +466,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                         }
                         break;
                     case RECORD_PACKING:
-                        logger.debug("XXXX: RECORD PAXCKING: {}", value);
                         if (value.equals(RECORD_PACKING_PACKED)) {
                             recordPacking = SRURecordPacking.PACKED;
                         } else if (value.equals(RECORD_PACKING_UNPACKED)) {
