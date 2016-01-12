@@ -227,7 +227,8 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getResponseNS(),
+                    request.getDiagnostics());
 
             // extraResponseData
             if (result != null) {
@@ -358,7 +359,7 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getScanNS(), request.getDiagnostics());
 
             // extraResponseData
             if (result.hasExtraResponseData()) {
@@ -563,7 +564,8 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getResponseNS(),
+                    request.getDiagnostics());
 
             // extraResponseData
             if (result.hasExtraResponseData()) {
@@ -638,22 +640,30 @@ public final class SRUServer {
             out.writeProcessingInstruction("xml-stylesheet", param.toString());
         }
 
-        out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
         switch (operation) {
         case EXPLAIN:
+            out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
             out.writeStartElement(ns.getResponseNS(), "explainResponse");
+            out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
+            // version
+            writeVersion(out, ns.getResponseNS(), version);
             break;
         case SCAN:
-            out.writeStartElement(ns.getResponseNS(), "scanResponse");
+            out.setPrefix(ns.getScanPrefix(), ns.getScanNS());
+            out.writeStartElement(ns.getScanNS(), "scanResponse");
+            out.writeNamespace(ns.getScanPrefix(), ns.getScanNS());
+            // version
+            writeVersion(out, ns.getScanNS(), version);
             break;
         case SEARCH_RETRIEVE:
+            out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
             out.writeStartElement(ns.getResponseNS(), "searchRetrieveResponse");
+            out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
+            // version
+            writeVersion(out, ns.getResponseNS(), version);
             break;
         }
-        out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
 
-        // version
-        writeVersion(out, ns, version);
     }
 
 
@@ -700,27 +710,30 @@ public final class SRUServer {
         case EXPLAIN:
             // 'explain' requires a complete explain record ...
             writeExplainRecord(out, ns, request);
+            writeDiagnosticList(out, ns, ns.getResponseNS(), diagnotics);
             break;
         case SCAN:
             // 'scan' fortunately does not need any elements ...
+            writeDiagnosticList(out, ns, ns.getScanNS(), diagnotics);
             break;
         case SEARCH_RETRIEVE:
             // 'searchRetrieve' needs numberOfRecords ..
             out.writeStartElement(ns.getResponseNS(), "numberOfRecords");
             out.writeCharacters("0");
             out.writeEndElement(); // "numberOfRecords" element
+            writeDiagnosticList(out, ns, ns.getResponseNS(), diagnotics);
             break;
         }
-        writeDiagnosticList(out, ns, diagnotics);
         endResponse(out);
     }
 
 
     private void writeDiagnosticList(SRUXMLStreamWriter out, SRUNamespaces ns,
-            List<SRUDiagnostic> diagnostics) throws XMLStreamException {
+            String envelopeNs, List<SRUDiagnostic> diagnostics)
+                    throws XMLStreamException {
         if ((diagnostics != null) && !diagnostics.isEmpty()) {
             out.setPrefix(ns.getDiagnosticPrefix(), ns.getDiagnosticNS());
-            out.writeStartElement(ns.getDiagnosticNS(), "diagnostics");
+            out.writeStartElement(envelopeNs, "diagnostics");
             out.writeNamespace(ns.getDiagnosticPrefix(), ns.getDiagnosticNS());
             for (SRUDiagnostic diagnostic : diagnostics) {
                 writeDiagnostic(out, ns, diagnostic, false);
@@ -951,7 +964,7 @@ public final class SRUServer {
 
         // echoedExplainRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
         // echoedExplainRequest/recordXmlEscpaing / recordPacking
@@ -978,7 +991,7 @@ public final class SRUServer {
 
         // echoedScanRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
         // echoedScanRequest/scanClause
@@ -1028,7 +1041,7 @@ public final class SRUServer {
 
         // echoedSearchRetrieveRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
         /*
@@ -1158,9 +1171,9 @@ public final class SRUServer {
     }
 
 
-    private void writeVersion(SRUXMLStreamWriter out, SRUNamespaces ns,
+    private void writeVersion(SRUXMLStreamWriter out, String envelopeNs,
             SRUVersion version) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "version");
+        out.writeStartElement(envelopeNs, "version");
         switch (version) {
         case VERSION_1_1:
             out.writeCharacters("1.1");
