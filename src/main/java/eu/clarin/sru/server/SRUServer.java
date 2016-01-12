@@ -478,8 +478,10 @@ public final class SRUServer {
                         out.writeEndElement(); // "recordSchema" element
 
                         /*
-                         *  recordPacking (SRU 2.0)
-                         *  Only serialize, of it was in request.
+                         * recordPacking (SRU 2.0). Only serialize, if it was in
+                         * request.
+                         * XXX: not sure, how to support 'unpacked' record
+                         * packing anyways :/
                          */
                         if (request.isVersion(SRUVersion.VERSION_2_0) &&
                                 (request.getRawRecordPacking() != null)) {
