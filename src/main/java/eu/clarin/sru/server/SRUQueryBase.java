@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -16,11 +16,26 @@
  */
 package eu.clarin.sru.server;
 
+/**
+ * Base class for implementing for a parsed query to be returned from a
+ * {@link SRUQueryParser}.
+ *
+ * @param <T>
+ *            abstract syntax tree (object) for parsed queries.
+ */
 public abstract class SRUQueryBase<T> implements SRUQuery<T> {
     protected final String rawQuery;
     protected final T parsedQuery;
 
 
+    /**
+     * Constructor.
+     * 
+     * @param rawQuery
+     *            the raw and unparsed query as String
+     * @param parsedQuery
+     *            the query parsed into an abstract syntax tree object
+     */
     protected SRUQueryBase(String rawQuery, T parsedQuery) {
         if (rawQuery == null) {
             throw new NullPointerException("rawQuery == null");

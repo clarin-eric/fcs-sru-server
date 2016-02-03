@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -116,7 +116,9 @@ public interface SRURequest {
      * the query object to the supplied type.
      *
      * @param type
-     *            Class representing the Java data type to convert the query to.
+     *            Class representing the return type to convert the query to
+     * @param <T>
+     *            Class of the returned type
      * @return an {@link SRUQuery} instance tailored for the used queryType or
      *         <code>null</code> if not a <em>searchRetrieve</em> request
      * @throws ClassCastException

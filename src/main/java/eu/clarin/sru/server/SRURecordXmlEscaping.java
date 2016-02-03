@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -17,7 +17,7 @@
 package eu.clarin.sru.server;
 
 /**
- * SRU Record XML escaping.
+ * SRU Record XML escaping (or record packing in SRU 1.2).
  */
 public enum SRURecordXmlEscaping {
     /**
