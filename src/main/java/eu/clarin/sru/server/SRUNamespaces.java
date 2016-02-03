@@ -25,7 +25,7 @@ public interface SRUNamespaces {
     /**
      * The namespace URI for encoding <em>explain</em> and
      * <em>searchRetrieve</em> operation responses.
-     * 
+     *
      * @return the namespace URI for encoding <em>explain</em> and
      *         <em>searchRetrieve</em>
      */
@@ -35,7 +35,7 @@ public interface SRUNamespaces {
     /**
      * The namespace prefix for encoding <em>explain</em> and
      * <em>searchRetrieve</em> operation responses.
-     * 
+     *
      * @return the namespace prefix for encoding <em>explain</em> and
      *         <em>searchRetrieve</em>
      */
@@ -44,7 +44,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace URI for encoding <em>scan</em> operation responses.
-     * 
+     *
      * @return the namespace URI for encoding <em>scan</em>
      */
     public String getScanNS();
@@ -52,7 +52,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace prefix for encoding <em>scan</em> operation responses.
-     * 
+     *
      * @return the namespace prefix for encoding <em>scan</em>
      */
     public String getScanPrefix();
@@ -60,7 +60,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace URI for encoding SRU diagnostics.
-     * 
+     *
      * @return the namespace URI for encoding SRU diagnostics
      */
     public String getDiagnosticNS();
@@ -68,7 +68,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace prefix for encoding SRU diagnostics.
-     * 
+     *
      * @return the namespace prefix for encoding SRU diagnostics
      */
     public String getDiagnosticPrefix();
@@ -76,7 +76,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace URI for encoding explain record data fragments.
-     * 
+     *
      * @return the namespace URI for encoding explain record data fragments
      */
     public String getExplainNS();
@@ -84,7 +84,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace prefix for encoding explain record data fragments.
-     * 
+     *
      * @return the namespace prefix for encoding explain record data fragments
      */
     public String getExplainPrefix();
@@ -92,7 +92,7 @@ public interface SRUNamespaces {
 
     /**
      * The namespace URI for encoding XCQL fragments
-     * 
+     *
      * @return the namespace URI for encoding XCQL fragments
      */
     public String getXcqlNS();

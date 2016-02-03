@@ -30,7 +30,7 @@ public abstract class SRUQueryBase<T> implements SRUQuery<T> {
 
     /**
      * Constructor.
-     * 
+     *
      * @param rawQuery
      *            the raw and unparsed query as String
      * @param parsedQuery
