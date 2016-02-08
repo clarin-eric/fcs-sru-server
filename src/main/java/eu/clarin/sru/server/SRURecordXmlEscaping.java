@@ -17,32 +17,16 @@
 package eu.clarin.sru.server;
 
 /**
- * An exception raised, if some error occurred with the SRUServer configuration.
+ * SRU Record XML escaping (or record packing in SRU 1.2).
  */
-@SuppressWarnings("serial")
-public class SRUConfigException extends Exception {
+public enum SRURecordXmlEscaping {
+    /**
+     * XML record packing
+     */
+    XML,
 
     /**
-     * Constructor.
-     *
-     * @param msg
-     *            a message
+     * String record packing
      */
-    public SRUConfigException(String msg) {
-        super(msg);
-    }
-
-
-    /**
-     * Constructor.
-     *
-     * @param msg
-     *            a message
-     * @param cause
-     *            the cause of the error
-     */
-    public SRUConfigException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
-
-} // class SRUConfigException
+    STRING
+} // enum SRURecordXmlEscaping

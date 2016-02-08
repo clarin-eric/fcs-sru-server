@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -24,10 +24,12 @@ import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUDiagnosticList;
 import eu.clarin.sru.server.SRUException;
 import eu.clarin.sru.server.SRUExplainResult;
+import eu.clarin.sru.server.SRUQueryParserRegistry;
 import eu.clarin.sru.server.SRURequest;
 import eu.clarin.sru.server.SRUScanResultSet;
 import eu.clarin.sru.server.SRUSearchEngine;
 import eu.clarin.sru.server.SRUSearchResultSet;
+import eu.clarin.sru.server.SRUServer;
 import eu.clarin.sru.server.SRUServerConfig;
 
 
@@ -87,13 +89,19 @@ public abstract class SRUSearchEngineBase implements SRUSearchEngine {
      *            the {@link ServletContext} for the Servlet
      * @param config
      *            the {@link SRUServerConfig} object for this search engine
+     * @param parsersRegistryBuilder
+     *            the {@link SRUQueryParserRegistry.Builder} object to be used
+     *            for this search engine. Use to register additional query
+     *            parsers with the {@link SRUServer}.
      * @param params
      *            additional parameters gathered from the Servlet configuration
      *            and Servlet context.
      * @throws SRUConfigException
      *             an error occurred during initialization of the search engine
      */
-    public void init(ServletContext context, SRUServerConfig config,
+    public void init(ServletContext context,
+            SRUServerConfig config,
+            SRUQueryParserRegistry.Builder parsersRegistryBuilder,
             Map<String, String> params) throws SRUConfigException {
     }
 

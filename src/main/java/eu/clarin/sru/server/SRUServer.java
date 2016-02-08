@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -57,6 +57,7 @@ public final class SRUServer {
     private static final Logger logger =
             LoggerFactory.getLogger(SRUServer.class);
     private final SRUServerConfig config;
+    private final SRUQueryParserRegistry queryParsers;
     private final SRUSearchEngine searchEngine;
     private final XMLOutputFactory writerFactory;
 
@@ -65,24 +66,35 @@ public final class SRUServer {
      * Constructor.
      *
      * @param config
-     *            a SRUEndpointConfig object
+     *            a {@link SRUServerConfig} object
+     * @param queryParsers
+     *            a {@link SRUQueryParserRegistry} object
      * @param searchEngine
-     *            an object implementing the SRUSearchEngine interface
+     *            an object implementing the {@link SRUSearchEngine} interface
      * @throws NullPointerException
-     *             if config or searchEngine is <code>null</code>
+     *             if config, queryParserRegistry or searchEngine is
+     *             <code>null</code>
      * @throws SRUException
      *             if an error occurred
      */
-    public SRUServer(SRUServerConfig config, SRUSearchEngine searchEngine)
-            throws SRUException {
+    public SRUServer(SRUServerConfig config,
+            SRUQueryParserRegistry queryParsers,
+            SRUSearchEngine searchEngine) throws SRUException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
         this.config = config;
+
+        if (queryParsers == null) {
+            throw new NullPointerException("queryParserRegistry == null");
+        }
+        this.queryParsers = queryParsers;
+
         if (searchEngine == null) {
             throw new NullPointerException("searchEngine == null");
         }
         this.searchEngine = searchEngine;
+
         this.writerFactory = XMLOutputFactory.newInstance();
     }
 
@@ -97,7 +109,8 @@ public final class SRUServer {
      */
     public void handleRequest(HttpServletRequest request,
             HttpServletResponse response) {
-        final SRURequestImpl req = new SRURequestImpl(config, request);
+        final SRURequestImpl req =
+                new SRURequestImpl(config, queryParsers, request);
         try {
             // set response properties
             response.setContentType(RESPONSE_CONTENT_TYPE);
@@ -122,7 +135,7 @@ public final class SRUServer {
                     // (some) parameters are malformed, send error
                     SRUXMLStreamWriter out =
                         createXMLStreamWriter(response.getOutputStream(),
-                                SRURecordPacking.XML, false,
+                                SRURecordXmlEscaping.XML, false,
                                 req.getIndentResponse());
                     final SRUNamespaces ns = getNamespaces(req.getVersion());
                     writeFatalError(out, ns, req, req.getDiagnostics());
@@ -163,7 +176,7 @@ public final class SRUServer {
                     }
                     SRUXMLStreamWriter out =
                             createXMLStreamWriter(response.getOutputStream(),
-                                    SRURecordPacking.XML, false,
+                                    SRURecordXmlEscaping.XML, false,
                                     req.getIndentResponse());
                     final SRUNamespaces ns = getNamespaces(req.getVersion());
                     writeFatalError(out, ns, req, diagnostics);
@@ -200,7 +213,7 @@ public final class SRUServer {
             // send results
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
-                                          request.getRecordPacking(),
+                                          request.getRecordXmlEscaping(),
                                           true,
                                           request.getIndentResponse());
 
@@ -214,7 +227,8 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getResponseNS(),
+                    request.getDiagnostics());
 
             // extraResponseData
             if (result != null) {
@@ -257,7 +271,7 @@ public final class SRUServer {
             // send results
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
-                                          request.getRecordPacking(),
+                                          request.getRecordXmlEscaping(),
                                           true,
                                           request.getIndentResponse());
 
@@ -345,7 +359,7 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getScanNS(), request.getDiagnostics());
 
             // extraResponseData
             if (result.hasExtraResponseData()) {
@@ -393,7 +407,7 @@ public final class SRUServer {
             // send results
             SRUXMLStreamWriter out =
                     createXMLStreamWriter(response.getOutputStream(),
-                                          request.getRecordPacking(),
+                                          request.getRecordXmlEscaping(),
                                           true,
                                           request.getIndentResponse());
 
@@ -412,11 +426,12 @@ public final class SRUServer {
                 out.writeEndElement(); // "resultSetId" element
             }
 
-            // resultSetIdleTime
-            if (result.getResultSetIdleTime() > 0) {
+            // resultSetIdleTime (SRU 1.1 and SRU 1.2)
+            if (!request.isVersion(SRUVersion.VERSION_2_0) &&
+                    (result.getResultSetTTL() >= 0)) {
                 out.writeStartElement(ns.getResponseNS(), "resultSetIdleTime");
                 out.writeCharacters(Integer.toString(result
-                        .getResultSetIdleTime()));
+                        .getResultSetTTL()));
                 out.writeEndElement(); // "resultSetIdleTime" element
             }
 
@@ -463,8 +478,23 @@ public final class SRUServer {
                         }
                         out.writeEndElement(); // "recordSchema" element
 
-                        // recordPacking
-                        writeRecordPacking(out, ns, request.getRecordPacking());
+                        /*
+                         * recordPacking (SRU 2.0). Only serialize, if it was in
+                         * request.
+                         * XXX: not sure, how to support 'unpacked' record
+                         * packing anyways :/
+                         */
+                        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                                (request.getRawRecordPacking() != null)) {
+                            writeRecordPacking(out, ns,
+                                    request.getRecordPacking());
+                        }
+
+                        /*
+                         * recordXMLEscaping (SRU 2.0) or
+                         *   recordPacking (SRU 1.1 and 1.2)
+                         */
+                        writeRecordXmlEscaping(out, ns, request);
 
                         /*
                          * Output either record data or surrogate diagnostic ...
@@ -481,9 +511,10 @@ public final class SRUServer {
                         out.writeEndElement(); // "recordData" element
 
                         /*
-                         * recordIdentifier is version 1.2 only
+                         * recordIdentifier is version 1.2+ only
                          */
-                        if (request.isVersion(SRUVersion.VERSION_1_2)) {
+                        if (request.isVersion(SRUVersion.VERSION_1_2,
+                                SRUVersion.VERSION_2_0)) {
                             final String identifier =
                                     result.getRecordIdentifier();
                             if (identifier != null) {
@@ -533,7 +564,8 @@ public final class SRUServer {
             }
 
             // diagnostics
-            writeDiagnosticList(out, ns, request.getDiagnostics());
+            writeDiagnosticList(out, ns, ns.getResponseNS(),
+                    request.getDiagnostics());
 
             // extraResponseData
             if (result.hasExtraResponseData()) {
@@ -542,6 +574,50 @@ public final class SRUServer {
                 out.writeEndElement(); // "extraResponseData" element
             }
 
+            // SRU 2.0 stuff ...
+            if (request.isVersion(SRUVersion.VERSION_2_0)) {
+                // resultSetTTL
+                if (result.getResultSetTTL() >= 0) {
+                    out.writeStartElement(ns.getResponseNS(), "resultSetTTL");
+                    out.writeCharacters(
+                            Integer.toString(result.getResultSetTTL()));
+                    out.writeEndElement(); // "resultSetTTL" element
+                }
+
+                // resultCountPrecision
+                final SRUResultCountPrecision precision =
+                        result.getResultCountPrecision();
+                if (precision != null) {
+                    out.writeStartElement(ns.getResponseNS(), "resultCountPrecision");
+                    switch (precision) {
+                    case EXACT:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/exact");
+                        break;
+                    case UNKNOWN:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/unknown");
+                        break;
+                    case ESTIMATE:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/estimate");
+                        break;
+                    case MAXIMUM:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/maximum");
+                        break;
+                    case MINIMUM:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/minimum");
+                        break;
+                    case CURRENT:
+                        out.writeCharacters("info:srw/vocabulary/resultCountPrecision/1/current");
+                        break;
+                    } // switch
+                    out.writeEndElement(); // "resultCountPrecision" element
+                }
+
+                // facetedResults
+                // NOT YET SUPPORTED
+
+                // searchResultAnalysis
+                // NOT YET SUPPORTED
+            }
             endResponse(out);
         } finally {
             result.close();
@@ -564,22 +640,30 @@ public final class SRUServer {
             out.writeProcessingInstruction("xml-stylesheet", param.toString());
         }
 
-        out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
         switch (operation) {
         case EXPLAIN:
+            out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
             out.writeStartElement(ns.getResponseNS(), "explainResponse");
+            out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
+            // version
+            writeVersion(out, ns.getResponseNS(), version);
             break;
         case SCAN:
-            out.writeStartElement(ns.getResponseNS(), "scanResponse");
+            out.setPrefix(ns.getScanPrefix(), ns.getScanNS());
+            out.writeStartElement(ns.getScanNS(), "scanResponse");
+            out.writeNamespace(ns.getScanPrefix(), ns.getScanNS());
+            // version
+            writeVersion(out, ns.getScanNS(), version);
             break;
         case SEARCH_RETRIEVE:
+            out.setPrefix(ns.getResponsePrefix(), ns.getResponseNS());
             out.writeStartElement(ns.getResponseNS(), "searchRetrieveResponse");
+            out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
+            // version
+            writeVersion(out, ns.getResponseNS(), version);
             break;
         }
-        out.writeNamespace(ns.getResponsePrefix(), ns.getResponseNS());
 
-        // version
-        writeVersion(out, ns, version);
     }
 
 
@@ -626,27 +710,30 @@ public final class SRUServer {
         case EXPLAIN:
             // 'explain' requires a complete explain record ...
             writeExplainRecord(out, ns, request);
+            writeDiagnosticList(out, ns, ns.getResponseNS(), diagnotics);
             break;
         case SCAN:
             // 'scan' fortunately does not need any elements ...
+            writeDiagnosticList(out, ns, ns.getScanNS(), diagnotics);
             break;
         case SEARCH_RETRIEVE:
             // 'searchRetrieve' needs numberOfRecords ..
             out.writeStartElement(ns.getResponseNS(), "numberOfRecords");
             out.writeCharacters("0");
             out.writeEndElement(); // "numberOfRecords" element
+            writeDiagnosticList(out, ns, ns.getResponseNS(), diagnotics);
             break;
         }
-        writeDiagnosticList(out, ns, diagnotics);
         endResponse(out);
     }
 
 
     private void writeDiagnosticList(SRUXMLStreamWriter out, SRUNamespaces ns,
-            List<SRUDiagnostic> diagnostics) throws XMLStreamException {
+            String envelopeNs, List<SRUDiagnostic> diagnostics)
+                    throws XMLStreamException {
         if ((diagnostics != null) && !diagnostics.isEmpty()) {
             out.setPrefix(ns.getDiagnosticPrefix(), ns.getDiagnosticNS());
-            out.writeStartElement(ns.getDiagnosticNS(), "diagnostics");
+            out.writeStartElement(envelopeNs, "diagnostics");
             out.writeNamespace(ns.getDiagnosticPrefix(), ns.getDiagnosticNS());
             for (SRUDiagnostic diagnostic : diagnostics) {
                 writeDiagnostic(out, ns, diagnostic, false);
@@ -664,8 +751,22 @@ public final class SRUServer {
         out.writeCharacters(ns.getExplainNS());
         out.writeEndElement(); // "recordSchema" element
 
-        // recordPacking
-        writeRecordPacking(out, ns, request.getRecordPacking());
+        /*
+         *  recordPacking (SRU 2.0)
+         *  Only serialize, of it was in request.
+         *
+         *  XXX: not sure, if this makes sense for explain
+         */
+        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                (request.getRawRecordPacking() != null)) {
+            writeRecordPacking(out, ns, request.getRecordPacking());
+        }
+
+        /*
+         * recordXMLEscaping (SRU 2.0) or
+         *   recordPacking (SRU 1.1 and 1.2)
+         */
+        writeRecordXmlEscaping(out, ns, request);
 
         out.writeStartElement(ns.getResponseNS(), "recordData");
 
@@ -863,12 +964,12 @@ public final class SRUServer {
 
         // echoedExplainRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
-        // echoedExplainRequest/recordPacking
+        // echoedExplainRequest/recordXmlEscpaing / recordPacking
         if (request.getRawRecordPacking() != null) {
-            writeRecordPacking(out, ns, request.getRawRecordPacking());
+            writeRecordXmlEscaping(out, ns, request);
         }
 
         // echoedExplainRequest/stylesheet
@@ -876,11 +977,6 @@ public final class SRUServer {
             out.writeStartElement(ns.getResponseNS(), "stylesheet");
             out.writeCharacters(request.getStylesheet());
             out.writeEndElement(); // "stylesheet" element
-        }
-
-        // echoedExplainRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
         }
 
         out.writeEndElement(); // "echoedExplainRequest" element
@@ -895,7 +991,7 @@ public final class SRUServer {
 
         // echoedScanRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
         // echoedScanRequest/scanClause
@@ -932,17 +1028,12 @@ public final class SRUServer {
             out.writeEndElement(); // "stylesheet" element
         }
 
-        // echoedScanRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
-        }
-
         out.writeEndElement(); // "echoedScanRequest" element
     }
 
 
     private void writeEchoedSearchRetrieveRequest(SRUXMLStreamWriter out,
-            SRUNamespaces ns, SRURequestImpl request, CQLNode cql)
+            SRUNamespaces ns, SRURequestImpl request, SRUQuery<?> query)
             throws XMLStreamException, SRUException {
         // echoedSearchRetrieveRequest
         out.writeStartElement(ns.getResponseNS(),
@@ -950,20 +1041,26 @@ public final class SRUServer {
 
         // echoedSearchRetrieveRequest/version
         if (request.getRawVersion() != null) {
-            writeVersion(out, ns, request.getRawVersion());
+            writeVersion(out, ns.getResponseNS(), request.getRawVersion());
         }
 
-        // echoedSearchRetrieveRequest/query
-        out.writeStartElement(ns.getResponseNS(), "query");
-        out.writeCharacters(request.getRawQuery());
-        out.writeEndElement(); // "query"
+        /*
+         * XXX: unclear, if <query> should only be echoed if queryType is CQL!?
+         */
+        if (SRUConstants.SRU_QUERY_TYPE_CQL.equals(query.getQueryType())) {
+            final CQLQueryParser.CQLQuery cql = (CQLQueryParser.CQLQuery) query;
+            // echoedSearchRetrieveRequest/query
+            out.writeStartElement(ns.getResponseNS(), "query");
+            out.writeCharacters(cql.getRawQuery());
+            out.writeEndElement(); // "query"
 
-        // echoedSearchRetrieveRequest/xQuery
-        out.setDefaultNamespace(ns.getXcqlNS());
-        out.writeStartElement(ns.getResponseNS(), "xQuery");
-        out.writeDefaultNamespace(ns.getXcqlNS());
-        out.writeXCQL(cql, true);
-        out.writeEndElement(); // "xQuery" element
+            // echoedSearchRetrieveRequest/xQuery
+            out.setDefaultNamespace(ns.getXcqlNS());
+            out.writeStartElement(ns.getResponseNS(), "xQuery");
+            out.writeDefaultNamespace(ns.getXcqlNS());
+            out.writeXCQL(cql.getParsedQuery(), true);
+            out.writeEndElement(); // "xQuery" element
+        }
 
         // echoedSearchRetrieveRequest/startRecord
         if (request.getStartRecord() > 0) {
@@ -980,9 +1077,24 @@ public final class SRUServer {
             out.writeEndElement(); // "startRecord" element
         }
 
-        // echoedSearchRetrieveRequest/recordPacking
-        if (request.getRawRecordPacking() != null) {
-            writeRecordPacking(out, ns, request.getRawRecordPacking());
+        // (SRU 2.0) echoedSearchRetrieveRequest/recordPacking
+        if (request.isVersion(SRUVersion.VERSION_2_0) &&
+                (request.getRawRecordPacking() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "recordPacking");
+            out.writeCharacters(request.getRawRecordPacking());
+            out.writeEndElement(); // "recordPacking" element
+        }
+
+        // echoedSearchRetrieveRequest/recordXmlEscaping / recordPacking
+        if (request.getRawRecordXmlEscaping() != null) {
+            if (request.isVersion(SRUVersion.VERSION_2_0)) {
+                out.writeStartElement(ns.getResponseNS(), "recordXMLEscaping");
+
+            } else {
+                out.writeStartElement(ns.getResponseNS(), "recordPacking");
+            }
+            out.writeCharacters(request.getRawRecordXmlEscaping());
+            out.writeEndElement(); // "recordXmlEscaping"  / "recordPacking" element
         }
 
         // echoedSearchRetrieveRequest/recordSchema
@@ -1024,18 +1136,44 @@ public final class SRUServer {
             out.writeEndElement(); // "stylesheet" element
         }
 
-        // echoedSearchRetrieveRequest/baseUrl (SRU 1.2 only)
-        if (request.isVersion(SRUVersion.VERSION_1_2)) {
-            writeBaseUrl(out, ns, request);
+        // echoedSearchRetrieveRequest/renderedBy
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getRenderBy() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "renderedBy");
+            switch (request.getRenderBy()) {
+            case SERVER:
+                out.writeCharacters("server");
+                break;
+            case CLIENT:
+                out.writeCharacters("client");
+                break;
+            }
+            out.writeEndElement(); // "renderedBy" element
+        }
+
+        // echoedSearchRetrieveRequest/extraRequestParameter
+        // FIXME: NOT YET IMPLEMENTED
+
+        // echoedSearchRetrieveRequest/httpAccept
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getRawHttpAccept() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "renderedBy");
+            out.writeCharacters(request.getRawHttpAccept());
+            out.writeEndElement(); // "renderedBy" element
+        }
+
+        // echoedSearchRetrieveRequest/responseType
+        if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getResponeType() != null)) {
+            out.writeStartElement(ns.getResponseNS(), "responseType");
+            out.writeCharacters(request.getResponeType());
+            out.writeEndElement(); // "responseType" element
         }
 
         out.writeEndElement(); // "echoedSearchRetrieveRequest" element
     }
 
 
-    private void writeVersion(SRUXMLStreamWriter out, SRUNamespaces ns,
+    private void writeVersion(SRUXMLStreamWriter out, String envelopeNs,
             SRUVersion version) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "version");
+        out.writeStartElement(envelopeNs, "version");
         switch (version) {
         case VERSION_1_1:
             out.writeCharacters("1.1");
@@ -1051,10 +1189,14 @@ public final class SRUServer {
     }
 
 
-    private void writeRecordPacking(SRUXMLStreamWriter out, SRUNamespaces ns,
-            SRURecordPacking recordPacking) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "recordPacking");
-        switch (recordPacking) {
+    private void writeRecordXmlEscaping(SRUXMLStreamWriter out,
+            SRUNamespaces ns, SRURequest request) throws XMLStreamException {
+        if (request.isVersion(SRUVersion.VERSION_2_0)) {
+            out.writeStartElement(ns.getResponseNS(), "recordXMLEscaping");
+        } else {
+            out.writeStartElement(ns.getResponseNS(), "recordPacking");
+        }
+        switch (request.getRecordXmlEscaping()) {
         case XML:
             out.writeCharacters("xml");
             break;
@@ -1062,22 +1204,27 @@ public final class SRUServer {
             out.writeCharacters("string");
             break;
         } // switch
-        out.writeEndElement(); // "recordPacking" element
+        out.writeEndElement(); // "recordXMLEscaping" / "recordPacking" element
     }
 
 
-    private void writeBaseUrl(SRUXMLStreamWriter out, SRUNamespaces ns,
-            SRURequest request) throws XMLStreamException {
-        out.writeStartElement(ns.getResponseNS(), "baseUrl");
-        out.writeCharacters(request.getProtocolScheme());
-        out.writeCharacters(config.getBaseUrl());
-        out.writeEndElement(); // "baseUrl" element
+    private void writeRecordPacking(SRUXMLStreamWriter out, SRUNamespaces ns,
+            SRURecordPacking recordPacking) throws XMLStreamException {
+        out.writeStartElement(ns.getResponseNS(), "recordPacking");
+        switch (recordPacking) {
+        case PACKED:
+            out.writeCharacters("packed");
+            break;
+        case UNPACKED:
+            out.writeCharacters("unpacked");
+            break;
+        }
+        out.writeEndElement(); // (SRU 2.0) "recordPacking" element
     }
 
 
-    private void writeLocalizedStrings(XMLStreamWriter writer,
-            SRUNamespaces ns, String name, List<LocalizedString> list)
-            throws XMLStreamException {
+    private void writeLocalizedStrings(XMLStreamWriter writer, SRUNamespaces ns,
+            String name, List<LocalizedString> list) throws XMLStreamException {
         if ((list != null) && !list.isEmpty()) {
             for (LocalizedString item : list) {
                 writer.writeStartElement(ns.getExplainNS(), name);
@@ -1095,7 +1242,7 @@ public final class SRUServer {
 
 
     private SRUXMLStreamWriter createXMLStreamWriter(OutputStream out,
-            SRURecordPacking recordPacking, boolean skipFlush, int indent)
+            SRURecordXmlEscaping recordPacking, boolean skipFlush, int indent)
             throws SRUException {
         try {
             if (skipFlush) {

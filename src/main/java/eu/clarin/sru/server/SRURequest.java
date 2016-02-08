@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -80,8 +80,19 @@ public interface SRURequest {
 
 
     /**
-     * Get the <em>recordPacking</em> parameter of this request. Only available
-     * for <em>explain</em> and <em>searchRetrieve</em> requests.
+     * Get the <em>recordXmlEscpaing</em> (SRU 2.0) or <em>recordPacking</em>
+     * (SRU 1.1 and SRU 1.2) parameter of this request. Only available for
+     * <em>explain</em> and <em>searchRetrieve</em> requests.
+     *
+     * @return the record XML escaping method
+     * @see SRURecordXmlEscaping
+     */
+    public SRURecordXmlEscaping getRecordXmlEscaping();
+
+
+    /**
+     * Get the <em>recordPacking</em> (SRU 2.0) parameter of this request. Only
+     * available for <em>searchRetrieve</em> requests.
      *
      * @return the record packing method
      * @see SRURecordPacking
@@ -93,16 +104,56 @@ public interface SRURequest {
      * Get the <em>query</em> parameter of this request. Only available for
      * <em>searchRetrieve</em> requests.
      *
-     * @return the parsed query or <code>null</code> if not a
+     * @return an {@link SRUQuery} instance tailored for the used queryType or
+     *         <code>null</code> if not a <em>searchRetrieve</em> request
+     */
+    public SRUQuery<?> getQuery();
+
+
+    /**
+     * Get the <em>query</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests. This convenience method tried to cast
+     * the query object to the supplied type.
+     *
+     * @param type
+     *            Class representing the return type to convert the query to
+     * @param <T>
+     *            Class of the returned type
+     * @return an {@link SRUQuery} instance tailored for the used queryType or
+     *         <code>null</code> if not a <em>searchRetrieve</em> request
+     * @throws ClassCastException
+     *             if conversion is not supported, type is <code>null</code> or
+     *             another error occurs
+     */
+    public <T extends SRUQuery<?>> T getQuery(Class<T> type);
+
+
+    /**
+     * Get the <em>queryType</em> parameter of this request. Only available for
+     * <em>searchRetrieve</em> requests.
+     *
+     * @return the queryType of the parsed query or <code>null</code> if not a
      *         <em>searchRetrieve</em> request
      */
-    public CQLNode getQuery();
+    public String getQueryType();
+
+
+    /**
+     * Check if the request was made with the given queryType. Only available
+     * for <em>searchRetrieve</em> requests.
+     *
+     * @param queryType
+     *            the queryType to compare with
+     * @return <code>true</code> if the queryType matches, <code>false</code>
+     *         otherwise
+     */
+    public boolean isQueryType(String queryType);
 
 
     /**
      * Get the <em>startRecord</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests. If the client did not provide
-     * a value for the request, it is set to <code>1</code>.
+     * for <em>searchRetrieve</em> requests. If the client did not provide a
+     * value for the request, it is set to <code>1</code>.
      *
      * @return the number of the start record
      */
@@ -117,18 +168,6 @@ public interface SRURequest {
      * @return the maximum number of records
      */
     public int getMaximumRecords();
-
-
-    /**
-     * Get the <em>recordSchema</em> parameter of this request. Only available
-     * for <em>searchRetrieve</em> requests.
-     *
-     * @return the record schema name or <code>null</code> if no value was
-     *         supplied for this request
-     * @deprecated use {@link #getRecordSchemaIdentifier()}
-     */
-    @Deprecated
-    public String getRecordSchemaName();
 
 
     /**
@@ -211,6 +250,37 @@ public interface SRURequest {
      *         this request
      */
     public String getStylesheet();
+
+
+    /**
+     * Get the <em>renderBy</em> parameter of this request.
+     *
+     * @return the renderBy parameter or <code>null</code> if no value was
+     *         supplied for this request
+     */
+    public SRURenderBy getRenderBy();
+
+
+    /**
+     * (SRU 2.0) The request parameter <em>responseType</em>, paired with the
+     * Internet media type specified for the response (via either the httpAccept
+     * parameter or http accept header) determines the schema for the response.
+     *
+     * @return the value of the responeType request parameter or
+     *         <code>null</code> if no value was supplied for this request
+     */
+    public String getResponeType();
+
+
+    /**
+     * (SRU 2.0) The request parameter <em>httpAccept</em> may be supplied to
+     * indicate the preferred format of the response. The value is an Internet
+     * media type.
+     *
+     * @return the value of the httpAccept request parameter or
+     *         <code>null</code> if no value was supplied for
+     */
+    public String getHttpAccept();
 
 
     /**

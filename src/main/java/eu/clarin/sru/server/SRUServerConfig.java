@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -716,8 +716,13 @@ public final class SRUServerConfig {
     }
 
 
+    public SRURecordXmlEscaping getDefaultRecordXmlEscaping() {
+        return SRURecordXmlEscaping.XML;
+    }
+
+
     public SRURecordPacking getDefaultRecordPacking() {
-        return SRURecordPacking.XML;
+        return SRURecordPacking.PACKED;
     }
 
 
@@ -1402,4 +1407,4 @@ public final class SRUServerConfig {
         return result;
     }
 
-} // class SRUEndpointConfig
+} // class SRUServerConfig

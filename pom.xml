@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>eu.clarin.sru</groupId>
     <artifactId>sru-server</artifactId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.8.0</version>
     <packaging>jar</packaging>
     <name>SRU/CQL Server</name>
-    <description>A SRU/CQL server implementation conforming to SRU/CQL protocol version 1.1 and 1.2</description>
+    <description>A SRU/CQL server implementation conforming to SRU/CQL protocol version 1.1 and 1.2 and (partially) 2.0</description>
 
     <properties>
         <!-- project settings -->
@@ -90,4 +90,16 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>CLARIN-snapshot</id>
+            <url>https://nexus.clarin.eu/content/repositories/clarin-snapshot</url>
+        </snapshotRepository>
+
+        <repository>
+            <id>CLARIN</id>
+            <url>https://nexus.clarin.eu/content/repositories/Clarin</url>
+        </repository>
+    </distributionManagement>
 </project>

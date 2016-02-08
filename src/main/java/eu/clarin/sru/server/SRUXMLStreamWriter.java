@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -44,7 +44,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
         SEEN_DATA
     }
     private static final SAXParserFactory factory;
-    private final SRURecordPacking packing;
+    private final SRURecordXmlEscaping recordEscaping;
     private final Writer writer;
     private final XMLStreamWriter xmlwriter;
     private int indent = -1;
@@ -54,15 +54,16 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
     private boolean writingRecord = false;
 
 
-    SRUXMLStreamWriter(OutputStream stream, XMLOutputFactory factory,
-            SRURecordPacking recordPacking, int indent) throws IOException,
-            XMLStreamException {
-        this.packing = recordPacking;
+    SRUXMLStreamWriter(OutputStream stream,
+            XMLOutputFactory factory,
+            SRURecordXmlEscaping recordXmlEscaping,
+            int indent) throws IOException, XMLStreamException {
+        this.recordEscaping = recordXmlEscaping;
         this.writer = new OutputStreamWriter(stream,
                 SRUServer.RESPONSE_ENCODING) {
             @Override
             public void write(int c) throws IOException {
-                if (writingRecord && (packing == SRURecordPacking.STRING)) {
+                if (writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING)) {
                     /*
                      * NOTE: need to write single characters here, because
                      * super.write(String) will call us again, and we would
@@ -97,7 +98,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
             @Override
             public void write(char[] c, int off, int len) throws IOException {
-                if (writingRecord && (packing == SRURecordPacking.STRING)) {
+                if (writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING)) {
                     for (int i = off; i < len; i++) {
                         this.write(c[i]);
                     }
@@ -108,7 +109,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
             @Override
             public void write(String s, int off, int len) throws IOException {
-                if (writingRecord && (packing == SRURecordPacking.STRING)) {
+                if (writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING)) {
                     for (int i = off; i < len; i++) {
                         this.write(s.charAt(i));
                     }
@@ -479,7 +480,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
 
     private void onStartElement() throws XMLStreamException {
-        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+        if (!(writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING))) {
             stateStack.push(IndentingState.SEEN_ELEMENT);
             state = IndentingState.SEEN_NOTHING;
             if (depth > 0) {
@@ -492,7 +493,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
 
     private void onEndElement() throws XMLStreamException {
-        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+        if (!(writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING))) {
             depth--;
             if (state == IndentingState.SEEN_ELEMENT) {
                 xmlwriter.writeCharacters("\n");
@@ -504,7 +505,7 @@ final class SRUXMLStreamWriter implements XMLStreamWriter {
 
 
     private void onEmptyElement() throws XMLStreamException {
-        if (!(writingRecord && (packing == SRURecordPacking.STRING))) {
+        if (!(writingRecord && (recordEscaping == SRURecordXmlEscaping.STRING))) {
             state = IndentingState.SEEN_ELEMENT;
             if (depth > 0) {
                 xmlwriter.writeCharacters("\n");

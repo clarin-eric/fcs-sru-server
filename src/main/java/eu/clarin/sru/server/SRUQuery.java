@@ -17,32 +17,33 @@
 package eu.clarin.sru.server;
 
 /**
- * An exception raised, if some error occurred with the SRUServer configuration.
+ * Holder class for a parsed query to be returned from a {@link SRUQueryParser}.
+ *
+ * @param <T> abstract syntax tree (object) for parsed queries.
  */
-@SuppressWarnings("serial")
-public class SRUConfigException extends Exception {
+public interface SRUQuery<T> {
 
     /**
-     * Constructor.
+     * Get the short name for this parsed query, e.g. "cql".
      *
-     * @param msg
-     *            a message
+     * @return the short name for the query
      */
-    public SRUConfigException(String msg) {
-        super(msg);
-    }
+    public String getQueryType();
 
 
     /**
-     * Constructor.
+     * Get the original query as a string.
      *
-     * @param msg
-     *            a message
-     * @param cause
-     *            the cause of the error
+     * @return the original query
      */
-    public SRUConfigException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+    public String getRawQuery();
 
-} // class SRUConfigException
+
+    /**
+     * Get the parsed query as an abstract syntax tree.
+     *
+     * @return the parsed query as an abstract syntax tree.
+     */
+    public T getParsedQuery();
+
+} // interface SRUQuery

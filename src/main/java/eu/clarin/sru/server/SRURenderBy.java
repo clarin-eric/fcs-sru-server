@@ -17,32 +17,20 @@
 package eu.clarin.sru.server;
 
 /**
- * An exception raised, if some error occurred with the SRUServer configuration.
+ * SRU Record XML escaping.
  */
-@SuppressWarnings("serial")
-public class SRUConfigException extends Exception {
+public enum SRURenderBy {
+    /**
+     * The client requests that the server simply return this URL in the
+     * response, in the href attribute of the xml-stylesheet processing
+     * instruction before the response xml
+     */
+    CLIENT,
 
     /**
-     * Constructor.
-     *
-     * @param msg
-     *            a message
+     * The client requests that the server format the response according to the
+     * specified stylesheet, assuming the default SRU response schema as input
+     * to the stylesheet.
      */
-    public SRUConfigException(String msg) {
-        super(msg);
-    }
-
-
-    /**
-     * Constructor.
-     *
-     * @param msg
-     *            a message
-     * @param cause
-     *            the cause of the error
-     */
-    public SRUConfigException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
-
-} // class SRUConfigException
+    SERVER
+} // enum SRURenderBy

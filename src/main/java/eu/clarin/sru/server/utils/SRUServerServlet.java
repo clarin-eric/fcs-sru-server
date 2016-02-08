@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import eu.clarin.sru.server.SRUConfigException;
 import eu.clarin.sru.server.SRUException;
+import eu.clarin.sru.server.SRUQueryParserRegistry;
 import eu.clarin.sru.server.SRUServer;
 import eu.clarin.sru.server.SRUServerConfig;
 
@@ -246,8 +247,11 @@ public final class SRUServerServlet extends HttpServlet {
          * finally initialize the SRU server ...
          */
         try {
-            searchEngine.init(ctx, sruServerConfig, params);
-            sruServer = new SRUServer(sruServerConfig, searchEngine);
+            final SRUQueryParserRegistry.Builder builder =
+                    new SRUQueryParserRegistry.Builder();
+            searchEngine.init(ctx, sruServerConfig, builder, params);
+            final SRUQueryParserRegistry parsers = builder.build();
+            sruServer = new SRUServer(sruServerConfig, parsers, searchEngine);
         } catch (SRUConfigException e) {
             throw new ServletException("error initializing sru server", e);
         } catch (SRUException e) {

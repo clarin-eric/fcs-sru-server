@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2011-2013 by
+ * This software is copyright (c) 2011-2016 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -89,14 +89,30 @@ public abstract class SRUSearchResultSet extends SRUAbstractResult {
 
 
     /**
-     * The idle time for this result. The default implementation returns
-     * <code>-1</code>.
+     * The result set time to live. In SRU 2.0 it will be serialized as
+     * <code>&lt;resultSetTTL&gt;</code> element; in SRU 1.2 as
+     * <code>&lt;resultSetIdleTime&gt;</code> element.The default implementation
+     * returns <code>-1</code>.
      *
-     * @return the result set idle time or <code>-1</code> if not applicable for
+     * @return the result set time to live or <code>-1</code> if not applicable for
      *         this result
      */
-    public int getResultSetIdleTime() {
+    public int getResultSetTTL() {
         return -1;
+    }
+
+
+    /**
+     * (SRU 2.0) Indicate the accuracy of the result count reported by total
+     * number of records that matched the query. Default implementation returns
+     * <code>null</code>.
+     *
+     * @see SRUResultCountPrecision
+     * @return the result count precision or <code>null</code> if not applicable
+     *         for this result
+     */
+    public SRUResultCountPrecision getResultCountPrecision() {
+        return null;
     }
 
 
