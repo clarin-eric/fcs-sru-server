@@ -119,8 +119,8 @@ public final class SRUServerConfig {
      * Parameter constant for setting the namespace URIs for SRU 1.1 and SRU
      * 1.2.
      * <p>
-     * Valid values: "<code>loc"</code> for Library Of Congress URI or "
-     * <code>oasis</code> for OASIS URIs (without quotation marks).
+     * Valid values: "<code>loc</code>" for Library Of Congress URI or "
+     * <code>oasis</code>" for OASIS URIs (without quotation marks).
      * </p>
      */
     public static final String SRU_LEGACY_NAMESPACE_MODE =
