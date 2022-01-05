@@ -79,7 +79,9 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final int DEFAULT_RESPONSE_POSITION     = 1;
     private final SRUServerConfig config;
     private final SRUQueryParserRegistry queryParsers;
+    private final SRUAuthenticationInfoProvider authenticationInfoProvider;
     private final HttpServletRequest request;
+    private SRUAuthenticationInfo authenticationInfo;
     private List<SRUDiagnostic> diagnostics;
     private SRUOperation operation;
     private SRUVersion version;
@@ -248,10 +250,12 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     SRURequestImpl(SRUServerConfig config,
             SRUQueryParserRegistry queryParsers,
+            SRUAuthenticationInfoProvider authenticationInfoProvider,
             HttpServletRequest request) {
-        this.config       = config;
+        this.config = config;
         this.queryParsers = queryParsers;
-        this.request      = request;
+        this.authenticationInfoProvider = authenticationInfoProvider;
+        this.request = request;
     }
 
 
@@ -675,7 +679,6 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                 }
             }
 
-
             /*
              *  check if any parameters where not consumed and
              *  add appropriate warnings
@@ -693,8 +696,19 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
         }
 
         /*
+         * extract authentication information from, if an authentication provider is set
+         */
+        if (authenticationInfoProvider != null) {
+            try {
+                authenticationInfo = authenticationInfoProvider.getAuthenticationInfo(request);
+            } catch (SRUException e) {
+                addDiagnostic(e.getDiagnostic());
+            }
+        }
+
+        /*
          *  diagnostics == null -> consider as success
-         *  FIXME: this should ne done nicer!
+         *  FIXME: this should be done nicer!
          */
         return (diagnostics == null);
     }
@@ -768,6 +782,22 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             }
         }
         return config.getIndentResponse();
+    }
+
+
+    @Override
+    public SRUAuthenticationInfo getAuthentication() {
+        return authenticationInfo;
+    }
+
+
+    @Override
+    public String getAuthenticationSubject() {
+        if (authenticationInfo != null) {
+            return authenticationInfo.getSubject();
+        } else {
+            return null;
+        }
     }
 
 
@@ -1013,15 +1043,20 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     @Override
     public void addDiagnostic(String uri, String details, String message) {
-        final SRUDiagnostic diagnostic =
-                new SRUDiagnostic(uri, details, message);
+        final SRUDiagnostic diagnostic = new SRUDiagnostic(uri, details,
+                message);
+        addDiagnostic(diagnostic);
+    }
+
+
+    private void addDiagnostic(SRUDiagnostic diagnostic) {
         if (diagnostics == null) {
             diagnostics = new ArrayList<SRUDiagnostic>();
         }
         diagnostics.add(diagnostic);
     }
-
-
+    
+    
     private List<String> getParameterNames() {
         List<String> list = new ArrayList<String>();
         for (Enumeration<?> i = request.getParameterNames();

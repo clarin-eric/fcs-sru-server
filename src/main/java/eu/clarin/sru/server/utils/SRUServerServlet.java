@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,8 +36,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.clarin.sru.server.SRUAuthenticationInfoProvider;
 import eu.clarin.sru.server.SRUConfigException;
-import eu.clarin.sru.server.SRUException;
 import eu.clarin.sru.server.SRUQueryParserRegistry;
 import eu.clarin.sru.server.SRUServer;
 import eu.clarin.sru.server.SRUServerConfig;
@@ -144,7 +145,7 @@ public final class SRUServerServlet extends HttpServlet {
         /*
          * get init-parameters from ServletConfig ...
          */
-        final HashMap<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         for (Enumeration<?> i = cfg.getInitParameterNames();
                 i.hasMoreElements();) {
             String key = (String) i.nextElement();
@@ -203,59 +204,71 @@ public final class SRUServerServlet extends HttpServlet {
             setDefaultConfigParam(params, SRUServerConfig.SRU_DATABASE,
                     contextPath);
         }
+        // seal parameters against tampering ...
+        params = Collections.unmodifiableMap(params);
 
-        // parse configuration
-        SRUServerConfig sruServerConfig;
+        /*
+         * now go ahead and setup everything ...
+         */
         try {
-            sruServerConfig =
+            /*
+             * parse SRU server configuration
+             */
+            SRUServerConfig sruServerConfig =
                     SRUServerConfig.parse(params, sruServerConfigFile);
-        } catch (SRUConfigException e) {
-            throw new ServletException("sru server configuration is invalid", e);
-        }
 
-        /*
-         * create an instance of the search engine ...
-         */
-        try {
-            logger.debug("creating new search engine from class {}",
-                    sruServerSearchEngineClass);
-            @SuppressWarnings("unchecked")
-            Class<SRUSearchEngineBase> clazz = (Class<SRUSearchEngineBase>)
-                Class.forName(sruServerSearchEngineClass);
-            Constructor<SRUSearchEngineBase> constructor =
-                    clazz.getConstructor();
-            searchEngine = constructor.newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (ClassCastException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (NoSuchMethodException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (SecurityException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (InstantiationException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (IllegalAccessException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (IllegalArgumentException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (InvocationTargetException e) {
-            throw new ServletException("error initializing sru server", e);
-        }
+            /*
+             * create an instance of the search engine ...
+             */
+            try {
+                logger.debug("creating new search engine from class {}",
+                        sruServerSearchEngineClass);
+                @SuppressWarnings("unchecked")
+                Class<SRUSearchEngineBase> clazz = (Class<SRUSearchEngineBase>)
+                    Class.forName(sruServerSearchEngineClass);
+                Constructor<SRUSearchEngineBase> constructor =
+                        clazz.getConstructor();
+                searchEngine = constructor.newInstance();
+            } catch (ClassNotFoundException |
+                    NoSuchMethodException |
+                    SecurityException |
+                    InstantiationException |
+                    IllegalAccessException |
+                    IllegalArgumentException |
+                    InvocationTargetException e) {
+                throw new SRUConfigException("error creating search engine", e);
+            }
 
-        /*
-         * finally initialize the SRU server ...
-         */
-        try {
+            /*
+             * initialize search engine ...
+             */
             final SRUQueryParserRegistry.Builder builder =
                     new SRUQueryParserRegistry.Builder();
             searchEngine.init(ctx, sruServerConfig, builder, params);
-            final SRUQueryParserRegistry parsers = builder.build();
-            sruServer = new SRUServer(sruServerConfig, parsers, searchEngine);
+
+            /*
+             * create authentication provider
+             */
+            SRUAuthenticationInfoProvider authenticationProvider = null;
+            if (SRUAuthenticationInfoProviderFactory.class.isInstance(searchEngine)) {
+                logger.debug("creating new authentication info provider");
+
+                authenticationProvider = ((SRUAuthenticationInfoProviderFactory) searchEngine)
+                        .createAuthenticationInfoProvider(ctx, params);
+            }
+
+            /*
+             * finally create the sru server ...
+             */
+            sruServer = new SRUServer(sruServerConfig,
+                    builder.build(),
+                    authenticationProvider,
+                    searchEngine);
         } catch (SRUConfigException e) {
-            throw new ServletException("error initializing sru server", e);
-        } catch (SRUException e) {
-            throw new ServletException("error initializing sru server", e);
+            String msg = (e.getMessage() != null)
+                        ? "error configuring or inializing the server: " + e.getMessage()
+                        : "error configuring or inializing the server";
+            throw new ServletException(msg, e);
         }
     }
 

@@ -58,6 +58,7 @@ public final class SRUServer {
             LoggerFactory.getLogger(SRUServer.class);
     private final SRUServerConfig config;
     private final SRUQueryParserRegistry queryParsers;
+    private final SRUAuthenticationInfoProvider authenticationInfoProvider;
     private final SRUSearchEngine searchEngine;
     private final XMLOutputFactory writerFactory;
 
@@ -69,17 +70,20 @@ public final class SRUServer {
      *            a {@link SRUServerConfig} object
      * @param queryParsers
      *            a {@link SRUQueryParserRegistry} object
+     * @param authenticationInfoProvider
+     *            a {@link SRUAuthenticationInfoProvider} or <code>null</code>
      * @param searchEngine
      *            an object implementing the {@link SRUSearchEngine} interface
      * @throws NullPointerException
      *             if config, queryParserRegistry or searchEngine is
      *             <code>null</code>
-     * @throws SRUException
-     *             if an error occurred
+     * @throws SRUConfigException
+     *             if an error occurred with configuration or initialization of the server
      */
     public SRUServer(SRUServerConfig config,
             SRUQueryParserRegistry queryParsers,
-            SRUSearchEngine searchEngine) throws SRUException {
+            SRUAuthenticationInfoProvider authenticationInfoProvider,
+            SRUSearchEngine searchEngine) throws SRUConfigException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
@@ -94,6 +98,8 @@ public final class SRUServer {
             throw new NullPointerException("searchEngine == null");
         }
         this.searchEngine = searchEngine;
+
+        this.authenticationInfoProvider = authenticationInfoProvider;
 
         this.writerFactory = XMLOutputFactory.newInstance();
     }
@@ -110,7 +116,7 @@ public final class SRUServer {
     public void handleRequest(HttpServletRequest request,
             HttpServletResponse response) {
         final SRURequestImpl req =
-                new SRURequestImpl(config, queryParsers, request);
+                new SRURequestImpl(config, queryParsers, authenticationInfoProvider, request);
         try {
             // set response properties
             response.setContentType(RESPONSE_CONTENT_TYPE);

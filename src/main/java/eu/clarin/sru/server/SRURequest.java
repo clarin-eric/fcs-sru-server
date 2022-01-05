@@ -27,6 +27,22 @@ import org.z3950.zing.cql.CQLNode;
  * Provides information about a SRU request.
  */
 public interface SRURequest {
+    /**
+     * Get the authentication information that was extracted from the the
+     * request.
+     *
+     * @return the request authentication or <code>null</code>
+     */
+    public SRUAuthenticationInfo getAuthentication();
+
+
+    /**
+     * Get the subject of the request.
+     *
+     * @return the subject of the request or <code>null</code>
+     */
+    public String getAuthenticationSubject();
+
 
     /**
      * Get the <em>operation</em> parameter of this request. Available for
