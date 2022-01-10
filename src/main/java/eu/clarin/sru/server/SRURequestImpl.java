@@ -616,7 +616,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                              * QueryParser implementation
                              */
                             final Map<String, String> queryParameters =
-                                    new HashMap<String, String>();
+                                    new HashMap<>();
                             List<String> missingParameter = null;
                             for (String name : queryParser.getQueryParameterNames()) {
                                 parameterNames.remove(name);
@@ -626,7 +626,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                                     queryParameters.put(name, value);
                                 } else {
                                     if (missingParameter == null) {
-                                        missingParameter = new ArrayList<String>();
+                                        missingParameter = new ArrayList<>();
                                     }
                                     missingParameter.add(name);
                                 }
@@ -1008,7 +1008,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
             String name = (String) i.nextElement();
             if (name.startsWith(PARAM_EXTENSION_PREFIX)) {
                 if (result == null) {
-                    result = new ArrayList<String>();
+                    result = new ArrayList<>();
                 }
                 result.add(name);
             }
@@ -1051,14 +1051,14 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
 
     private void addDiagnostic(SRUDiagnostic diagnostic) {
         if (diagnostics == null) {
-            diagnostics = new ArrayList<SRUDiagnostic>();
+            diagnostics = new ArrayList<>();
         }
         diagnostics.add(diagnostic);
     }
-    
-    
+
+
     private List<String> getParameterNames() {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         for (Enumeration<?> i = request.getParameterNames();
                 i.hasMoreElements();) {
             String name = (String) i.nextElement();

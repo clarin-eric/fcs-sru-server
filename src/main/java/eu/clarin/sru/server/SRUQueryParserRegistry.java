@@ -75,8 +75,7 @@ public class SRUQueryParserRegistry {
      * Builder for creating {@link SRUQueryParserRegistry} instances.
      */
     public static class Builder {
-        private final List<SRUQueryParser<?>> parsers =
-                new ArrayList<SRUQueryParser<?>>();
+        private final List<SRUQueryParser<?>> parsers = new ArrayList<>();
 
 
         /**
@@ -95,7 +94,7 @@ public class SRUQueryParserRegistry {
 
 
         /**
-         * Constructor. Automaticaly registers registers SRU/CQL standard query
+         * Constructor. Automatically registers registers SRU/CQL standard query
          * parsers (queryType <em>cql</em> and <em>searchTerms</em>).
          */
         public Builder() {

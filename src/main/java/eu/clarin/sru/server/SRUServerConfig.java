@@ -1235,7 +1235,7 @@ public final class SRUServerConfig {
         XPathExpression expr = xpath.compile("//sru:indexInfo/sru:set");
         NodeList result = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         if (result.getLength() > 0) {
-            sets = new ArrayList<IndexInfo.Set>(result.getLength());
+            sets = new ArrayList<>(result.getLength());
             for (int i = 0; i < result.getLength(); i++) {
                 Element e = (Element) result.item(i);
                 String identifier = e.getAttribute("identifier");
@@ -1257,7 +1257,7 @@ public final class SRUServerConfig {
         expr = xpath.compile("//sru:indexInfo/sru:index");
         result = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         if (result.getLength() > 0) {
-            indexes = new ArrayList<IndexInfo.Index>(result.getLength());
+            indexes = new ArrayList<>(result.getLength());
             for (int i = 0; i < result.getLength(); i++) {
                 Element e = (Element) result.item(i);
                 List<LocalizedString> title =
@@ -1268,7 +1268,7 @@ public final class SRUServerConfig {
                 List<IndexInfo.Index.Map> maps = null;
                 NodeList result2 = e.getElementsByTagName("map");
                 if ((result2 != null) && (result2.getLength() > 0)) {
-                    maps = new ArrayList<IndexInfo.Index.Map>(
+                    maps = new ArrayList<>(
                             result2.getLength());
                     boolean foundPrimary = false;
                     for (int j = 0; j < result2.getLength(); j++) {
@@ -1331,7 +1331,7 @@ public final class SRUServerConfig {
         XPathExpression expr = xpath.compile("//sru:schemaInfo/sru:schema");
         NodeList result = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
         if (result.getLength() > 0) {
-            schemaInfos = new ArrayList<SchemaInfo>(result.getLength());
+            schemaInfos = new ArrayList<>(result.getLength());
             for (int i = 0; i < result.getLength(); i++) {
                 Element e = (Element) result.item(i);
                 String identifier = e.getAttribute("identifier");
@@ -1376,7 +1376,7 @@ public final class SRUServerConfig {
             throws SRUConfigException {
         List<LocalizedString> list = null;
         if (nodes.getLength() > 0) {
-            list = new ArrayList<LocalizedString>(nodes.getLength());
+            list = new ArrayList<>(nodes.getLength());
             boolean foundPrimary = false;
             for (int i = 0; i < nodes.getLength(); i++) {
                 Element e = (Element) nodes.item(i);
