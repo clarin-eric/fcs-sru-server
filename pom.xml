@@ -9,7 +9,7 @@
     <name>SRU/CQL Server</name>
     <description>A SRU/CQL server implementation conforming to SRU/CQL protocol version 1.1 and 1.2 and (partially) 2.0</description>
     <organization>
-        <name>Leibnit-Institut für Deutsche Sprache</name>
+        <name>Leibniz-Institut für Deutsche Sprache</name>
         <url>http://www.ids-mannheim.de/</url>
     </organization>
 
