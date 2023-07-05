@@ -66,7 +66,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
     private static final String VERSION_1_2                = "1.2";
     /* various parameter values */
     private static final String RECORD_XML_ESCAPING_XML    = "xml";
-    private static final String RECORD_XML_ESCPAING_STRING = "string";
+    private static final String RECORD_XML_ESCAPING_STRING = "string";
     private static final String RECORD_PACKING_PACKED      = "packed";
     private static final String RECORD_PACKING_UNPACKED    = "unpacked";
     private static final String RENDER_BY_CLIENT           = "client";
@@ -460,7 +460,7 @@ final class SRURequestImpl implements SRURequest, SRUDiagnosticList {
                     case RECORD_XML_ESCAPING:
                         if (value.equals(RECORD_XML_ESCAPING_XML)) {
                             recordXmlEscaping = SRURecordXmlEscaping.XML;
-                        } else if (value.equals(RECORD_XML_ESCPAING_STRING)) {
+                        } else if (value.equals(RECORD_XML_ESCAPING_STRING)) {
                             recordXmlEscaping = SRURecordXmlEscaping.STRING;
                         } else {
                             addDiagnostic(
