@@ -1161,9 +1161,9 @@ public final class SRUServer {
 
         // echoedSearchRetrieveRequest/httpAccept
         if (request.isVersion(SRUVersion.VERSION_2_0) && (request.getRawHttpAccept() != null)) {
-            out.writeStartElement(ns.getResponseNS(), "renderedBy");
+            out.writeStartElement(ns.getResponseNS(), "httpAccept");
             out.writeCharacters(request.getRawHttpAccept());
-            out.writeEndElement(); // "renderedBy" element
+            out.writeEndElement(); // "httpAccept" element
         }
 
         // echoedSearchRetrieveRequest/responseType
