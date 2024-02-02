@@ -1,6 +1,6 @@
 # Changelog
 
-# [1.10.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/1.10.0) - 2024-02-02
+# [1.10.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.10.0) - 2024-02-02
 
 - Additions:
   - Add [Github Pages](https://clarin-eric.github.io/fcs-sru-server/) with [JavaDoc](https://clarin-eric.github.io/fcs-sru-server/project-reports.html)
