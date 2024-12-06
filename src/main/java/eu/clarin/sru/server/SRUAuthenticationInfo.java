@@ -18,7 +18,7 @@ package eu.clarin.sru.server;
 
 public interface SRUAuthenticationInfo {
 
-    public String getAuthentictaionMethod();
+    public String getAuthenticationMethod();
 
 
     public String getSubject();
