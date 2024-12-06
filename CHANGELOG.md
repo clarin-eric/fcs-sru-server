@@ -1,5 +1,13 @@
 # Changelog
 
+# [1.11.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.11.0) - 2024-12-06
+
+- Changes:
+  - **BREAKING** Fix typo in interface `SRUAuthenticationInfo`
+
+- Dependencies:
+  - Bump `org.slf4j` to `2.0.16`
+
 # [1.10.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.10.0) - 2024-02-02
 
 - Additions:
