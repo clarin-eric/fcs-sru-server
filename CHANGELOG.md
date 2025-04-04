@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.12.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.12.0) - 2025-04-04
+
+- Dependencies:
+  - Bump Github Actions CI script actions versions
+  - Bump Maven build plugin versions
+  - Bump `org.slf4j` to `2.0.17`
+
 # [1.11.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.11.0) - 2024-12-06
 
 - Changes:
