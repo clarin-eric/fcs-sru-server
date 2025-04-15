@@ -1,5 +1,13 @@
 # Changelog
 
+# [1.13.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.13.0) - 2025-04-15
+
+- Changes:
+  - Strict Java 8 version check by using strict [maven compile release configuration](https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html), fails when code uses newer features!
+
+- Dependencies:
+  - **BREAKING** Bump `javax.servlet:servlet-api` to `4.0.1` (see [issue](https://github.com/clarin-eric/fcs-simple-endpoint/issues/4))
+
 # [1.12.0](https://github.com/clarin-eric/fcs-sru-server/releases/tag/SRUServer-1.12.0) - 2025-04-04
 
 - Dependencies:
